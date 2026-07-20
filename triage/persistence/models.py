@@ -19,6 +19,7 @@ class Investigation(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_id)
     repository: Mapped[str] = mapped_column(String(255), nullable=False)
     issue_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    issue_title: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[InvestigationStatus] = mapped_column(
         Enum(InvestigationStatus, native_enum=False), nullable=False, default=InvestigationStatus.PENDING
     )
@@ -62,11 +63,14 @@ class LLMCall(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_id)
     investigation_id: Mapped[str | None] = mapped_column(ForeignKey("investigations.id"), nullable=True)
+    attempt_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    provider: Mapped[str | None] = mapped_column(String(64), nullable=True)
     model: Mapped[str] = mapped_column(String(128), nullable=False)
+    pricing_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
     purpose: Mapped[str] = mapped_column(String(64), nullable=False)
     input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     cached_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
-    cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6), nullable=False)
+    cost_usd: Mapped[Decimal | None] = mapped_column(Numeric(12, 6), nullable=True)
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

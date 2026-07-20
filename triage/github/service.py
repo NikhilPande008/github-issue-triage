@@ -11,7 +11,7 @@ class IssueSource(Protocol):
 
     def fetch_comments(self, issue_number: int) -> list[dict]: ...
 
-    def fetch_latest_open_issues(self, limit: int) -> list[dict]: ...
+    def fetch_latest_open_issues(self, limit: int, start_page: int = 1) -> list[dict]: ...
 
 
 class GitHubIssueService:
@@ -24,8 +24,8 @@ class GitHubIssueService:
         issue = self.client.fetch_issue(issue_number)
         return map_issue(self.client.repository, issue, self.client.fetch_comments(issue_number))
 
-    def fetch_latest_open_issues(self, limit: int) -> list[GitHubIssue]:
-        issues = self.client.fetch_latest_open_issues(limit)
+    def fetch_latest_open_issues(self, limit: int, start_page: int = 1) -> list[GitHubIssue]:
+        issues = self.client.fetch_latest_open_issues(limit, start_page)
         return [
             map_issue(self.client.repository, issue, self.client.fetch_comments(issue["number"]))
             for issue in issues

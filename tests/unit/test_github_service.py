@@ -10,7 +10,8 @@ class FakeIssueSource:
     def fetch_comments(self, issue_number: int) -> list[dict]:
         return [{"user": {"login": "commenter"}, "body": "comment", "created_at": "2026-01-01T00:00:00Z"}]
 
-    def fetch_latest_open_issues(self, limit: int) -> list[dict]:
+    def fetch_latest_open_issues(self, limit: int, start_page: int = 1) -> list[dict]:
+        assert start_page == 1
         return [issue_payload(3), issue_payload(2)][:limit]
 
 

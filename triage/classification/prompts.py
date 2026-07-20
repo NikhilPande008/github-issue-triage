@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from triage.classification.models import ClassificationEvidence
+from triage.core.prompt_evidence import tail_terminal_evidence
 
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "classification.md"
 
@@ -12,7 +13,7 @@ def load_system_prompt() -> str:
 
 def render_evidence_prompt(evidence: ClassificationEvidence) -> str:
     """Render only execution evidence; no issue or investigation context is accepted."""
-    pytest_output = evidence.pytest_output_path.read_text(encoding="utf-8")
+    pytest_output = tail_terminal_evidence(evidence.pytest_output_path.read_text(encoding="utf-8"))
     git_diff = (
         evidence.git_diff_path.read_text(encoding="utf-8")
         if evidence.git_diff_path is not None and evidence.git_diff_path.exists()

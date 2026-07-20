@@ -12,7 +12,13 @@ class PytestReport:
 
 SUMMARY_FAILURE = re.compile(r"^FAILED\s+(?P<nodeid>\S+)(?:\s+-\s+(?P<reason>.*))?$", re.MULTILINE)
 ASSERTION_LOCATION = re.compile(r"^(?P<path>(?:[^\n:]+/)?[^\n:]+\.py):\d+: AssertionError", re.MULTILINE)
-TERMINAL_SUMMARY = re.compile(r"^=+\s+.*\bfailed\b.*\s+=+$", re.MULTILINE)
+# Pytest emits either an equals-delimited summary or a plain count line after
+# ``short test summary info``.  The latter is used by the recorded #7564 run:
+# ``1 failed, 338 passed, 1 skipped, 1 xfailed, ...``.
+TERMINAL_SUMMARY = re.compile(
+    r"^(?=.*\b[1-9]\d*\s+failed\b)(?=.*\b(?:\d+\s+(?:passed|skipped|xfailed|xpassed|deselected)|in\s+\d+(?:\.\d+)?s)\b).*$",
+    re.MULTILINE,
+)
 
 
 def parse_pytest_output(output: str, exit_code: int) -> PytestReport:
@@ -24,9 +30,11 @@ def parse_pytest_output(output: str, exit_code: int) -> PytestReport:
 
     assertion_paths = {Path(match.group("path")) for match in ASSERTION_LOCATION.finditer(output)}
     for match in SUMMARY_FAILURE.finditer(output):
-        reason = (match.group("reason") or "").lstrip()
-        if reason.startswith("assert ") or reason.startswith("AssertionError"):
-            assertion_paths.add(Path(match.group("nodeid").split("::", maxsplit=1)[0]))
+        # A pytest ``FAILED`` node is a completed test failure even when its
+        # exception is not AssertionError (for example, pytest.raises finding
+        # an unexpected OSError). The validator still requires this path to be
+        # a changed executable test before accepting reproduction evidence.
+        assertion_paths.add(Path(match.group("nodeid").split("::", maxsplit=1)[0]))
     return PytestReport(completed=True, rejection_reason=None, assertion_failures=sorted(assertion_paths))
 
 

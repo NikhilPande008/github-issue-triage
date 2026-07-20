@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
-import { AttemptCard } from "../components/AttemptCard";
+import { CopyButton } from "../components/CopyButton";
 import { EvidenceViewer } from "../components/EvidenceViewer";
+import { MaintainerReply } from "../components/MaintainerReply";
 import { SummaryCard } from "../components/SummaryCard";
 import { Timeline } from "../components/Timeline";
 import { StatusBadge } from "../components/StatusBadge";
 import { api, type EvidenceArtifact, type InvestigationSummary, type TimelineAttempt } from "../services/api";
 
-export function InvestigationDetail({ id, onBack }: { id: string; onBack: () => void }) {
-  const [summary, setSummary] = useState<InvestigationSummary>(); const [timeline, setTimeline] = useState<TimelineAttempt[]>([]); const [artifacts, setArtifacts] = useState<EvidenceArtifact[]>([]); const [error, setError] = useState<string>();
-  useEffect(() => { Promise.all([api.summary(id), api.timeline(id), api.artifacts(id)]).then(([s, t, a]) => { setSummary(s); setTimeline(t.items); setArtifacts(a.items); }).catch((err: Error) => setError(err.message)); }, [id]);
-  if (error) return <main><button onClick={onBack}>Back</button><p className="error">Unable to load investigation: {error}</p></main>;
-  if (!summary) return <main>Loading investigation evidence…</main>;
-  return <main><button onClick={onBack}>Back to investigations</button><h1>Investigation <code>{id}</code></h1><SummaryCard summary={summary} /><Timeline attempts={timeline} />{timeline.map((attempt) => <AttemptCard key={attempt.attempt_number} attempt={attempt} />)}<EvidenceViewer artifacts={artifacts} /><section className="card"><h2>Classification</h2><p><StatusBadge value={summary.classification} /></p><p><b>assertsFailure:</b> <StatusBadge value={summary.asserts_failure} /></p><p><b>Validation reason:</b> {summary.validation_reason ?? "Not recorded"}</p></section><section className="card"><h2>Cost</h2><p>Input tokens: {summary.input_tokens}</p><p>Cached input tokens: {summary.cached_input_tokens}</p><p>Output tokens: {summary.output_tokens}</p><p>Cache hit: {summary.cache_hit_percent === null ? "Not recorded" : `${summary.cache_hit_percent}%`}</p><p>Cost: ${summary.cost_usd.toFixed(6)}</p><p>LLM latency: {summary.latency_ms} ms</p></section></main>;
+export function InvestigationDetail({ id }: { id: string }) {
+  const [summary, setSummary] = useState<InvestigationSummary>(); const [timeline, setTimeline] = useState<TimelineAttempt[]>([]); const [artifacts, setArtifacts] = useState<EvidenceArtifact[]>([]); const [error, setError] = useState<string>(); const [loadingArtifacts, setLoadingArtifacts] = useState(true);
+  useEffect(() => {
+    setSummary(undefined); setError(undefined); setArtifacts([]); setLoadingArtifacts(true);
+    Promise.all([api.summary(id), api.timeline(id)]).then(([s, t]) => { setSummary(s); setTimeline(t.items); }).catch((err: Error) => setError(err.message));
+    api.artifacts(id).then((result) => setArtifacts(result.items)).catch((err: Error) => setError(err.message)).finally(() => setLoadingArtifacts(false));
+  }, [id]);
+  if (error) return <section><a className="back-link" href="/">← Back to investigations</a><p className="error">Unable to load investigation: {error}</p></section>;
+  if (!summary) return <section><p role="status">Loading investigation evidence…</p></section>;
+  const issueUrl = `https://github.com/${summary.repository}/issues/${summary.issue_number}`;
+  return <section><a className="back-link" href="/">← Back to investigations</a><div className="detail-heading"><div><p className="eyebrow">Investigation evidence</p><h1><a href={issueUrl} target="_blank" rel="noreferrer noopener">{summary.repository} #{summary.issue_number} <span className="external-mark" aria-label="opens GitHub in a new tab">↗</span></a></h1><div className="id-line"><code>{id.slice(0, 8)}</code><CopyButton value={id} label="Copy investigation ID" /></div></div><div className="detail-badges"><StatusBadge value={summary.classification} /><StatusBadge value={summary.status} /><StatusBadge value={summary.asserts_failure} /></div></div><SummaryCard summary={summary} /><Timeline attempts={timeline} /><MaintainerReply classification={summary.classification} artifacts={artifacts} /><EvidenceViewer artifacts={artifacts} loading={loadingArtifacts} /><section className="card"><h2>Validation</h2><p><b>assertsFailure:</b> <StatusBadge value={summary.asserts_failure} /></p><p><b>Reason:</b> {summary.validation_reason ?? "—"}</p></section></section>;
 }

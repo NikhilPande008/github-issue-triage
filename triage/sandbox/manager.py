@@ -43,13 +43,14 @@ class Sandbox:
 
 
 class SandboxManager:
-    def __init__(self, workspace_root: Path, image_name: str, dependency_timeout_seconds: int, overall_timeout_seconds: int, auth_path: Path, docker_client=None):
+    def __init__(self, workspace_root: Path, image_name: str, dependency_timeout_seconds: int, overall_timeout_seconds: int, auth_path: Path, docker_client=None, setup_command: str = "python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt"):
         self.workspace_root = workspace_root
         self.image_name = image_name
         self.dependency_timeout_seconds = dependency_timeout_seconds
         self.overall_timeout_seconds = overall_timeout_seconds
         self.auth_path = auth_path
         self.docker_client = docker_client or docker.from_env()
+        self.setup_command = setup_command
 
     def create(self, run_id: str, repository: str) -> Sandbox:
         workspace = SandboxWorkspace.create(self.workspace_root, run_id, repository)
@@ -64,7 +65,7 @@ class SandboxManager:
                 "sandbox created",
                 extra={"run_id": run_id, "container_id": container.id, "image_id": image.id, "workspace_path": str(workspace.root)},
             )
-            container.run("python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt", self.dependency_timeout_seconds)
+            container.run(self.setup_command, self.dependency_timeout_seconds)
             return sandbox
         except Exception:
             if container is not None:

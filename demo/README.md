@@ -19,6 +19,10 @@ npm run dev
 ```
 
 Open <http://localhost:5173>. The dashboard contains the `REPRODUCED` flagship
-record, earlier honest negative records, and their extraction, terminal, pytest,
-and Git-diff evidence. The snapshot is intentionally read-only; it is not a
-substitute for a live investigation.
+record and its extraction, terminal, pytest, and Git-diff evidence. The snapshot
+is intentionally read-only; it is not a substitute for a live investigation.
+
+Maintainers refresh this snapshot with `scripts/export_demo.py`, which selects
+explicit investigation IDs and copies only their persisted rows and referenced
+artifacts into a newly created demo database. It never copies the live
+`triage.db` wholesale.

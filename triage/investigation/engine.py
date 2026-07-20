@@ -50,9 +50,11 @@ class InvestigationEngine:
         self.artifacts_root = artifacts_root
         self.validator = validator
 
-    def investigate(self, issue: GitHubIssue, extraction: IssueExtraction, repository_path: Path) -> InvestigationResult:
-        investigation = self.investigations.create(
-            Investigation(repository=issue.repository, issue_number=issue.issue_number, status=InvestigationStatus.PENDING)
+    def investigate(
+        self, issue: GitHubIssue, extraction: IssueExtraction, repository_path: Path, investigation: Investigation | None = None
+    ) -> InvestigationResult:
+        investigation = investigation or self.investigations.create(
+            Investigation(repository=issue.repository, issue_number=issue.issue_number, issue_title=issue.title, status=InvestigationStatus.PENDING)
         )
         self.investigations.update(investigation, status=InvestigationStatus.RUNNING)
         run_id = new_run_id()
@@ -81,7 +83,7 @@ class InvestigationEngine:
             artifact_dir = attempt_artifact_dir(self.artifacts_root, run_id, attempt_number)
             execution = self.runner.run_attempt(repository_path, prompt, artifact_dir)
             self._record_attempt_artifacts(investigation.id, execution)
-            self._record_codex_call(investigation.id, execution)
+            self._record_codex_call(investigation.id, attempt_number, execution)
             validation = self.validator.validate(
                 ValidationEvidence(
                     git_diff_path=execution.evidence.git_diff_path,
@@ -117,10 +119,12 @@ class InvestigationEngine:
         if execution.evidence.git_diff_path:
             self.artifacts.create(Artifact(investigation_id=investigation_id, kind="git_diff", path=str(execution.evidence.git_diff_path)))
 
-    def _record_codex_call(self, investigation_id: str, execution: AttemptExecution) -> None:
+    def _record_codex_call(self, investigation_id: str, attempt_number: int, execution: AttemptExecution) -> None:
         self.llm_calls.create(
             LLMCall(
                 investigation_id=investigation_id,
+                attempt_number=attempt_number,
+                provider="codex",
                 model="codex",
                 purpose="investigation",
                 input_tokens=0,

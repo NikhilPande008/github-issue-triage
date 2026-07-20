@@ -2,7 +2,8 @@ from triage.extraction.client import ExtractionResponse, Usage
 from triage.extraction.service import ExtractionService
 from triage.github.models import GitHubIssue
 from triage.persistence.database import Base, create_session_factory
-from triage.persistence.models import LLMCall
+from triage.persistence.models import Investigation, LLMCall
+from triage.domain.enums import InvestigationStatus
 from triage.persistence.repositories import LLMCallRepository
 
 
@@ -41,10 +42,15 @@ def test_extraction_records_llm_call(tmp_path) -> None:
         url="https://github.com/psf/requests/issues/123",
     )
     with factory() as session:
-        ExtractionService(FakeClient(), LLMCallRepository(session)).extract(issue)
+        investigation = Investigation(repository="psf/requests", issue_number=123, status=InvestigationStatus.PENDING)
+        session.add(investigation)
+        session.commit()
+        ExtractionService(FakeClient(), LLMCallRepository(session), investigation.id).extract(issue)
         call = session.query(LLMCall).one()
 
-    assert call.investigation_id is None
+    assert call.investigation_id == investigation.id
+    assert call.provider == "openai"
+    assert call.pricing_version == "2026-07-20"
     assert call.input_tokens == 100
     assert call.cached_input_tokens == 20
     assert call.output_tokens == 10

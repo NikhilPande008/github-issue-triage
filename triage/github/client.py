@@ -24,12 +24,22 @@ class GitHubClient:
     def fetch_comments(self, issue_number: int) -> list[dict[str, Any]]:
         return self._get(f"/repos/{self.repository}/issues/{issue_number}/comments?per_page=100")
 
-    def fetch_latest_open_issues(self, limit: int) -> list[dict[str, Any]]:
+    def fetch_latest_open_issues(self, limit: int, start_page: int = 1) -> list[dict[str, Any]]:
+        """Return newest open issues, excluding pull requests, across GitHub pages."""
         if limit < 1 or limit > 100:
             raise ValueError("limit must be between 1 and 100")
-        query = urlencode({"state": "open", "sort": "created", "direction": "desc", "per_page": limit})
-        issues = self._get(f"/repos/{self.repository}/issues?{query}")
-        return [issue for issue in issues if "pull_request" not in issue]
+        if start_page < 1:
+            raise ValueError("start_page must be at least 1")
+        selected: list[dict[str, Any]] = []
+        page = start_page
+        while len(selected) < limit:
+            query = urlencode({"state": "open", "sort": "created", "direction": "desc", "per_page": 100, "page": page})
+            issues = self._get(f"/repos/{self.repository}/issues?{query}")
+            selected.extend(issue for issue in issues if "pull_request" not in issue)
+            if len(issues) < 100:
+                break
+            page += 1
+        return selected[:limit]
 
     def _get(self, path: str) -> Any:
         headers = {

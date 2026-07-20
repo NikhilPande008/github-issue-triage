@@ -53,7 +53,7 @@ def test_extract_command_prints_validated_json(monkeypatch, capsys) -> None:
             return issue
 
     class FakeExtractionService:
-        def __init__(self, client, repository):
+        def __init__(self, client, repository, investigation_id=None):
             pass
 
         def extract(self, fetched_issue: GitHubIssue) -> IssueExtraction:
@@ -93,7 +93,7 @@ def test_investigate_local_command_prints_summary(monkeypatch, capsys, tmp_path)
             return issue
 
     class FakeExtractionService:
-        def __init__(self, client, repository):
+        def __init__(self, client, repository, investigation_id=None):
             pass
 
         def extract(self, fetched_issue: GitHubIssue) -> IssueExtraction:
@@ -106,7 +106,7 @@ def test_investigate_local_command_prints_summary(monkeypatch, capsys, tmp_path)
         def __init__(self, **kwargs):
             pass
 
-        def investigate(self, fetched_issue, extraction, repository_path):
+        def investigate(self, fetched_issue, extraction, repository_path, investigation=None):
             pytest_output = tmp_path / "pytest_output.txt"
             pytest_output.write_text("1 failed\n", encoding="utf-8")
             git_diff = tmp_path / "git.diff"
@@ -134,11 +134,16 @@ def test_investigate_local_command_prints_summary(monkeypatch, capsys, tmp_path)
         def __init__(self, session):
             pass
 
+        def create(self, item):
+            item.id = "investigation-1"
+            return item
+
         def get(self, item_id):
             return object()
 
         def update(self, item, **values):
-            assert values["classification"].value == "REPRODUCED"
+            if "classification" in values:
+                assert values["classification"].value == "REPRODUCED"
             return item
 
     class FakeSession:

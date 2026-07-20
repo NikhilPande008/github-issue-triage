@@ -39,3 +39,19 @@ def test_client_lists_open_issues_and_filters_pull_requests(monkeypatch) -> None
     issues = GitHubClient("psf/requests").fetch_latest_open_issues(2)
 
     assert issues == [{"number": 2}]
+
+
+def test_client_paginates_when_pull_requests_fill_the_first_page(monkeypatch) -> None:
+    requests = []
+    first_page = [{"number": number, "pull_request": {"url": "example"}} for number in range(100)]
+    second_page = [{"number": 202}, {"number": 201}]
+
+    def fake_urlopen(request, timeout):
+        requests.append(request.full_url)
+        return FakeResponse(first_page if request.full_url.endswith("page=1") else second_page)
+
+    monkeypatch.setattr(client_module, "urlopen", fake_urlopen)
+    issues = GitHubClient("psf/requests").fetch_latest_open_issues(2)
+
+    assert issues == second_page
+    assert len(requests) == 2

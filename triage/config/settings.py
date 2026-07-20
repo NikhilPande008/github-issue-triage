@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     sandbox_workspace_dir: Path = Path("sandbox-workspaces")
     sandbox_image: str = "github-issue-triage:latest"
     dependency_install_timeout_seconds: int = 600
+    sandbox_setup_command: str = "python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt"
     pytest_timeout_seconds: int = 300
     investigation_timeout_seconds: int = 900
     codex_auth_path: Path = Path.home() / ".codex" / "auth.json"

@@ -1,6 +1,7 @@
 from typing import Generic, TypeVar
 
 from sqlalchemy import select
+from triage.domain.enums import InvestigationStatus
 from sqlalchemy.orm import Session
 
 from triage.persistence.models import Artifact, Hypothesis, Investigation, LLMCall
@@ -40,6 +41,14 @@ class Repository(Generic[ModelT]):
 
 class InvestigationRepository(Repository[Investigation]):
     model = Investigation
+
+    def processed_issue_numbers(self, repository: str) -> set[int]:
+        """Completed/failed runs are resumable batch work; interrupted runs may be retried."""
+        statement = select(Investigation.issue_number).where(
+            Investigation.repository == repository,
+            Investigation.status.in_([InvestigationStatus.COMPLETED, InvestigationStatus.FAILED]),
+        )
+        return set(self.session.scalars(statement))
 
 
 class HypothesisRepository(Repository[Hypothesis]):

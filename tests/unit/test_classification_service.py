@@ -37,7 +37,7 @@ def test_valid_false_result_is_classified_and_instrumented(tmp_path) -> None:
     client = FakeClient(['{"classification": "NEEDS_INFO"}'])
     calls = FakeCallStore()
 
-    result = ClassificationService(client, calls).classify(evidence(tmp_path))
+    result = ClassificationService(client, calls, investigation_id="investigation-1").classify(evidence(tmp_path))
 
     assert result is Classification.NEEDS_INFO
     assert len(client.calls) == 1
@@ -46,6 +46,8 @@ def test_valid_false_result_is_classified_and_instrumented(tmp_path) -> None:
     assert calls.items[0].cached_input_tokens == 20
     assert calls.items[0].output_tokens == 10
     assert calls.items[0].cost_usd > 0
+    assert calls.items[0].investigation_id == "investigation-1"
+    assert calls.items[0].provider == "openai"
 
 
 def test_validator_success_always_wins_without_model_call(tmp_path) -> None:

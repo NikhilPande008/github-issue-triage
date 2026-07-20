@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from triage.config.settings import Settings
 from triage.domain.enums import Classification
+from triage.llm.pricing import OPENAI_PROVIDER
 from triage.persistence.database import create_session_factory
 from triage.persistence.models import Artifact, Hypothesis, Investigation, LLMCall
 
@@ -32,13 +33,43 @@ def _duration_seconds(investigation: Investigation) -> float | None:
     return max(0.0, (end - investigation.created_at).total_seconds())
 
 
+def _tracked_llm_metrics(calls: list[LLMCall]) -> dict[str, object]:
+    """Aggregate only linked, priced OpenAI API calls; Codex is intentionally excluded."""
+    tracked_calls = [call for call in calls if call.provider == OPENAI_PROVIDER]
+    caveat = "Tracked LLM API cost and latency include linked OpenAI API calls only; Codex usage is excluded because exact Codex billing data is unavailable."
+    if not tracked_calls:
+        return {
+            "tracked_llm_api_cost_usd": None,
+            "tracked_llm_api_latency_ms": None,
+            "tracked_llm_api_input_tokens": None,
+            "tracked_llm_api_cached_input_tokens": None,
+            "tracked_llm_api_output_tokens": None,
+            "tracked_llm_api_cost_status": "unavailable",
+            "tracked_llm_api_latency_status": "unavailable",
+            "tracked_llm_api_explanation": "No tracked LLM API calls are linked to this investigation. " + caveat,
+        }
+    cost_available = all(call.cost_usd is not None for call in tracked_calls)
+    cost = sum((Decimal(call.cost_usd) for call in tracked_calls if call.cost_usd is not None), Decimal("0"))
+    return {
+        "tracked_llm_api_cost_usd": float(cost) if cost_available else None,
+        "tracked_llm_api_latency_ms": sum(call.latency_ms for call in tracked_calls),
+        "tracked_llm_api_input_tokens": sum(call.input_tokens for call in tracked_calls),
+        "tracked_llm_api_cached_input_tokens": sum(call.cached_input_tokens for call in tracked_calls),
+        "tracked_llm_api_output_tokens": sum(call.output_tokens for call in tracked_calls),
+        "tracked_llm_api_cost_status": "available" if cost_available else "unavailable",
+        "tracked_llm_api_latency_status": "available",
+        "tracked_llm_api_explanation": caveat if cost_available else "A linked LLM API call has unknown pricing; cost is unavailable. " + caveat,
+    }
+
+
 def _investigation_payload(
-    investigation: Investigation, attempt_count: int, cost_usd: Decimal | int = 0
+    investigation: Investigation, attempt_count: int, cost_usd: Decimal | int = 0, tracked_metrics: dict[str, object] | None = None
 ) -> dict[str, object]:
     return {
         "id": investigation.id,
         "repository": investigation.repository,
         "issue_number": investigation.issue_number,
+        "issue_title": investigation.issue_title,
         "status": investigation.status.value,
         "classification": investigation.classification.value if investigation.classification else None,
         "asserts_failure": investigation.asserts_failure,
@@ -46,8 +77,10 @@ def _investigation_payload(
         "attempt_count": attempt_count,
         "started_at": _timestamp(investigation.created_at),
         "updated_at": _timestamp(investigation.updated_at),
+        "completed_at": _timestamp(investigation.classification_completed_at),
         "duration_seconds": _duration_seconds(investigation),
         "cost_usd": float(Decimal(cost_usd)),
+        **(tracked_metrics or _tracked_llm_metrics([])),
     }
 
 
@@ -87,9 +120,14 @@ def list_investigations(
             .group_by(LLMCall.investigation_id)
         ).all()
     )
+    calls_by_investigation: dict[str, list[LLMCall]] = {}
+    if investigations:
+        for call in session.scalars(select(LLMCall).where(LLMCall.investigation_id.in_([item.id for item in investigations]))):
+            if call.investigation_id is not None:
+                calls_by_investigation.setdefault(call.investigation_id, []).append(call)
     return {
         "items": [
-            _investigation_payload(item, counts.get(item.id, 0), costs.get(item.id, 0))
+            _investigation_payload(item, counts.get(item.id, 0), costs.get(item.id, 0), _tracked_llm_metrics(calls_by_investigation.get(item.id, [])))
             for item in investigations
         ],
         "page": page,
@@ -104,7 +142,8 @@ def get_investigation(investigation_id: str, session: Session = Depends(get_sess
     attempt_count = session.scalar(
         select(func.count()).select_from(Hypothesis).where(Hypothesis.investigation_id == investigation.id)
     ) or 0
-    return _investigation_payload(investigation, attempt_count)
+    calls = list(session.scalars(select(LLMCall).where(LLMCall.investigation_id == investigation.id)))
+    return _investigation_payload(investigation, attempt_count, tracked_metrics=_tracked_llm_metrics(calls))
 
 
 @router.get("/{investigation_id}/timeline")
@@ -145,27 +184,21 @@ def get_summary(investigation_id: str, session: Session = Depends(get_session)) 
     attempts = session.scalar(
         select(func.count()).select_from(Hypothesis).where(Hypothesis.investigation_id == investigation.id)
     ) or 0
-    totals = session.execute(
-        select(
-            func.coalesce(func.sum(LLMCall.input_tokens), 0),
-            func.coalesce(func.sum(LLMCall.cached_input_tokens), 0),
-            func.coalesce(func.sum(LLMCall.output_tokens), 0),
-            func.coalesce(func.sum(LLMCall.cost_usd), 0),
-            func.coalesce(func.sum(LLMCall.latency_ms), 0),
-        ).where(LLMCall.investigation_id == investigation.id)
-    ).one()
-    input_tokens, cached_input_tokens, output_tokens, cost_usd, latency_ms = totals
-    input_tokens = int(input_tokens)
-    cached_input_tokens = int(cached_input_tokens)
-    output_tokens = int(output_tokens)
+    calls = list(session.scalars(select(LLMCall).where(LLMCall.investigation_id == investigation.id)))
+    tracked_metrics = _tracked_llm_metrics(calls)
     return {
-        **_investigation_payload(investigation, attempts),
+        **_investigation_payload(investigation, attempts, tracked_metrics=tracked_metrics),
         "total_duration_seconds": _duration_seconds(investigation),
-        "input_tokens": input_tokens,
-        "cached_input_tokens": cached_input_tokens,
-        "output_tokens": output_tokens,
-        "total_tokens": input_tokens + output_tokens,
-        "cache_hit_percent": round((cached_input_tokens / input_tokens) * 100, 2) if input_tokens else None,
-        "cost_usd": float(Decimal(cost_usd)),
-        "latency_ms": int(latency_ms),
+        "input_tokens": tracked_metrics["tracked_llm_api_input_tokens"],
+        "cached_input_tokens": tracked_metrics["tracked_llm_api_cached_input_tokens"],
+        "output_tokens": tracked_metrics["tracked_llm_api_output_tokens"],
+        "total_tokens": (
+            int(tracked_metrics["tracked_llm_api_input_tokens"]) + int(tracked_metrics["tracked_llm_api_output_tokens"])
+            if tracked_metrics["tracked_llm_api_input_tokens"] is not None else None
+        ),
+        "cache_hit_percent": (
+            round((int(tracked_metrics["tracked_llm_api_cached_input_tokens"]) / int(tracked_metrics["tracked_llm_api_input_tokens"])) * 100, 2)
+            if tracked_metrics["tracked_llm_api_input_tokens"] else None
+        ),
+        "latency_ms": tracked_metrics["tracked_llm_api_latency_ms"],
     }

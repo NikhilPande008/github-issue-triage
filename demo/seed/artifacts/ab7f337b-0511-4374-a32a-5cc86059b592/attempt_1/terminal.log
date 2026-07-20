@@ -9,17 +9,18 @@ Run focused pytest commands when useful. Stop once the test suite demonstrates a
 ## Issue extraction
 
 {
-  "summary": "Request to change the existing OSError for missing TLS material to FileNotFoundError.",
-  "steps_to_reproduce": [],
-  "expected_behavior": "Missing TLS certificate material raises FileNotFoundError with a filename attribute, while existing OSError handlers continue to work.",
-  "actual_behavior": "Missing TLS certificate material raises OSError with a string message containing the invalid path.",
+  "summary": "Change the existing OSError for missing TLS material to FileNotFoundError.",
+  "steps_to_reproduce": [
+    "Set conn.cert_file to a path for which os.path.exists(conn.cert_file) is false."
+  ],
+  "expected_behavior": "Raise FileNotFoundError with errno.ENOENT and the missing certificate path available as the exception'"'"'s filename attribute.",
+  "actual_behavior": "An OSError is raised with the message \"Could not find the TLS certificate file, invalid path: {conn.cert_file}\".",
   "environment": {},
   "affected_area": "TLS material",
   "repro_code": "if conn.cert_file and not os.path.exists(conn.cert_file):\n    raise OSError(\n        f\"Could not find the TLS certificate file, \"\n        f\"invalid path: {conn.cert_file}\"\n    )",
   "missing_info": [
-    "A complete invocation or setup showing how conn.cert_file is configured.",
-    "The requests version is not provided.",
-    "The Python version is not provided."
+    "No concrete execution context or complete reproducer is provided.",
+    "No environment or version details are provided."
   ],
   "confidence": 0.96
 }
@@ -46,7 +47,7 @@ approval: never
 sandbox: workspace-write [workdir, /tmp, $TMPDIR]
 reasoning effort: none
 reasoning summaries: none
-session id: 019f7f73-f8f2-7462-9d92-43d239115a4c
+session id: 019f8095-0ac7-7042-a457-8e626f833688
 --------
 user
 # Codex investigation prompt v1
@@ -60,17 +61,18 @@ Run focused pytest commands when useful. Stop once the test suite demonstrates a
 ## Issue extraction
 
 {
-  "summary": "Request to change the existing OSError for missing TLS material to FileNotFoundError.",
-  "steps_to_reproduce": [],
-  "expected_behavior": "Missing TLS certificate material raises FileNotFoundError with a filename attribute, while existing OSError handlers continue to work.",
-  "actual_behavior": "Missing TLS certificate material raises OSError with a string message containing the invalid path.",
+  "summary": "Change the existing OSError for missing TLS material to FileNotFoundError.",
+  "steps_to_reproduce": [
+    "Set conn.cert_file to a path for which os.path.exists(conn.cert_file) is false."
+  ],
+  "expected_behavior": "Raise FileNotFoundError with errno.ENOENT and the missing certificate path available as the exception's filename attribute.",
+  "actual_behavior": "An OSError is raised with the message \"Could not find the TLS certificate file, invalid path: {conn.cert_file}\".",
   "environment": {},
   "affected_area": "TLS material",
   "repro_code": "if conn.cert_file and not os.path.exists(conn.cert_file):\n    raise OSError(\n        f\"Could not find the TLS certificate file, \"\n        f\"invalid path: {conn.cert_file}\"\n    )",
   "missing_info": [
-    "A complete invocation or setup showing how conn.cert_file is configured.",
-    "The requests version is not provided.",
-    "The Python version is not provided."
+    "No concrete execution context or complete reproducer is provided.",
+    "No environment or version details are provided."
   ],
   "confidence": 0.96
 }
@@ -89,49 +91,30 @@ None; this is the first attempt.
 
 warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
 codex
-I’ll trace the TLS certificate-path validation and its existing tests. My hypothesis is that the code raises a plain `OSError` directly, so a focused regression test can show the missing `filename` attribute and incorrect exception type.
+I’ll locate the TLS certificate validation and add the narrowest regression test that exposes the current exception mismatch, then run that focused test.
 exec
-/bin/bash -lc 'rg -n -C 3 "Could not find the TLS certificate file|invalid path:|cert_file" .' in /workspace/repo
+/bin/bash -lc 'pwd && rg -n -i "Could not find the TLS certificate file|cert_file|TLS certificate" .' in /workspace/repo
  exited 1 in 0ms:
 bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
 
 exec
-/bin/bash -lc "pwd && rg --files -g '"'!*'"\\.pyc' | head -80" in /workspace/repo
+/bin/bash -c 'rg -n -i "Could not find the TLS certificate file|cert_file|TLS certificate" .' in /workspace/repo
  exited 1 in 0ms:
 bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
 
 codex
-The workspace command runner is currently blocked before it can access the repository (a sandbox namespace error). I’ll use the available read-only web lookup only to identify the likely upstream file and avoid guessing, then report the local verification blocker precisely.
-web search: 
-web search: "Could not find the TLS certificate file" "invalid path"
+The shell sandbox is currently failing before it can execute any command (`bwrap` cannot create a user namespace), so I can’t inspect the repository or run pytest. I’ll make one minimal retry to confirm this is environmental rather than repository-specific.
+exec
+/bin/bash -lc true in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
 codex
-Investigation is blocked by the workspace command runner: every repository read or `pytest` command fails before execution with a sandbox namespace error.
-
-The reported defect is nevertheless concretely explained by the supplied code: it directly constructs `OSError(message)`, which leaves `exc.filename` as `None`. A focused regression should invoke `requests.get(..., cert="/missing/cert.pem")` and assert:
-
-```python
-with pytest.raises(FileNotFoundError) as exc:
-    requests.get("https://example.invalid", cert=missing_path)
-
-assert exc.value.filename == missing_path
-```
-
-I did not modify files or claim a reproduced test failure because I could not access or run the repository.
+Blocked by the execution environment: every shell command fails before running with a `bwrap` user-namespace permission error. I couldn’t inspect files, add a regression test, or run pytest, so there is no test evidence or repository change to report.
+Blocked by the execution environment: every shell command fails before running with a `bwrap` user-namespace permission error. I couldn’t inspect files, add a regression test, or run pytest, so there is no test evidence or repository change to report.
 tokens used
-13,392
-Investigation is blocked by the workspace command runner: every repository read or `pytest` command fails before execution with a sandbox namespace error.
-
-The reported defect is nevertheless concretely explained by the supplied code: it directly constructs `OSError(message)`, which leaves `exc.filename` as `None`. A focused regression should invoke `requests.get(..., cert="/missing/cert.pem")` and assert:
-
-```python
-with pytest.raises(FileNotFoundError) as exc:
-    requests.get("https://example.invalid", cert=missing_path)
-
-assert exc.value.filename == missing_path
-```
-
-I did not modify files or claim a reproduced test failure because I could not access or run the repository.
-[exit 0; elapsed 27635ms; preferred]
+4,279
+[exit 0; elapsed 22153ms; preferred]
 $ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
 
 You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
@@ -143,17 +126,18 @@ Run focused pytest commands when useful. Stop once the test suite demonstrates a
 ## Issue extraction
 
 {
-  "summary": "Request to change the existing OSError for missing TLS material to FileNotFoundError.",
-  "steps_to_reproduce": [],
-  "expected_behavior": "Missing TLS certificate material raises FileNotFoundError with a filename attribute, while existing OSError handlers continue to work.",
-  "actual_behavior": "Missing TLS certificate material raises OSError with a string message containing the invalid path.",
+  "summary": "Change the existing OSError for missing TLS material to FileNotFoundError.",
+  "steps_to_reproduce": [
+    "Set conn.cert_file to a path for which os.path.exists(conn.cert_file) is false."
+  ],
+  "expected_behavior": "Raise FileNotFoundError with errno.ENOENT and the missing certificate path available as the exception'"'"'s filename attribute.",
+  "actual_behavior": "An OSError is raised with the message \"Could not find the TLS certificate file, invalid path: {conn.cert_file}\".",
   "environment": {},
   "affected_area": "TLS material",
   "repro_code": "if conn.cert_file and not os.path.exists(conn.cert_file):\n    raise OSError(\n        f\"Could not find the TLS certificate file, \"\n        f\"invalid path: {conn.cert_file}\"\n    )",
   "missing_info": [
-    "A complete invocation or setup showing how conn.cert_file is configured.",
-    "The requests version is not provided.",
-    "The Python version is not provided."
+    "No concrete execution context or complete reproducer is provided.",
+    "No environment or version details are provided."
   ],
   "confidence": 0.96
 }
@@ -180,7 +164,7 @@ approval: never
 sandbox: danger-full-access
 reasoning effort: none
 reasoning summaries: none
-session id: 019f7f74-634c-7190-87bd-84957d960818
+session id: 019f8095-5ea3-7093-b2ae-86a5450928c6
 --------
 user
 # Codex investigation prompt v1
@@ -194,17 +178,18 @@ Run focused pytest commands when useful. Stop once the test suite demonstrates a
 ## Issue extraction
 
 {
-  "summary": "Request to change the existing OSError for missing TLS material to FileNotFoundError.",
-  "steps_to_reproduce": [],
-  "expected_behavior": "Missing TLS certificate material raises FileNotFoundError with a filename attribute, while existing OSError handlers continue to work.",
-  "actual_behavior": "Missing TLS certificate material raises OSError with a string message containing the invalid path.",
+  "summary": "Change the existing OSError for missing TLS material to FileNotFoundError.",
+  "steps_to_reproduce": [
+    "Set conn.cert_file to a path for which os.path.exists(conn.cert_file) is false."
+  ],
+  "expected_behavior": "Raise FileNotFoundError with errno.ENOENT and the missing certificate path available as the exception's filename attribute.",
+  "actual_behavior": "An OSError is raised with the message \"Could not find the TLS certificate file, invalid path: {conn.cert_file}\".",
   "environment": {},
   "affected_area": "TLS material",
   "repro_code": "if conn.cert_file and not os.path.exists(conn.cert_file):\n    raise OSError(\n        f\"Could not find the TLS certificate file, \"\n        f\"invalid path: {conn.cert_file}\"\n    )",
   "missing_info": [
-    "A complete invocation or setup showing how conn.cert_file is configured.",
-    "The requests version is not provided.",
-    "The Python version is not provided."
+    "No concrete execution context or complete reproducer is provided.",
+    "No environment or version details are provided."
   ],
   "confidence": 0.96
 }
@@ -222,17 +207,18 @@ None; this is the first attempt.
 None; this is the first attempt.
 
 codex
-I’ll trace the TLS-material validation and its existing tests. My hypothesis is that a direct `OSError` is raised for a missing certificate path, so a focused regression test expecting `FileNotFoundError` (including `.filename`) should fail before any production change.
+I’ll locate the TLS certificate validation and its focused tests. My hypothesis is that it currently constructs a plain `OSError` from a message, so a regression test can show that the exception type, `errno`, and `filename` do not meet the reported contract.
 exec
-/bin/bash -lc 'rg -n -C 3 "Could not find the TLS certificate file|invalid path|cert_file" .' in /workspace/repo
+/bin/bash -lc 'pwd && rg -n -C 3 "Could not find the TLS certificate file|cert_file" .' in /workspace/repo
  succeeded in 0ms:
-./HISTORY.md-746--   It is now possible to pass `no_proxy` as a key to the `proxies`
-./HISTORY.md-747-    dictionary to provide handling similar to the `NO_PROXY` environment
-./HISTORY.md-748-    variable.
-./HISTORY.md:749:-   When users provide invalid paths to certificate bundle files or
-./HISTORY.md-750-    directories Requests now raises `IOError`, rather than failing at
-./HISTORY.md-751-    the time of the HTTPS request with a fairly inscrutable certificate
-./HISTORY.md-752-    validation error.
+/workspace/repo
+./tests/test_requests.py-981-            requests.get(httpbin_secure(), cert=INVALID_PATH)
+./tests/test_requests.py-982-        assert (
+./tests/test_requests.py-983-            str(e.value)
+./tests/test_requests.py:984:            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+./tests/test_requests.py-985-        )
+./tests/test_requests.py-986-
+./tests/test_requests.py-987-        with pytest.raises(IOError) as e:
 --
 ./src/requests/adapters.py-105-    pool_kwargs["cert_reqs"] = cert_reqs
 ./src/requests/adapters.py-106-    if client_cert is not None:
@@ -246,14 +232,6 @@ exec
 ./src/requests/adapters.py-114-    host_params = {
 ./src/requests/adapters.py-115-        "scheme": scheme,
 ./src/requests/adapters.py-116-        "host": parsed_request_url.hostname,
---
-./src/requests/adapters.py-331-            if not cert_loc or not os.path.exists(cert_loc):
-./src/requests/adapters.py-332-                raise OSError(
-./src/requests/adapters.py-333-                    f"Could not find a suitable TLS CA certificate bundle, "
-./src/requests/adapters.py:334:                    f"invalid path: {cert_loc}"
-./src/requests/adapters.py-335-                )
-./src/requests/adapters.py-336-
-./src/requests/adapters.py-337-            conn.cert_reqs = "CERT_REQUIRED"
 --
 ./src/requests/adapters.py-347-
 ./src/requests/adapters.py-348-        if cert:
@@ -270,10 +248,6 @@ exec
 ./src/requests/adapters.py-359-                )
 ./src/requests/adapters.py-360-            if conn.key_file and not os.path.exists(conn.key_file):
 ./src/requests/adapters.py-361-                raise OSError(
-./src/requests/adapters.py:362:                    f"Could not find the TLS key file, invalid path: {conn.key_file}"
-./src/requests/adapters.py-363-                )
-./src/requests/adapters.py-364-
-./src/requests/adapters.py-365-    def build_response(self, req: PreparedRequest, resp: Any) -> Response:
 --
 ./src/requests/adapters.py-421-          ``"ca_certs"`` will be set if the string is not a directory recognized
 ./src/requests/adapters.py-422-          by :py:func:`os.path.isdir`, otherwise ``"ca_cert_dir"`` will be
@@ -282,113 +256,10 @@ exec
 ./src/requests/adapters.py-425-          ``"cert"`` is a tuple with a second item, ``"key_file"`` will also
 ./src/requests/adapters.py-426-          be present
 ./src/requests/adapters.py-427-
---
-./tests/test_requests.py-972-            requests.get(httpbin_secure(), verify=INVALID_PATH)
-./tests/test_requests.py-973-        assert (
-./tests/test_requests.py-974-            str(e.value)
-./tests/test_requests.py:975:            == f"Could not find a suitable TLS CA certificate bundle, invalid path: {INVALID_PATH}"
-./tests/test_requests.py-976-        )
-./tests/test_requests.py-977-
-./tests/test_requests.py-978-    def test_invalid_ssl_certificate_files(self, httpbin_secure):
---
-./tests/test_requests.py-981-            requests.get(httpbin_secure(), cert=INVALID_PATH)
-./tests/test_requests.py-982-        assert (
-./tests/test_requests.py-983-            str(e.value)
-./tests/test_requests.py:984:            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
-./tests/test_requests.py-985-        )
-./tests/test_requests.py-986-
-./tests/test_requests.py-987-        with pytest.raises(IOError) as e:
-./tests/test_requests.py-988-            requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
-./tests/test_requests.py-989-        assert str(e.value) == (
-./tests/test_requests.py:990:            f"Could not find the TLS key file, invalid path: {INVALID_PATH}"
-./tests/test_requests.py-991-        )
-./tests/test_requests.py-992-
-./tests/test_requests.py-993-    @pytest.mark.parametrize(
 
 exec
-/bin/bash -lc "sed -n '930,1000p' tests/test_requests.py && sed -n '310,370p' src/requests/adapters.py && git status --short" in /workspace/repo
+/bin/bash -lc "sed -n '320,372p' src/requests/adapters.py && sed -n '950,1000p' tests/test_requests.py && git status --short" in /workspace/repo
  succeeded in 0ms:
-    def test_request_ok_set(self, httpbin):
-        r = requests.get(httpbin("status", "404"))
-        assert not r.ok
-
-    def test_status_raising(self, httpbin):
-        r = requests.get(httpbin("status", "404"))
-        with pytest.raises(requests.exceptions.HTTPError):
-            r.raise_for_status()
-
-        r = requests.get(httpbin("status", "500"))
-        assert not r.ok
-
-    def test_decompress_gzip(self, httpbin):
-        r = requests.get(httpbin("gzip"))
-        r.content.decode("ascii")
-
-    @pytest.mark.parametrize(
-        "url, params",
-        (
-            ("/get", {"foo": "føø"}),
-            ("/get", {"føø": "føø"}),
-            ("/get", {"føø": "føø"}),
-            ("/get", {"foo": "foo"}),
-            ("ø", {"foo": "foo"}),
-        ),
-    )
-    def test_unicode_get(self, httpbin, url, params):
-        requests.get(httpbin(url), params=params)
-
-    def test_unicode_header_name(self, httpbin):
-        requests.put(
-            httpbin("put"),
-            headers={"Content-Type": "application/octet-stream"},
-            data="\xff",
-        )  # compat.str is unicode.
-
-    def test_pyopenssl_redirect(self, httpbin_secure, httpbin_ca_bundle):
-        requests.get(httpbin_secure("status", "301"), verify=httpbin_ca_bundle)
-
-    def test_invalid_ca_certificate_path(self, httpbin_secure):
-        INVALID_PATH = "/garbage"
-        with pytest.raises(IOError) as e:
-            requests.get(httpbin_secure(), verify=INVALID_PATH)
-        assert (
-            str(e.value)
-            == f"Could not find a suitable TLS CA certificate bundle, invalid path: {INVALID_PATH}"
-        )
-
-    def test_invalid_ssl_certificate_files(self, httpbin_secure):
-        INVALID_PATH = "/garbage"
-        with pytest.raises(IOError) as e:
-            requests.get(httpbin_secure(), cert=INVALID_PATH)
-        assert (
-            str(e.value)
-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
-        )
-
-        with pytest.raises(IOError) as e:
-            requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
-        assert str(e.value) == (
-            f"Could not find the TLS key file, invalid path: {INVALID_PATH}"
-        )
-
-    @pytest.mark.parametrize(
-        "env, expected",
-        (
-            ({}, True),
-            ({"REQUESTS_CA_BUNDLE": "/some/path"}, "/some/path"),
-            ({"REQUESTS_CA_BUNDLE": ""}, True),
-            ({"CURL_CA_BUNDLE": "/some/path"}, "/some/path"),
-            ({"CURL_CA_BUNDLE": ""}, True),
-        """Verify a SSL certificate. This method should not be called from user
-        code, and is only exposed for use when subclassing the
-        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
-
-        :param conn: The urllib3 connection object associated with the cert.
-        :param url: The requested URL.
-        :param verify: Either a boolean, in which case it controls whether we verify
-            the server's TLS certificate, or a string, in which case it must be a path
-            to a CA bundle to use
-        :param cert: The SSL certificate to verify.
         """
         if url.lower().startswith("https") and verify:
             cert_loc = None
@@ -440,69 +311,138 @@ exec
         for use when subclassing the
         :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`
 
+        :param req: The :class:`PreparedRequest <PreparedRequest>` used to generate the response.
+        :param resp: The urllib3 response object.
+            ("/get", {"føø": "føø"}),
+            ("/get", {"føø": "føø"}),
+            ("/get", {"foo": "foo"}),
+            ("ø", {"foo": "foo"}),
+        ),
+    )
+    def test_unicode_get(self, httpbin, url, params):
+        requests.get(httpbin(url), params=params)
+
+    def test_unicode_header_name(self, httpbin):
+        requests.put(
+            httpbin("put"),
+            headers={"Content-Type": "application/octet-stream"},
+            data="\xff",
+        )  # compat.str is unicode.
+
+    def test_pyopenssl_redirect(self, httpbin_secure, httpbin_ca_bundle):
+        requests.get(httpbin_secure("status", "301"), verify=httpbin_ca_bundle)
+
+    def test_invalid_ca_certificate_path(self, httpbin_secure):
+        INVALID_PATH = "/garbage"
+        with pytest.raises(IOError) as e:
+            requests.get(httpbin_secure(), verify=INVALID_PATH)
+        assert (
+            str(e.value)
+            == f"Could not find a suitable TLS CA certificate bundle, invalid path: {INVALID_PATH}"
+        )
+
+    def test_invalid_ssl_certificate_files(self, httpbin_secure):
+        INVALID_PATH = "/garbage"
+        with pytest.raises(IOError) as e:
+            requests.get(httpbin_secure(), cert=INVALID_PATH)
+        assert (
+            str(e.value)
+            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+        )
+
+        with pytest.raises(IOError) as e:
+            requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
+        assert str(e.value) == (
+            f"Could not find the TLS key file, invalid path: {INVALID_PATH}"
+        )
+
+    @pytest.mark.parametrize(
+        "env, expected",
+        (
+            ({}, True),
+            ({"REQUESTS_CA_BUNDLE": "/some/path"}, "/some/path"),
+            ({"REQUESTS_CA_BUNDLE": ""}, True),
+            ({"CURL_CA_BUNDLE": "/some/path"}, "/some/path"),
+            ({"CURL_CA_BUNDLE": ""}, True),
 
 codex
-The existing regression test exercises exactly this path but only checks the broad `IOError` alias and message. I’ll tighten that certificate-file assertion to require the requested subclass and its `filename`; the key-file behavior remains out of scope for this report.
+The report maps directly to `HTTPAdapter.cert_verify`, and an existing test already exercises the missing certificate path. I’ll tighten only that certificate assertion to the requested exception contract, while leaving the CA and key behavior untouched.
 apply patch
 patch: completed
 /workspace/repo/tests/test_requests.py
 diff --git a/tests/test_requests.py b/tests/test_requests.py
-index 8bcb81d8b17f28cd76188b210035036cdd401975..18e7000fdebc7a2e016780ab695551cacb35d8ee
+index 8bcb81d8b17f28cd76188b210035036cdd401975..e94be860f4fb22c25df62e477663cd88cb71c6af
 --- a/tests/test_requests.py
 +++ b/tests/test_requests.py
-@@ -977,8 +977,9 @@
+@@ -977,12 +977,10 @@
  
      def test_invalid_ssl_certificate_files(self, httpbin_secure):
          INVALID_PATH = "/garbage"
 -        with pytest.raises(IOError) as e:
 +        with pytest.raises(FileNotFoundError) as e:
              requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
 +        assert e.value.filename == INVALID_PATH
-         assert (
-             str(e.value)
-             == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
 
 diff --git a/tests/test_requests.py b/tests/test_requests.py
-index 8bcb81d8b17f28cd76188b210035036cdd401975..18e7000fdebc7a2e016780ab695551cacb35d8ee
+index 8bcb81d8b17f28cd76188b210035036cdd401975..e94be860f4fb22c25df62e477663cd88cb71c6af
 --- a/tests/test_requests.py
 +++ b/tests/test_requests.py
-@@ -977,8 +977,9 @@
+@@ -977,12 +977,10 @@
  
      def test_invalid_ssl_certificate_files(self, httpbin_secure):
          INVALID_PATH = "/garbage"
 -        with pytest.raises(IOError) as e:
 +        with pytest.raises(FileNotFoundError) as e:
              requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
 +        assert e.value.filename == INVALID_PATH
-         assert (
-             str(e.value)
-             == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
 
 exec
-/bin/bash -lc 'pytest -q tests/test_requests.py -k invalid_ssl_certificate_files' in /workspace/repo
+/bin/bash -lc "sed -n '1,45p' tests/test_requests.py && pytest -q tests/test_requests.py -k invalid_ssl_certificate_files" in /workspace/repo
 diff --git a/tests/test_requests.py b/tests/test_requests.py
-index 8bcb81d8b17f28cd76188b210035036cdd401975..18e7000fdebc7a2e016780ab695551cacb35d8ee
+index 8bcb81d8b17f28cd76188b210035036cdd401975..e94be860f4fb22c25df62e477663cd88cb71c6af
 --- a/tests/test_requests.py
 +++ b/tests/test_requests.py
-@@ -977,8 +977,9 @@
+@@ -977,12 +977,10 @@
  
      def test_invalid_ssl_certificate_files(self, httpbin_secure):
          INVALID_PATH = "/garbage"
 -        with pytest.raises(IOError) as e:
 +        with pytest.raises(FileNotFoundError) as e:
              requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
 +        assert e.value.filename == INVALID_PATH
-         assert (
-             str(e.value)
-             == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
 
- exited 1 in 898ms:
+ exited 1 in 1118ms:
+[2026-07-20 17:31:59,890] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
 F                                                                        [100%]
 =================================== FAILURES ===================================
 _______________ TestRequests.test_invalid_ssl_certificate_files ________________
 
-self = <tests.test_requests.TestRequests object at 0xffff91ee4a70>
-httpbin_secure = <function prepare_url.<locals>.inner at 0xffff912763e0>
+self = <tests.test_requests.TestRequests object at 0xffffbc094d70>
+httpbin_secure = <function prepare_url.<locals>.inner at 0xffffbb4823e0>
 
     def test_invalid_ssl_certificate_files(self, httpbin_secure):
         INVALID_PATH = "/garbage"
@@ -527,9 +467,9 @@ src/requests/adapters.py:668: in send
     self.cert_verify(conn, request.url, verify, cert)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <requests.adapters.HTTPAdapter object at 0xffff92ea9bb0>
-conn = <urllib3.connectionpool.HTTPSConnectionPool object at 0xffff91ef2870>
-url = 'https://127.0.0.1:40355/', verify = True, cert = '/garbage'
+self = <requests.adapters.HTTPAdapter object at 0xffffbc36d7f0>
+conn = <urllib3.connectionpool.HTTPSConnectionPool object at 0xffffbc0a2720>
+url = 'https://127.0.0.1:33663/', verify = True, cert = '/garbage'
 
     def cert_verify(
         self, conn: Any, url: str, verify: _t.VerifyType, cert: _t.CertType
@@ -589,70 +529,234 @@ E               OSError: Could not find the TLS certificate file, invalid path: 
 src/requests/adapters.py:356: OSError
 =========================== short test summary info ============================
 FAILED tests/test_requests.py::TestRequests::test_invalid_ssl_certificate_files
-1 failed, 340 deselected in 0.68s
+1 failed, 340 deselected in 0.80s
 
 codex
-Confirmed the reported defect with a focused regression test.
-
-- Updated `test_invalid_ssl_certificate_files` to require `FileNotFoundError` and `exception.filename == "/garbage"`.
-- Focused pytest run fails: production code raises plain `OSError` in `src/requests/adapters.py:356`.
-
-The test change is in [tests/test_requests.py](/workspace/repo/tests/test_requests.py:980). No production code was changed.
+The focused regression test fails at the reported validation site: it raises plain `OSError` instead of `FileNotFoundError`. I’ll add the required standard-library `errno` import so the test fully encodes the expected metadata; no production change is being made in this investigation.
+apply patch
+patch: completed
+/workspace/repo/tests/test_requests.py
 diff --git a/tests/test_requests.py b/tests/test_requests.py
-index 8bcb81d8b17f28cd76188b210035036cdd401975..18e7000fdebc7a2e016780ab695551cacb35d8ee
+index 8bcb81d8b17f28cd76188b210035036cdd401975..4cfadf5e85f74e81db4be73b7516199ea172ac73
 --- a/tests/test_requests.py
 +++ b/tests/test_requests.py
-@@ -977,8 +977,9 @@
+@@ -2,6 +2,7 @@
+ 
+ import collections
+ import contextlib
++import errno
+ import io
+ import json
+ import os
+@@ -977,12 +978,10 @@
  
      def test_invalid_ssl_certificate_files(self, httpbin_secure):
          INVALID_PATH = "/garbage"
 -        with pytest.raises(IOError) as e:
 +        with pytest.raises(FileNotFoundError) as e:
              requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
 +        assert e.value.filename == INVALID_PATH
-         assert (
-             str(e.value)
-             == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
+
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d8b17f28cd76188b210035036cdd401975..4cfadf5e85f74e81db4be73b7516199ea172ac73
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -2,6 +2,7 @@
+ 
+ import collections
+ import contextlib
++import errno
+ import io
+ import json
+ import os
+@@ -977,12 +978,10 @@
+ 
+     def test_invalid_ssl_certificate_files(self, httpbin_secure):
+         INVALID_PATH = "/garbage"
+-        with pytest.raises(IOError) as e:
++        with pytest.raises(FileNotFoundError) as e:
+             requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
++        assert e.value.filename == INVALID_PATH
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
+
+exec
+/bin/bash -lc 'git diff --check && git diff -- tests/test_requests.py && git status --short' in /workspace/repo
+ succeeded in 0ms:
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d..4cfadf5 100644
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -2,6 +2,7 @@
+ 
+ import collections
+ import contextlib
++import errno
+ import io
+ import json
+ import os
+@@ -977,12 +978,10 @@ class TestRequests:
+ 
+     def test_invalid_ssl_certificate_files(self, httpbin_secure):
+         INVALID_PATH = "/garbage"
+-        with pytest.raises(IOError) as e:
++        with pytest.raises(FileNotFoundError) as e:
+             requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
++        assert e.value.filename == INVALID_PATH
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
+ M tests/test_requests.py
+
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d8b17f28cd76188b210035036cdd401975..4cfadf5e85f74e81db4be73b7516199ea172ac73
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -2,6 +2,7 @@
+ 
+ import collections
+ import contextlib
++import errno
+ import io
+ import json
+ import os
+@@ -977,12 +978,10 @@
+ 
+     def test_invalid_ssl_certificate_files(self, httpbin_secure):
+         INVALID_PATH = "/garbage"
+-        with pytest.raises(IOError) as e:
++        with pytest.raises(FileNotFoundError) as e:
+             requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
++        assert e.value.filename == INVALID_PATH
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
+
+codex
+Confirmed the defect with a focused regression test in [tests/test_requests.py](/workspace/repo/tests/test_requests.py:978).
+
+`pytest -q tests/test_requests.py -k invalid_ssl_certificate_files` fails because `HTTPAdapter.cert_verify` raises plain `OSError` for `/garbage`, not `FileNotFoundError`.
+
+The test now requires:
+
+- `FileNotFoundError`
+- `errno == errno.ENOENT`
+- `filename == "/garbage"`
+
+No production code was changed.
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d8b17f28cd76188b210035036cdd401975..4cfadf5e85f74e81db4be73b7516199ea172ac73
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -2,6 +2,7 @@
+ 
+ import collections
+ import contextlib
++import errno
+ import io
+ import json
+ import os
+@@ -977,12 +978,10 @@
+ 
+     def test_invalid_ssl_certificate_files(self, httpbin_secure):
+         INVALID_PATH = "/garbage"
+-        with pytest.raises(IOError) as e:
++        with pytest.raises(FileNotFoundError) as e:
+             requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
++        assert e.value.filename == INVALID_PATH
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
 
 tokens used
-10,493
-Confirmed the reported defect with a focused regression test.
+9,188
+Confirmed the defect with a focused regression test in [tests/test_requests.py](/workspace/repo/tests/test_requests.py:978).
 
-- Updated `test_invalid_ssl_certificate_files` to require `FileNotFoundError` and `exception.filename == "/garbage"`.
-- Focused pytest run fails: production code raises plain `OSError` in `src/requests/adapters.py:356`.
+`pytest -q tests/test_requests.py -k invalid_ssl_certificate_files` fails because `HTTPAdapter.cert_verify` raises plain `OSError` for `/garbage`, not `FileNotFoundError`.
 
-The test change is in [tests/test_requests.py](/workspace/repo/tests/test_requests.py:980). No production code was changed.
-[exit 0; elapsed 23979ms; Docker-isolated fallback]
+The test now requires:
+
+- `FileNotFoundError`
+- `errno == errno.ENOENT`
+- `filename == "/garbage"`
+
+No production code was changed.
+[exit 0; elapsed 31708ms; Docker-isolated fallback]
 $ python -m pytest -q 'tests/test_requests.py'
-[2026-07-20 12:16:25,889] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
-....................................127.0.0.1 - - [20/Jul/2026 12:16:25] "GET /relative-redirect/20 HTTP/1.1" 302 0
-.......127.0.0.1 - - [20/Jul/2026 12:16:25] "HEAD /get HTTP/1.1" 200 0
-...............127.0.0.1 - - [20/Jul/2026 12:16:26] "GET /get HTTP/1.1" 200 247
-.......127.0.0.1 - - [20/Jul/2026 12:16:26] "HEAD /get HTTP/1.1" 200 0
-....... [ 21%]
-..............127.0.0.1 - - [20/Jul/2026 12:16:26] "GET /basic-auth/user/pass HTTP/1.1" 401 0
-......127.0.0.1 - - [20/Jul/2026 12:16:26] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 401 0
-................127.0.0.1 - - [20/Jul/2026 12:16:26] "PUT /put HTTP/1.1" 200 412
-...F.........s...................127.0.0.1 - - [20/Jul/2026 12:16:26] "GET / HTTP/1.1" 200 13760
-.127.0.0.1 - - [20/Jul/2026 12:16:26] "GET /headers HTTP/1.1" 200 239
-.. [ 42%]
-........................................................................ [ 63%]
-.........127.0.0.1 - - [20/Jul/2026 12:16:26] "GET /get HTTP/1.1" 200 272
-.................x............................................. [ 84%]
-................................127.0.0.1 - - [20/Jul/2026 12:16:56] "GET /redirect-to?url=http%3A%2F%2F%3A1 HTTP/1.1" 302 0
-.....................                    [100%]
+[2026-07-20 17:32:12,371] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+..................................127.0.0.1 - - [20/Jul/2026 17:32:12] "POST /post HTTP/1.1" 200 363
+.....127.0.0.1 - - [20/Jul/2026 17:32:12] "HEAD /get HTTP/1.1" 200 0
+.127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /get HTTP/1.1" 200 272
+..127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /get HTTP/1.1" 200 272
+.....127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /get HTTP/1.1" 200 272
+.127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /get?test=true&q=test HTTP/1.1" 200 317
+.127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /cookies HTTP/1.1" 200 40
+....127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /get HTTP/1.1" 200 297
+...127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /cookies HTTP/1.1" 200 40
+..127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /get HTTP/1.1" 200 247
+.127.0.0.1 - - [20/Jul/2026 17:32:12] "GET /get HTTP/1.1" 200 272
+............. [ 21%]
+.................127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 200 46
+..127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 200 46
+.127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 401 0
+..127.0.0.1 - - [20/Jul/2026 17:32:13] "POST /post HTTP/1.1" 200 416
+.127.0.0.1 - - [20/Jul/2026 17:32:13] "POST /post HTTP/1.1" 200 475
+......127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /status/404 HTTP/1.1" 404 0
+127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /status/500 HTTP/1.1" 500 0
+.......127.0.0.1 - - [20/Jul/2026 17:32:13] "PUT /put HTTP/1.1" 200 412
+...F.........s...................... [ 42%]
+........................................127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /get HTTP/1.1" 200 348
+........................127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /get HTTP/1.1" 200 300
+.......127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /get HTTP/1.1" 200 272
+. [ 63%]
+..127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /get HTTP/1.1" 200 315
+.......127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /get HTTP/1.1" 200 272
+........127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /get HTTP/1.1" 200 272
+....127.0.0.1 - - [20/Jul/2026 17:32:13] "POST /post HTTP/1.1" 200 430
+.....x........127.0.0.1 - - [20/Jul/2026 17:32:13] "GET /html HTTP/1.1" 200 3741
+..................................... [ 84%]
+.....................................................                    [100%]
 =================================== FAILURES ===================================
 _______________ TestRequests.test_invalid_ssl_certificate_files ________________
 
-self = <tests.test_requests.TestRequests object at 0xffff8ed36d20>
-httpbin_secure = <function prepare_url.<locals>.inner at 0xffff8ec75e40>
+self = <tests.test_requests.TestRequests object at 0xffff8e207860>
+httpbin_secure = <function prepare_url.<locals>.inner at 0xffff8e2347c0>
 
     def test_invalid_ssl_certificate_files(self, httpbin_secure):
         INVALID_PATH = "/garbage"
         with pytest.raises(FileNotFoundError) as e:
 >           requests.get(httpbin_secure(), cert=INVALID_PATH)
 
-tests/test_requests.py:981: 
+tests/test_requests.py:982: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 src/requests/api.py:87: in get
     return request("get", url, params=params, **kwargs)
@@ -670,9 +774,9 @@ src/requests/adapters.py:668: in send
     self.cert_verify(conn, request.url, verify, cert)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <requests.adapters.HTTPAdapter object at 0xffff8ec605f0>
-conn = <urllib3.connectionpool.HTTPSConnectionPool object at 0xffff8ec61c70>
-url = 'https://127.0.0.1:40967/', verify = True, cert = '/garbage'
+self = <requests.adapters.HTTPAdapter object at 0xffff8e2bd130>
+conn = <urllib3.connectionpool.HTTPSConnectionPool object at 0xffff8e2c06e0>
+url = 'https://127.0.0.1:44261/', verify = True, cert = '/garbage'
 
     def cert_verify(
         self, conn: Any, url: str, verify: _t.VerifyType, cert: _t.CertType
@@ -761,21 +865,34 @@ tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_mt
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
 FAILED tests/test_requests.py::TestRequests::test_invalid_ssl_certificate_files
-1 failed, 338 passed, 1 skipped, 1 xfailed, 12 warnings in 39.54s
+1 failed, 338 passed, 1 skipped, 1 xfailed, 12 warnings in 39.98s
 [exit 1]
 $ git diff --no-ext-diff
 diff --git a/tests/test_requests.py b/tests/test_requests.py
-index 8bcb81d..18e7000 100644
+index 8bcb81d..4cfadf5 100644
 --- a/tests/test_requests.py
 +++ b/tests/test_requests.py
-@@ -977,8 +977,9 @@ class TestRequests:
+@@ -2,6 +2,7 @@
+ 
+ import collections
+ import contextlib
++import errno
+ import io
+ import json
+ import os
+@@ -977,12 +978,10 @@ class TestRequests:
  
      def test_invalid_ssl_certificate_files(self, httpbin_secure):
          INVALID_PATH = "/garbage"
 -        with pytest.raises(IOError) as e:
 +        with pytest.raises(FileNotFoundError) as e:
              requests.get(httpbin_secure(), cert=INVALID_PATH)
+-        assert (
+-            str(e.value)
+-            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+-        )
++        assert e.value.errno == errno.ENOENT
 +        assert e.value.filename == INVALID_PATH
-         assert (
-             str(e.value)
-             == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+ 
+         with pytest.raises(IOError) as e:
+             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))

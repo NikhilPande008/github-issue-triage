@@ -23,3 +23,8 @@ def test_settings_default_repository() -> None:
     settings = Settings(_env_file=None)
     assert settings.demo_repository == "psf/requests"
     assert settings.github_token is None
+
+
+def test_settings_loads_declarative_sandbox_setup_command(monkeypatch) -> None:
+    monkeypatch.setenv("SANDBOX_SETUP_COMMAND", "python -m pip install -e . pytest")
+    assert Settings(_env_file=None).sandbox_setup_command == "python -m pip install -e . pytest"

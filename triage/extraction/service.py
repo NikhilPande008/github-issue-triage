@@ -1,4 +1,3 @@
-from decimal import Decimal, ROUND_HALF_UP
 from time import perf_counter
 from typing import Protocol
 
@@ -6,6 +5,7 @@ from triage.extraction.client import MODEL, ExtractionResponse, Usage
 from triage.extraction.prompts import load_system_prompt, render_user_prompt
 from triage.extraction.schema import ExtractionValidationError, validate_extraction_json
 from triage.github.models import GitHubIssue
+from triage.llm.pricing import OPENAI_PROVIDER, PRICE_BOOK_VERSION, calculate_cost as calculate_priced_cost
 from triage.persistence.models import LLMCall
 
 
@@ -21,24 +21,18 @@ class ExtractionFailure(RuntimeError):
     pass
 
 
-def calculate_cost(usage: Usage) -> Decimal:
-    uncached = usage.input_tokens - usage.cached_input_tokens
-    if uncached < 0:
-        raise ValueError("cached input tokens cannot exceed input tokens")
-    cost = (
-        Decimal(uncached) * Decimal("1.00")
-        + Decimal(usage.cached_input_tokens) * Decimal("0.10")
-        + Decimal(usage.output_tokens) * Decimal("6.00")
-    ) / Decimal("1000000")
-    return cost.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
+def calculate_cost(usage: Usage):
+    """Compatibility wrapper for the configured extraction model tariff."""
+    return calculate_priced_cost(MODEL, usage.input_tokens, usage.cached_input_tokens, usage.output_tokens)
 
 
 class ExtractionService:
     """Executes and records up to two source-bound extraction calls."""
 
-    def __init__(self, client: ExtractionClient, llm_calls: LLMCallStore):
+    def __init__(self, client: ExtractionClient, llm_calls: LLMCallStore, investigation_id: str | None = None):
         self.client = client
         self.llm_calls = llm_calls
+        self.investigation_id = investigation_id
 
     def extract(self, issue: GitHubIssue) -> "IssueExtraction":
         system_prompt = load_system_prompt()
@@ -58,8 +52,10 @@ class ExtractionService:
     def _record(self, response: ExtractionResponse, latency_ms: int) -> None:
         self.llm_calls.create(
             LLMCall(
-                investigation_id=None,
+                investigation_id=self.investigation_id,
+                provider=OPENAI_PROVIDER,
                 model=MODEL,
+                pricing_version=PRICE_BOOK_VERSION,
                 purpose="issue_extraction",
                 input_tokens=response.usage.input_tokens,
                 cached_input_tokens=response.usage.cached_input_tokens,

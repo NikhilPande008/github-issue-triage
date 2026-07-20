@@ -23,8 +23,8 @@ current implementation, which raises `OSError`; the deterministic validator
 accepts that changed-test failure as a reproduction. The dashboard exposes the
 raw extraction JSON, terminal log, pytest output, and Git diff for inspection.
 
-Earlier runs remain in the demo as honest negative evidence. They are not
-rewritten into successes.
+The refreshed demo snapshot contains this newly attributed record only; older
+local investigations remain untouched in the live database.
 
 ## Judge demo: no keys, no rebuild
 

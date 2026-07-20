@@ -30,6 +30,28 @@ def test_successful_reproduction_fixture(tmp_path) -> None:
     assert result.assertion_count == 1
 
 
+def test_completed_plain_failure_summary_in_changed_test_is_reproduced(tmp_path) -> None:
+    output = """=================================== FAILURES ===================================
+_______________ TestRequests.test_invalid_ssl_certificate_files ________________
+
+E       OSError: Could not find the TLS certificate file, invalid path: /garbage
+
+=========================== short test summary info ============================
+FAILED tests/test_requests.py::TestRequests::test_invalid_ssl_certificate_files
+1 failed, 338 passed, 1 skipped, 1 xfailed, 12 warnings in 40.39s
+"""
+    diff = DIFF.replace("tests/test_reproduction.py", "tests/test_requests.py")
+    diff_path = tmp_path / "git.diff"
+    output_path = tmp_path / "pytest_output.txt"
+    diff_path.write_text(diff, encoding="utf-8")
+    output_path.write_text(output, encoding="utf-8")
+
+    result = EvidenceValidator().validate(ValidationEvidence(diff_path, output_path, 1))
+
+    assert result.asserts_failure is True
+    assert result.failing_test_paths == [Path("tests/test_requests.py")]
+
+
 @pytest.mark.parametrize(
     ("fixture", "exit_code"),
     [
