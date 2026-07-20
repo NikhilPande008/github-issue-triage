@@ -1,0 +1,9 @@
+============================= test session starts ==============================
+ERROR collecting tests/test_reproduction.py
+E     File "tests/test_reproduction.py", line 4
+E       assert (
+E              ^
+E   SyntaxError: '(' was never closed
+=========================== short test summary info ============================
+ERROR tests/test_reproduction.py
+=============================== 1 error in 0.05s ===============================

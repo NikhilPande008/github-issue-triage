@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+collected 1 item
+
+tests/test_reproduction.py F                                               [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_reproduces_issue ____________________________
+
+    def test_reproduces_issue():
+>       assert response.status_code == 200
+E       AssertionError: assert 500 == 200
+
+tests/test_reproduction.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reproduction.py::test_reproduces_issue - AssertionError: assert 500 == 200
+============================== 1 failed in 0.10s ==============================

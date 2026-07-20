@@ -1,0 +1,38 @@
+[project]
+name = "github-issue-triage"
+version = "0.1.0"
+description = "Foundation for GitHub issue investigation"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.14",
+  "docker>=7.1",
+  "fastapi>=0.115",
+  "gitpython>=3.1",
+  "openai>=1.0",
+  "pydantic-settings>=2.6",
+  "sqlalchemy>=2.0",
+  "uvicorn>=0.32",
+]
+
+[project.scripts]
+triage = "triage.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["triage*"]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28",
+  "pytest>=8.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

@@ -1,0 +1,15 @@
+.venv/
+.pytest_cache/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.env
+triage.db
+artifacts/
+sandbox-workspaces/
+.DS_Store
+*.tsbuildinfo
+dashboard/node_modules/
+dashboard/dist/
+HANDOFF.md
+DECISIONS.md
