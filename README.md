@@ -1,62 +1,43 @@
-# GitHub Issue Triage
+# Issue Triage
 
-An evidence-first system for turning a GitHub issue into a bounded, Docker-isolated reproduction attempt. It fetches and normalizes an issue, extracts a typed reproduction specification with OpenAI, asks Codex to create the smallest useful test change, runs pytest, and persists the resulting evidence for review.
+Evidence-first, read-only triage for GitHub issues. Issue Triage turns a report
+into a bounded reproduction investigation, preserving the extraction, changed
+test, pytest output, terminal log, diff, deterministic validation, and final
+classification for maintainer review.
 
-The project is deliberately conservative: a model cannot declare an issue reproduced. A deterministic validator must find both a changed executable pytest test and an assertion failure attributable to that test before the outcome can be `REPRODUCED`.
+License: [MIT](LICENSE). Supported host platforms: macOS or Linux with Python
+3.12+, Node.js, and Docker for live investigations. The offline judge demo only
+requires Python and Node.js.
 
-## What a judge can evaluate
+## Flagship evidence: `psf/requests` #7564
 
-- A typed FastAPI and SQLite/Alembic backend with a read-only React dashboard.
-- GitHub REST ingestion separated from internal domain models.
-- Strictly validated GPT-5.6 Luna extraction, including retry-on-validation-failure and usage tracking.
-- A three-attempt Codex investigation loop with hypotheses, revision reasons, terminal logs, diffs, and pytest output.
-- Fresh clone + fresh non-privileged Docker container for every investigation, with cleanup on completion.
-- An evidence validator that prevents incidental command, collection, timeout, and unrelated-test failures from being reported as reproductions.
-- Evidence-only classification: the classifier does not receive the issue text, extraction, Codex narrative, or hypothesis.
-- APIs and dashboard views for the investigation list, summary, attempt timeline, validation result, classification, model usage, and every stored artifact.
+The committed demo opens directly on real persisted evidence for
+[psf/requests #7564](https://github.com/psf/requests/issues/7564), “Raise
+`FileNotFoundError` for missing TLS material.” Investigation
+`c5445cae-4f0d-485f-81e8-0c2c22b80060` is `COMPLETED`,
+`REPRODUCED`, and `assertsFailure=true`.
 
-## End-to-end flow
+Codex changed the existing certificate-path test to require `FileNotFoundError`,
+`errno.ENOENT`, and the filename. The focused pytest evidence fails on the
+current implementation, which raises `OSError`; the deterministic validator
+accepts that changed-test failure as a reproduction. The dashboard exposes the
+raw extraction JSON, terminal log, pytest output, and Git diff for inspection.
 
-```text
-GitHub issue
-  -> normalized typed issue
-  -> validated extraction specification (GPT-5.6 Luna)
-  -> up to 3 Docker-isolated Codex + pytest attempts
-  -> diff + pytest evidence validator
-  -> deterministic reproduction or evidence-only classification
-  -> SQLite artifacts and read-only dashboard
-```
+Earlier runs remain in the demo as honest negative evidence. They are not
+rewritten into successes.
 
-## Verified production-style run
+## Judge demo: no keys, no rebuild
 
-The configured database includes a rerun of [psf/requests #7564](https://github.com/psf/requests/issues/7564), which requests `FileNotFoundError` for missing TLS material.
-
-Investigation `1c3191cf-93b8-4482-942b-2055fd7cb0f9` demonstrates the complete Docker fallback path:
-
-- Codex’s normal nested Bubblewrap sandbox was unavailable, so the runner used its narrow no-inner-sandbox fallback inside the already isolated Docker container.
-- Codex changed `tests/test_requests.py` to require `FileNotFoundError`, `errno.ENOENT`, and the missing filename.
-- Attempts 1 and 3 captured the expected failure: `1 failed, 338 passed, 1 skipped, 1 xfailed`.
-- The validator currently persists this run as `assertsFailure=false` / `WONT_REPRO` because its pytest-summary parser missed that output. This is an explicit known limitation, not a model-reported success.
-
-The prior negative run and this rerun, including extraction JSON, terminal logs, diffs, and pytest output, are available in `artifacts/` and through the dashboard API.
-
-## Quick start
-
-Prerequisites: Python 3.12+, [uv](https://docs.astral.sh/uv/), Docker, Node.js/npm (for the dashboard), a Codex authentication file, and an OpenAI API key for extraction and classification. A GitHub token is optional but avoids unauthenticated API limits.
+The tracked [demo snapshot](demo/README.md) lets a reviewer inspect the full
+evidence trail without GitHub, OpenAI, Codex, Docker, or API credentials:
 
 ```bash
 uv sync
-alembic upgrade head
-
-# Optional configuration; defaults use psf/requests and sqlite:///triage.db.
-export OPENAI_API_KEY="..."
-export GITHUB_TOKEN="..."
-
-# Start the evidence API.
+uv run python scripts/seed_demo.py
 uv run uvicorn triage.api.main:app --reload
 ```
 
-In another terminal, start the dashboard:
+In another terminal:
 
 ```bash
 cd dashboard
@@ -64,19 +45,62 @@ npm install
 npm run dev
 ```
 
-Useful commands:
+Open <http://localhost:5173>. The dashboard is read-only: it only calls `GET`
+endpoints and has no issue-comment, label, close, or execution controls.
+
+## What Codex accelerated
+
+Codex accelerated the narrow, repetitive investigation work: locating the
+relevant TLS certificate branch, proposing a minimal regression-test change,
+running focused pytest, and recording each attempt’s terminal output and diff.
+It did not decide the verdict. A deterministic validator requires a changed,
+executable pytest test plus an attributable assertion failure before the system
+may emit `REPRODUCED`; otherwise the evidence is classified conservatively.
+
+## How it works
+
+```text
+GitHub issue (read only)
+  -> typed extraction (tracked OpenAI API call)
+  -> up to three Docker-isolated Codex + pytest attempts
+  -> diff + pytest evidence validator
+  -> deterministic REPRODUCED or evidence-only classification
+  -> SQLite + artifacts -> read-only FastAPI + React dashboard
+```
+
+- GitHub REST access is read-only.
+- Every live investigation uses a fresh clone and a short-lived,
+  non-privileged Docker container without the Docker socket.
+- Extraction and evidence classification are validated structured OpenAI calls;
+  their linked, tracked API cost/latency is shown only when recorded. Codex
+  billing is explicitly excluded because exact Codex cost data is unavailable.
+- `NEEDS_INFO` detail pages can render a copyable maintainer reply from the
+  persisted extraction; it is a preview and is never posted to GitHub.
+
+## Live investigation setup
+
+Live work needs Docker, a Codex authentication file, network access for the
+target repository, and an OpenAI API key for extraction/classification.
 
 ```bash
-uv run triage fetch 7564
-uv run triage extract 7564
+uv sync
+alembic upgrade head
+export OPENAI_API_KEY="..."
+export GITHUB_TOKEN="..." # optional, avoids unauthenticated GitHub limits
 uv run triage investigate 7564
 ```
 
-`triage investigate` is the only command that performs a real investigation. It needs a running Docker daemon, network access to clone/install dependencies, and Codex authentication at `~/.codex/auth.json` unless `CODEX_AUTH_PATH` is set.
+For sequential, resumable read-only queue processing:
 
-## Review the evidence
+```bash
+uv run triage batch-triage --repository psf/requests --count 5
+```
 
-With the API running, these endpoints are read-only:
+The batch command selects newest open non-pull-request issues, skips completed
+or failed issues for that repository unless `--force` is supplied, and persists
+the normal extraction → investigation → validation → classification evidence.
+
+## Read-only APIs
 
 ```text
 GET /health
@@ -87,41 +111,12 @@ GET /investigations/{id}/summary
 GET /investigations/{id}/artifacts
 ```
 
-For the recorded rerun, replace `{id}` with `1c3191cf-93b8-4482-942b-2055fd7cb0f9`.
-
-## Safety and trust boundaries
-
-- Each investigation uses a fresh repository clone and short-lived, non-privileged Docker container; containers do not receive the Docker socket.
-- Codex starts in workspace-write mode. Only the exact Bubblewrap user-namespace failure enables the Docker-contained fallback, and both invocations are recorded in the terminal artifact.
-- The dashboard has no mutation or execution controls; it only calls GET endpoints.
-- Validation requires a changed executable pytest test plus an attributable assertion failure. Classification cannot override an approved reproduction.
-- No GitHub issue bodies are persisted. The validated extraction and execution artifacts are persisted so a result can be audited.
-
-## Tests
+## Verification
 
 ```bash
-uv run pytest
-cd dashboard && npm test && npm run build
+python3 -m pytest -q
+cd dashboard && npm test -- --run && npm run build
 ```
 
-The suite covers GitHub mapping, extraction validation/retry, the investigation loop, Docker runner behavior, Codex fallback selection, validation, classification, persistence, and dashboard APIs/components. The real Docker/Codex fixture smoke test is opt-in because it uses the configured Codex account:
-
-```bash
-RUN_DOCKER_CODEX_SMOKE=1 uv run pytest
-```
-
-## Configuration
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `DEMO_REPOSITORY` | `psf/requests` | GitHub repository to investigate |
-| `DATABASE_URL` | `sqlite:///triage.db` | SQLAlchemy database URL |
-| `ARTIFACTS_DIR` | `artifacts` | Host directory for copied evidence |
-| `INVESTIGATION_RUNNER` | `docker` | `docker` (isolated) or `local` (development only) |
-| `SANDBOX_WORKSPACE_DIR` | `sandbox-workspaces` | Temporary clone parent directory |
-| `SANDBOX_IMAGE` | `github-issue-triage:latest` | Reused Docker image |
-| `CODEX_AUTH_PATH` | `~/.codex/auth.json` | Codex authentication mounted read-only in Docker |
-| `PYTEST_TIMEOUT_SECONDS` | `300` | Per-pytest timeout |
-| `INVESTIGATION_TIMEOUT_SECONDS` | `900` | Overall Docker investigation timeout |
-
-See [HANDOFF.md](HANDOFF.md) for the current project state and [DECISIONS.md](DECISIONS.md) for the rationale behind durable architectural choices.
+See [HANDOFF.md](HANDOFF.md) for current operational state and
+[DECISIONS.md](DECISIONS.md) for durable architectural decisions.
