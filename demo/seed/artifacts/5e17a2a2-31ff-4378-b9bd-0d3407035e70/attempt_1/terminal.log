@@ -1,0 +1,1585 @@
+$ codex exec --sandbox workspace-write --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "The documentation for requests.Session.request(verify=...) says it defaults to True, but omitting verify defers to the session'"'"'s verify value. Passing verify=True can therefore behave differently from leaving verify unspecified, including resetting the CA bundle path.",
+  "steps_to_reproduce": [
+    "Import certifi, requests, ssl, and os.",
+    "Create a requests session.",
+    "Set session.verify to ssl.get_default_verify_paths().capath.",
+    "Verify that session.verify is a directory with os.path.isdir(session.verify).",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\") and observe a successful response.",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\", verify=True) and observe an OSError stating that the path /inaccessible/path is not a suitable TLS CA certificate bundle."
+  ],
+  "expected_behavior": "Leaving verify unspecified should defer to the session'"'"'s verify value, including a configured CA bundle path or verify=False. The documentation should state that the method defaults to the Session value, which defaults to True.",
+  "actual_behavior": "Passing verify=True uses the /inaccessible/path certifi CA bundle path and raises OSError, while leaving verify unspecified uses the session'"'"'s configured CA path and returns <Response [200]>.",
+  "environment": {
+    "certifi_version": "2026.04.22",
+    "certifi_path": "/inaccessible/path",
+    "requests_version": "2.33.1",
+    "python_implementation": "CPython",
+    "python_version": "3.10.12",
+    "operating_system": "Linux",
+    "platform_release": "6.8.0-110-generic",
+    "chardet_version": "4.0.0",
+    "charset_normalizer_version": "3.4.4",
+    "idna_version": "3.3",
+    "urllib3_version": "2.6.3",
+    "system_ssl_version": "30000020",
+    "using_charset_normalizer": "false",
+    "using_pyopenssl": "false"
+  },
+  "affected_area": "requests.Session.request() verify parameter documentation and behavior",
+  "repro_code": "import certifi,requests,ssl,os\n\ncertifi.__version__\ncertifi.where()\nrequests.__version__\nsession = requests.session()\nsession.verify = ssl.get_default_verify_paths().capath\nos.path.isdir(session.verify)\nsession.request(url=\"https://example.com\", method=\"HEAD\")\nsession.request(url=\"https://example.com\", method=\"HEAD\", verify=True)",
+  "missing_info": [],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019f80a5-9a7e-70d1-b30d-38315bbec513
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "The documentation for requests.Session.request(verify=...) says it defaults to True, but omitting verify defers to the session's verify value. Passing verify=True can therefore behave differently from leaving verify unspecified, including resetting the CA bundle path.",
+  "steps_to_reproduce": [
+    "Import certifi, requests, ssl, and os.",
+    "Create a requests session.",
+    "Set session.verify to ssl.get_default_verify_paths().capath.",
+    "Verify that session.verify is a directory with os.path.isdir(session.verify).",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\") and observe a successful response.",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\", verify=True) and observe an OSError stating that the path /inaccessible/path is not a suitable TLS CA certificate bundle."
+  ],
+  "expected_behavior": "Leaving verify unspecified should defer to the session's verify value, including a configured CA bundle path or verify=False. The documentation should state that the method defaults to the Session value, which defaults to True.",
+  "actual_behavior": "Passing verify=True uses the /inaccessible/path certifi CA bundle path and raises OSError, while leaving verify unspecified uses the session's configured CA path and returns <Response [200]>.",
+  "environment": {
+    "certifi_version": "2026.04.22",
+    "certifi_path": "/inaccessible/path",
+    "requests_version": "2.33.1",
+    "python_implementation": "CPython",
+    "python_version": "3.10.12",
+    "operating_system": "Linux",
+    "platform_release": "6.8.0-110-generic",
+    "chardet_version": "4.0.0",
+    "charset_normalizer_version": "3.4.4",
+    "idna_version": "3.3",
+    "urllib3_version": "2.6.3",
+    "system_ssl_version": "30000020",
+    "using_charset_normalizer": "false",
+    "using_pyopenssl": "false"
+  },
+  "affected_area": "requests.Session.request() verify parameter documentation and behavior",
+  "repro_code": "import certifi,requests,ssl,os\n\ncertifi.__version__\ncertifi.where()\nrequests.__version__\nsession = requests.session()\nsession.verify = ssl.get_default_verify_paths().capath\nos.path.isdir(session.verify)\nsession.request(url=\"https://example.com\", method=\"HEAD\")\nsession.request(url=\"https://example.com\", method=\"HEAD\", verify=True)",
+  "missing_info": [],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+I’ll verify the parameter handling and its existing test coverage, with the working hypothesis that the implementation already defers omitted `verify` to `Session.verify` but the `Session.request` documentation incorrectly advertises a literal `True` default.
+exec
+/bin/bash -lc "rg -n -C 5 \"def request\\(|verify.*Defaults|verify.*default\" requests tests docs || true
+rg --files | rg '("'^|/)(test.*|.*session.*|.*api.*)'"\\.py"'$'"' | head -80" in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+The workspace command runner is currently blocked before execution by its sandbox (`bwrap` cannot create a user namespace). I’ll make one minimal read-only retry to confirm this is environmental rather than repository-specific.
+exec
+/bin/bash -lc pwd in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+Blocked by the execution environment: even `pwd` fails because `bwrap` cannot create a user namespace, so I couldn’t inspect files or run pytest.
+
+Concrete hypothesis: `Session.request()` already preserves `Session.verify` when `verify` is omitted; the defect is the parameter documentation stating `True` rather than “defaults to the session’s `verify` value (which initially defaults to `True`)”. No changes were made and no failure evidence could be collected.
+tokens used
+6,810
+Blocked by the execution environment: even `pwd` fails because `bwrap` cannot create a user namespace, so I couldn’t inspect files or run pytest.
+
+Concrete hypothesis: `Session.request()` already preserves `Session.verify` when `verify` is omitted; the defect is the parameter documentation stating `True` rather than “defaults to the session’s `verify` value (which initially defaults to `True`)”. No changes were made and no failure evidence could be collected.
+[exit 0; elapsed 17827ms; preferred]
+$ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "The documentation for requests.Session.request(verify=...) says it defaults to True, but omitting verify defers to the session'"'"'s verify value. Passing verify=True can therefore behave differently from leaving verify unspecified, including resetting the CA bundle path.",
+  "steps_to_reproduce": [
+    "Import certifi, requests, ssl, and os.",
+    "Create a requests session.",
+    "Set session.verify to ssl.get_default_verify_paths().capath.",
+    "Verify that session.verify is a directory with os.path.isdir(session.verify).",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\") and observe a successful response.",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\", verify=True) and observe an OSError stating that the path /inaccessible/path is not a suitable TLS CA certificate bundle."
+  ],
+  "expected_behavior": "Leaving verify unspecified should defer to the session'"'"'s verify value, including a configured CA bundle path or verify=False. The documentation should state that the method defaults to the Session value, which defaults to True.",
+  "actual_behavior": "Passing verify=True uses the /inaccessible/path certifi CA bundle path and raises OSError, while leaving verify unspecified uses the session'"'"'s configured CA path and returns <Response [200]>.",
+  "environment": {
+    "certifi_version": "2026.04.22",
+    "certifi_path": "/inaccessible/path",
+    "requests_version": "2.33.1",
+    "python_implementation": "CPython",
+    "python_version": "3.10.12",
+    "operating_system": "Linux",
+    "platform_release": "6.8.0-110-generic",
+    "chardet_version": "4.0.0",
+    "charset_normalizer_version": "3.4.4",
+    "idna_version": "3.3",
+    "urllib3_version": "2.6.3",
+    "system_ssl_version": "30000020",
+    "using_charset_normalizer": "false",
+    "using_pyopenssl": "false"
+  },
+  "affected_area": "requests.Session.request() verify parameter documentation and behavior",
+  "repro_code": "import certifi,requests,ssl,os\n\ncertifi.__version__\ncertifi.where()\nrequests.__version__\nsession = requests.session()\nsession.verify = ssl.get_default_verify_paths().capath\nos.path.isdir(session.verify)\nsession.request(url=\"https://example.com\", method=\"HEAD\")\nsession.request(url=\"https://example.com\", method=\"HEAD\", verify=True)",
+  "missing_info": [],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: none
+session id: 019f80a5-df00-7410-8392-b20b41f92b1d
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "The documentation for requests.Session.request(verify=...) says it defaults to True, but omitting verify defers to the session's verify value. Passing verify=True can therefore behave differently from leaving verify unspecified, including resetting the CA bundle path.",
+  "steps_to_reproduce": [
+    "Import certifi, requests, ssl, and os.",
+    "Create a requests session.",
+    "Set session.verify to ssl.get_default_verify_paths().capath.",
+    "Verify that session.verify is a directory with os.path.isdir(session.verify).",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\") and observe a successful response.",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\", verify=True) and observe an OSError stating that the path /inaccessible/path is not a suitable TLS CA certificate bundle."
+  ],
+  "expected_behavior": "Leaving verify unspecified should defer to the session's verify value, including a configured CA bundle path or verify=False. The documentation should state that the method defaults to the Session value, which defaults to True.",
+  "actual_behavior": "Passing verify=True uses the /inaccessible/path certifi CA bundle path and raises OSError, while leaving verify unspecified uses the session's configured CA path and returns <Response [200]>.",
+  "environment": {
+    "certifi_version": "2026.04.22",
+    "certifi_path": "/inaccessible/path",
+    "requests_version": "2.33.1",
+    "python_implementation": "CPython",
+    "python_version": "3.10.12",
+    "operating_system": "Linux",
+    "platform_release": "6.8.0-110-generic",
+    "chardet_version": "4.0.0",
+    "charset_normalizer_version": "3.4.4",
+    "idna_version": "3.3",
+    "urllib3_version": "2.6.3",
+    "system_ssl_version": "30000020",
+    "using_charset_normalizer": "false",
+    "using_pyopenssl": "false"
+  },
+  "affected_area": "requests.Session.request() verify parameter documentation and behavior",
+  "repro_code": "import certifi,requests,ssl,os\n\ncertifi.__version__\ncertifi.where()\nrequests.__version__\nsession = requests.session()\nsession.verify = ssl.get_default_verify_paths().capath\nos.path.isdir(session.verify)\nsession.request(url=\"https://example.com\", method=\"HEAD\")\nsession.request(url=\"https://example.com\", method=\"HEAD\", verify=True)",
+  "missing_info": [],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+codex
+I’ll first inspect the `Session.request` implementation and its existing tests, then add the smallest regression test needed to expose whether omitting `verify` differs from explicitly passing `True`.
+exec
+/bin/bash -lc "pwd && rg -n \"def request\\(|verify.*defaults|verify=.*True|Session\\.request\" requests tests docs -g '*.py' -g '*.rst' -g '*.md'" in /workspace/repo
+ exited 2 in 0ms:
+/workspace/repo
+rg: requests: No such file or directory (os error 2)
+tests/test_requests.py:1022:                url=httpbin("get"), proxies={}, stream=False, verify=True, cert=None
+
+exec
+/bin/bash -lc "rg --files | sed -n '1,160p'" in /workspace/repo
+ succeeded in 0ms:
+MANIFEST.in
+setup.py
+README.md
+NOTICE
+tox.ini
+requirements-dev.txt
+AUTHORS.rst
+HISTORY.md
+Makefile
+LICENSE
+pyproject.toml
+tests/test_lowlevel.py
+tests/test_help.py
+tests/test_adapters.py
+tests/utils.py
+tests/test_requests.py
+tests/compat.py
+tests/test_testserver.py
+tests/__init__.py
+tests/test_hooks.py
+tests/conftest.py
+tests/test_utils.py
+tests/test_structures.py
+tests/test_packages.py
+ext/LICENSE
+ext/psf.png
+ext/requests-logo.ai
+ext/requests-logo.png
+ext/requests-logo.svg
+ext/kr.png
+ext/requests-logo-compressed.png
+docs/conf.py
+docs/Makefile
+docs/make.bat
+docs/api.rst
+src/requests/adapters.py
+src/requests/help.py
+src/requests/structures.py
+src/requests/exceptions.py
+src/requests/py.typed
+src/requests/utils.py
+src/requests/_internal_utils.py
+src/requests/api.py
+src/requests/__version__.py
+src/requests/packages.py
+src/requests/status_codes.py
+src/requests/__init__.py
+src/requests/certs.py
+src/requests/models.py
+src/requests/compat.py
+src/requests/hooks.py
+src/requests/_types.py
+src/requests/sessions.py
+src/requests/auth.py
+src/requests/cookies.py
+docs/index.rst
+docs/requirements.txt
+tests/testserver/__init__.py
+tests/testserver/server.py
+docs/_templates/sidebar.html
+docs/user/advanced.rst
+docs/user/quickstart.rst
+docs/user/authentication.rst
+docs/user/install.rst
+docs/community/vulnerabilities.rst
+docs/community/out-there.rst
+docs/community/release-process.rst
+docs/community/support.rst
+docs/community/faq.rst
+docs/community/recommended.rst
+docs/community/updates.rst
+tests/certs/README.md
+docs/_static/requests-sidebar.png
+docs/dev/authors.rst
+docs/_static/custom.css
+docs/dev/contributing.rst
+docs/_themes/LICENSE
+docs/_themes/flask_theme_support.py
+tests/certs/expired/README.md
+tests/certs/expired/server/cert.cnf
+tests/certs/mtls/client/client.key
+tests/certs/expired/server/server.csr
+tests/certs/expired/server/server.pem
+tests/certs/expired/server/Makefile
+tests/certs/expired/server/server.key
+tests/certs/mtls/client/cert.cnf
+tests/certs/mtls/client/client.csr
+tests/certs/mtls/client/client.pem
+tests/certs/mtls/client/Makefile
+tests/certs/valid/server/cert.cnf
+tests/certs/mtls/README.md
+tests/certs/mtls/Makefile
+tests/certs/expired/Makefile
+tests/certs/valid/server/Makefile
+tests/certs/valid/server/server.key
+tests/certs/valid/server/server.csr
+tests/certs/valid/server/server.pem
+tests/certs/expired/ca/ca.srl
+tests/certs/expired/ca/ca.crt
+tests/certs/expired/ca/Makefile
+tests/certs/expired/ca/ca-private.key
+tests/certs/expired/ca/ca.cnf
+
+exec
+/bin/bash -lc "rg -n -C 8 \"def request\\(\" src/requests/sessions.py && rg -n -C 5 \"verify\" tests/test_requests.py tests/test_adapters.py docs/api.rst" in /workspace/repo
+ succeeded in 0ms:
+549-            ),
+550-            params=merge_setting(request.params, self.params),
+551-            auth=merge_setting(auth, self.auth),
+552-            cookies=merged_cookies,
+553-            hooks=merge_hooks(request.hooks, self.hooks),
+554-        )
+555-        return p
+556-
+557:    def request(
+558-        self,
+559-        method: str,
+560-        url: _t.UriType,
+561-        params: _t.ParamsType = None,
+562-        data: _t.DataType = None,
+563-        headers: _t.HeadersType = None,
+564-        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,
+565-        files: _t.FilesType = None,
+tests/test_requests.py-962-            headers={"Content-Type": "application/octet-stream"},
+tests/test_requests.py-963-            data="\xff",
+tests/test_requests.py-964-        )  # compat.str is unicode.
+tests/test_requests.py-965-
+tests/test_requests.py-966-    def test_pyopenssl_redirect(self, httpbin_secure, httpbin_ca_bundle):
+tests/test_requests.py:967:        requests.get(httpbin_secure("status", "301"), verify=httpbin_ca_bundle)
+tests/test_requests.py-968-
+tests/test_requests.py-969-    def test_invalid_ca_certificate_path(self, httpbin_secure):
+tests/test_requests.py-970-        INVALID_PATH = "/garbage"
+tests/test_requests.py-971-        with pytest.raises(IOError) as e:
+tests/test_requests.py:972:            requests.get(httpbin_secure(), verify=INVALID_PATH)
+tests/test_requests.py-973-        assert (
+tests/test_requests.py-974-            str(e.value)
+tests/test_requests.py-975-            == f"Could not find a suitable TLS CA certificate bundle, invalid path: {INVALID_PATH}"
+tests/test_requests.py-976-        )
+tests/test_requests.py-977-
+--
+tests/test_requests.py-1017-    )
+tests/test_requests.py-1018-    def test_env_cert_bundles(self, httpbin, env, expected):
+tests/test_requests.py-1019-        s = requests.Session()
+tests/test_requests.py-1020-        with mock.patch("os.environ", env):
+tests/test_requests.py-1021-            settings = s.merge_environment_settings(
+tests/test_requests.py:1022:                url=httpbin("get"), proxies={}, stream=False, verify=True, cert=None
+tests/test_requests.py-1023-            )
+tests/test_requests.py:1024:        assert settings["verify"] == expected
+tests/test_requests.py-1025-
+tests/test_requests.py-1026-    def test_http_with_certificate(self, httpbin):
+tests/test_requests.py-1027-        r = requests.get(httpbin(), cert=".")
+tests/test_requests.py-1028-        assert r.status_code == 200
+tests/test_requests.py-1029-
+--
+tests/test_requests.py-1043-                "SubjectAltNameWarning",
+tests/test_requests.py-1044-            )
+tests/test_requests.py-1045-
+tests/test_requests.py-1046-        with pytest.warns() as warning_records:
+tests/test_requests.py-1047-            warnings.simplefilter("always")
+tests/test_requests.py:1048:            requests.get(f"https://localhost:{port}/", verify=ca_bundle)
+tests/test_requests.py-1049-
+tests/test_requests.py-1050-        warning_records = [
+tests/test_requests.py-1051-            item
+tests/test_requests.py-1052-            for item in warning_records
+tests/test_requests.py-1053-            if item.category.__name__ != "ResourceWarning"
+--
+tests/test_requests.py-1544-            next(r.iter_content(1024))
+tests/test_requests.py-1545-
+tests/test_requests.py-1546-    def test_request_and_response_are_pickleable(self, httpbin):
+tests/test_requests.py-1547-        r = requests.get(httpbin("get"))
+tests/test_requests.py-1548-
+tests/test_requests.py:1549:        # verify we can pickle the original request
+tests/test_requests.py-1550-        assert pickle.loads(pickle.dumps(r.request))
+tests/test_requests.py-1551-
+tests/test_requests.py:1552:        # verify we can pickle the response and that we have access to
+tests/test_requests.py-1553-        # the original request.
+tests/test_requests.py-1554-        pr = pickle.loads(pickle.dumps(r))
+tests/test_requests.py-1555-        assert r.request.url == pr.request.url
+tests/test_requests.py-1556-        assert r.request.headers == pr.request.headers
+tests/test_requests.py-1557-
+--
+tests/test_requests.py-1923-    ):
+tests/test_requests.py-1924-        r = requests.get(
+tests/test_requests.py-1925-            httpbin_secure("redirect-to"),
+tests/test_requests.py-1926-            params={"url": httpbin("get")},
+tests/test_requests.py-1927-            auth=("user", "pass"),
+tests/test_requests.py:1928:            verify=httpbin_ca_bundle,
+tests/test_requests.py-1929-        )
+tests/test_requests.py-1930-        assert r.history[0].request.headers["Authorization"]
+tests/test_requests.py-1931-        assert "Authorization" not in r.request.headers
+tests/test_requests.py-1932-
+tests/test_requests.py-1933-    def test_auth_is_retained_for_redirect_on_host(self, httpbin):
+--
+tests/test_requests.py-2557-        """Check that you can set None as a valid timeout value.
+tests/test_requests.py-2558-
+tests/test_requests.py-2559-        To actually test this behavior, we'd want to check that setting the
+tests/test_requests.py-2560-        timeout to None actually lets the request block past the system default
+tests/test_requests.py-2561-        timeout. However, this would make the test suite unbearably slow.
+tests/test_requests.py:2562:        Instead we verify that setting the timeout to None does not prevent the
+tests/test_requests.py-2563-        request from succeeding.
+tests/test_requests.py-2564-        """
+tests/test_requests.py-2565-        r = requests.get(httpbin("get"), timeout=timeout)
+tests/test_requests.py-2566-        assert r.status_code == 200
+tests/test_requests.py-2567-
+--
+tests/test_requests.py-2653-    assert r0.request.method == "POST"
+tests/test_requests.py-2654-    assert session.calls[-1] == SendCall((r0.request,), {})
+tests/test_requests.py-2655-    redirect_generator = session.resolve_redirects(r0, prep)
+tests/test_requests.py-2656-    default_keyword_args = {
+tests/test_requests.py-2657-        "stream": False,
+tests/test_requests.py:2658:        "verify": True,
+tests/test_requests.py-2659-        "cert": None,
+tests/test_requests.py-2660-        "timeout": None,
+tests/test_requests.py-2661-        "allow_redirects": False,
+tests/test_requests.py-2662-        "proxies": {},
+tests/test_requests.py-2663-    }
+--
+tests/test_requests.py-2923-        assert r3 == 425
+tests/test_requests.py-2924-        assert r4 == 425
+tests/test_requests.py-2925-        assert r5 == 425
+tests/test_requests.py-2926-        assert r6 == 425
+tests/test_requests.py-2927-
+tests/test_requests.py:2928:    def test_different_connection_pool_for_tls_settings_verify_True(self):
+tests/test_requests.py-2929-        def response_handler(sock):
+tests/test_requests.py-2930-            consume_socket_content(sock, timeout=0.5)
+tests/test_requests.py-2931-            sock.send(
+tests/test_requests.py-2932-                b"HTTP/1.1 200 OK\r\n"
+tests/test_requests.py-2933-                b"Content-Length: 18\r\n\r\n"
+--
+tests/test_requests.py-2944-            keyfile="tests/certs/expired/server/server.key",
+tests/test_requests.py-2945-        )
+tests/test_requests.py-2946-
+tests/test_requests.py-2947-        with server as (host, port):
+tests/test_requests.py-2948-            url = f"https://{host}:{port}"
+tests/test_requests.py:2949:            r1 = s.get(url, verify=False)
+tests/test_requests.py-2950-            assert r1.status_code == 200
+tests/test_requests.py-2951-
+tests/test_requests.py:2952:            # Cannot verify self-signed certificate
+tests/test_requests.py-2953-            with pytest.raises(requests.exceptions.SSLError):
+tests/test_requests.py-2954-                s.get(url)
+tests/test_requests.py-2955-
+tests/test_requests.py-2956-            close_server.set()
+tests/test_requests.py-2957-        assert 2 == len(s.adapters["https://"].poolmanager.pools)
+tests/test_requests.py-2958-
+tests/test_requests.py:2959:    def test_different_connection_pool_for_tls_settings_verify_bundle_expired_cert(
+tests/test_requests.py-2960-        self,
+tests/test_requests.py-2961-    ):
+tests/test_requests.py-2962-        def response_handler(sock):
+tests/test_requests.py-2963-            consume_socket_content(sock, timeout=0.5)
+tests/test_requests.py-2964-            sock.send(
+--
+tests/test_requests.py-2977-            keyfile="tests/certs/expired/server/server.key",
+tests/test_requests.py-2978-        )
+tests/test_requests.py-2979-
+tests/test_requests.py-2980-        with server as (host, port):
+tests/test_requests.py-2981-            url = f"https://{host}:{port}"
+tests/test_requests.py:2982:            r1 = s.get(url, verify=False)
+tests/test_requests.py-2983-            assert r1.status_code == 200
+tests/test_requests.py-2984-
+tests/test_requests.py-2985-            # Has right trust bundle, but certificate expired
+tests/test_requests.py-2986-            with pytest.raises(requests.exceptions.SSLError):
+tests/test_requests.py:2987:                s.get(url, verify="tests/certs/expired/ca/ca.crt")
+tests/test_requests.py-2988-
+tests/test_requests.py-2989-            close_server.set()
+tests/test_requests.py-2990-        assert 2 == len(s.adapters["https://"].poolmanager.pools)
+tests/test_requests.py-2991-
+tests/test_requests.py:2992:    def test_different_connection_pool_for_tls_settings_verify_bundle_unexpired_cert(
+tests/test_requests.py-2993-        self,
+tests/test_requests.py-2994-    ):
+tests/test_requests.py-2995-        def response_handler(sock):
+tests/test_requests.py-2996-            consume_socket_content(sock, timeout=0.5)
+tests/test_requests.py-2997-            sock.send(
+--
+tests/test_requests.py-3010-            keyfile="tests/certs/valid/server/server.key",
+tests/test_requests.py-3011-        )
+tests/test_requests.py-3012-
+tests/test_requests.py-3013-        with server as (host, port):
+tests/test_requests.py-3014-            url = f"https://{host}:{port}"
+tests/test_requests.py:3015:            r1 = s.get(url, verify=False)
+tests/test_requests.py-3016-            assert r1.status_code == 200
+tests/test_requests.py-3017-
+tests/test_requests.py:3018:            r2 = s.get(url, verify="tests/certs/valid/ca/ca.crt")
+tests/test_requests.py-3019-            assert r2.status_code == 200
+tests/test_requests.py-3020-
+tests/test_requests.py-3021-            close_server.set()
+tests/test_requests.py-3022-        assert 2 == len(s.adapters["https://"].poolmanager.pools)
+tests/test_requests.py-3023-
+--
+tests/test_requests.py-3050-            "tests/certs/mtls/client/client.pem",
+tests/test_requests.py-3051-            "tests/certs/mtls/client/client.key",
+tests/test_requests.py-3052-        )
+tests/test_requests.py-3053-        with server as (host, port):
+tests/test_requests.py-3054-            url = f"https://{host}:{port}"
+tests/test_requests.py:3055:            r1 = s.get(url, verify=False, cert=cert)
+tests/test_requests.py-3056-            assert r1.status_code == 200
+tests/test_requests.py-3057-            with pytest.raises(requests.exceptions.SSLError):
+tests/test_requests.py-3058-                s.get(url, cert=cert)
+tests/test_requests.py-3059-            close_server.set()
+tests/test_requests.py-3060-
+
+exec
+/bin/bash -lc "sed -n '557,670p' src/requests/sessions.py && sed -n '1,220p' docs/api.rst && sed -n '900,1040p' tests/test_requests.py" in /workspace/repo
+ succeeded in 0ms:
+    def request(
+        self,
+        method: str,
+        url: _t.UriType,
+        params: _t.ParamsType = None,
+        data: _t.DataType = None,
+        headers: _t.HeadersType = None,
+        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,
+        files: _t.FilesType = None,
+        auth: _t.AuthType = None,
+        timeout: _t.TimeoutType = None,
+        allow_redirects: bool = True,
+        proxies: dict[str, str] | None = None,
+        hooks: _t.HooksInputType | None = None,
+        stream: bool | None = None,
+        verify: _t.VerifyType | None = None,
+        cert: _t.CertType = None,
+        json: _t.JsonType = None,
+    ) -> Response:
+        """Constructs a :class:`Request <Request>`, prepares it and sends it.
+        Returns :class:`Response <Response>` object.
+
+        :param method: method for the new :class:`Request` object.
+        :param url: URL for the new :class:`Request` object.
+        :param params: (optional) Dictionary or bytes to be sent in the query
+            string for the :class:`Request`.
+        :param data: (optional) Dictionary, list of tuples, bytes, or file-like
+            object to send in the body of the :class:`Request`.
+        :param json: (optional) json to send in the body of the
+            :class:`Request`.
+        :param headers: (optional) Dictionary of HTTP Headers to send with the
+            :class:`Request`.
+        :param cookies: (optional) Dict or CookieJar object to send with the
+            :class:`Request`.
+        :param files: (optional) Dictionary of ``'filename': file-like-objects``
+            for multipart encoding upload.
+        :param auth: (optional) Auth tuple or callable to enable
+            Basic/Digest/Custom HTTP Auth.
+        :param timeout: (optional) How many seconds to wait for the server to send
+            data before giving up, as a float, or a :ref:`(connect timeout,
+            read timeout) <timeouts>` tuple.
+        :type timeout: float or tuple
+        :param allow_redirects: (optional) Set to True by default.
+        :type allow_redirects: bool
+        :param proxies: (optional) Dictionary mapping protocol or protocol and
+            hostname to the URL of the proxy.
+        :param hooks: (optional) Dictionary mapping hook name to one event or
+            list of events, event must be callable.
+        :param stream: (optional) whether to immediately download the response
+            content. Defaults to ``False``.
+        :param verify: (optional) Either a boolean, in which case it controls whether we verify
+            the server's TLS certificate, or a string, in which case it must be a path
+            to a CA bundle to use. Defaults to ``True``. When set to
+            ``False``, requests will accept any TLS certificate presented by
+            the server, and will ignore hostname mismatches and/or expired
+            certificates, which will make your application vulnerable to
+            man-in-the-middle (MitM) attacks. Setting verify to ``False``
+            may be useful during local development or testing.
+        :param cert: (optional) if String, path to ssl client cert file (.pem).
+            If Tuple, ('cert', 'key') pair.
+        :rtype: requests.Response
+        """
+        if isinstance(url, bytes):
+            url = url.decode("utf-8")
+
+        # Create the Request.
+        req = Request(
+            method=method.upper(),
+            url=url,
+            headers=headers,
+            files=files,
+            data=data or {},
+            json=json,
+            params=params or {},
+            auth=auth,
+            cookies=cookies,
+            hooks=hooks,
+        )
+        prep = self.prepare_request(req)
+
+        assert _is_prepared(prep)
+
+        proxies = proxies or {}
+
+        settings = self.merge_environment_settings(
+            prep.url, proxies, stream, verify, cert
+        )
+
+        # Send the request.
+        send_kwargs = {
+            "timeout": timeout,
+            "allow_redirects": allow_redirects,
+        }
+        send_kwargs.update(settings)
+        resp = self.send(prep, **send_kwargs)
+
+        return resp
+
+    def get(
+        self,
+        url: _t.UriType,
+        params: _t.ParamsType = None,
+        **kwargs: Unpack[_t.GetKwargs],
+    ) -> Response:
+        r"""Sends a GET request. Returns :class:`Response` object.
+
+        :param url: URL for the new :class:`Request` object.
+        :param params: (optional) Dictionary, list of tuples or bytes to send
+            in the query string for the :class:`Request`.
+        :param \*\*kwargs: Optional arguments that ``request`` takes.
+        :rtype: requests.Response
+        """
+
+        kwargs.setdefault("allow_redirects", True)
+.. _api:
+
+Developer Interface
+===================
+
+.. module:: requests
+
+This part of the documentation covers all the interfaces of Requests. For
+parts where Requests depends on external libraries, we document the most
+important right here and provide links to the canonical documentation.
+
+
+Main Interface
+--------------
+
+All of Requests' functionality can be accessed by these 7 methods.
+They all return an instance of the :class:`Response <Response>` object.
+
+.. autofunction:: request
+
+.. autofunction:: head
+.. autofunction:: get
+.. autofunction:: post
+.. autofunction:: put
+.. autofunction:: patch
+.. autofunction:: delete
+
+Exceptions
+----------
+
+.. autoexception:: requests.RequestException
+.. autoexception:: requests.ConnectionError
+.. autoexception:: requests.HTTPError
+.. autoexception:: requests.TooManyRedirects
+.. autoexception:: requests.ConnectTimeout
+.. autoexception:: requests.ReadTimeout
+.. autoexception:: requests.Timeout
+.. autoexception:: requests.JSONDecodeError
+
+
+Request Sessions
+----------------
+
+.. _sessionapi:
+
+.. autoclass:: Session
+   :inherited-members:
+
+
+Lower-Level Classes
+-------------------
+
+.. autoclass:: requests.Request
+   :inherited-members:
+
+.. autoclass:: Response
+   :inherited-members:
+   :exclude-members: is_permanent_redirect
+
+
+Lower-Lower-Level Classes
+-------------------------
+
+.. autoclass:: requests.PreparedRequest
+   :inherited-members:
+
+.. autoclass:: requests.adapters.BaseAdapter
+   :inherited-members:
+
+.. autoclass:: requests.adapters.HTTPAdapter
+   :inherited-members:
+
+Authentication
+--------------
+
+.. autoclass:: requests.auth.AuthBase
+.. autoclass:: requests.auth.HTTPBasicAuth
+.. autoclass:: requests.auth.HTTPProxyAuth
+.. autoclass:: requests.auth.HTTPDigestAuth
+
+
+
+Encodings
+---------
+
+.. autofunction:: requests.utils.get_encodings_from_content
+.. autofunction:: requests.utils.get_encoding_from_headers
+.. autofunction:: requests.utils.get_unicode_from_response
+
+
+.. _api-cookies:
+
+Cookies
+-------
+
+.. autofunction:: requests.utils.dict_from_cookiejar
+.. autofunction:: requests.utils.add_dict_to_cookiejar
+.. autofunction:: requests.cookies.cookiejar_from_dict
+
+.. autoclass:: requests.cookies.RequestsCookieJar
+   :inherited-members:
+
+.. autoclass:: requests.cookies.CookieConflictError
+   :inherited-members:
+
+
+
+Status Code Lookup
+------------------
+
+.. autoclass:: requests.codes
+
+.. automodule:: requests.status_codes
+
+
+Migrating to 1.x
+----------------
+
+This section details the main differences between 0.x and 1.x and is meant
+to ease the pain of upgrading.
+
+
+API Changes
+~~~~~~~~~~~
+
+* ``Response.json`` is now a callable and not a property of a response.
+
+  ::
+
+      import requests
+      r = requests.get('https://api.github.com/events')
+      r.json()   # This *call* raises an exception if JSON decoding fails
+
+* The ``Session`` API has changed. Sessions objects no longer take parameters.
+  ``Session`` is also now capitalized, but it can still be
+  instantiated with a lowercase ``session`` for backwards compatibility.
+
+  ::
+
+      s = requests.Session()    # formerly, session took parameters
+      s.auth = auth
+      s.headers.update(headers)
+      r = s.get('https://httpbin.org/headers')
+
+* All request hooks have been removed except 'response'.
+
+* Authentication helpers have been broken out into separate modules. See
+  requests-oauthlib_ and requests-kerberos_.
+
+.. _requests-oauthlib: https://github.com/requests/requests-oauthlib
+.. _requests-kerberos: https://github.com/requests/requests-kerberos
+
+* The parameter for streaming requests was changed from ``prefetch`` to
+  ``stream`` and the logic was inverted. In addition, ``stream`` is now
+  required for raw response reading.
+
+  ::
+
+      # in 0.x, passing prefetch=False would accomplish the same thing
+      r = requests.get('https://api.github.com/events', stream=True)
+      for chunk in r.iter_content(8192):
+          ...
+
+* The ``config`` parameter to the requests method has been removed. Some of
+  these options are now configured on a ``Session`` such as keep-alive and
+  maximum number of redirects. The verbosity option should be handled by
+  configuring logging.
+
+  ::
+
+      import requests
+      import logging
+
+      # Enabling debugging at http.client level (requests->urllib3->http.client)
+      # you will see the REQUEST, including HEADERS and DATA, and RESPONSE with HEADERS but without DATA.
+      # the only thing missing will be the response.body which is not logged.
+      try: # for Python 3
+          from http.client import HTTPConnection
+      except ImportError:
+          from httplib import HTTPConnection
+      HTTPConnection.debuglevel = 1
+
+      logging.basicConfig() # you need to initialize logging, otherwise you will not see anything from requests
+      logging.getLogger().setLevel(logging.DEBUG)
+      requests_log = logging.getLogger("urllib3")
+      requests_log.setLevel(logging.DEBUG)
+      requests_log.propagate = True
+
+      requests.get('https://httpbin.org/headers')
+
+
+
+Licensing
+~~~~~~~~~
+
+One key difference that has nothing to do with the API is a change in the
+license from the ISC_ license to the `Apache 2.0`_ license. The Apache 2.0
+license ensures that contributions to Requests are also covered by the Apache
+2.0 license.
+
+.. _ISC: https://opensource.org/licenses/ISC
+.. _Apache 2.0: https://opensource.org/licenses/Apache-2.0
+
+
+Migrating to 2.x
+----------------
+
+
+Compared with the 1.0 release, there were relatively few backwards
+incompatible changes, but there are still a few issues to be aware of with
+this major release.
+
+For more details on the changes in this release including new APIs, links
+to the relevant GitHub issues and some of the bug fixes, read Cory's blog_
+on the subject.
+
+.. _blog: https://lukasa.co.uk/2013/09/Requests_20/
+
+
+API Changes
+        class CustomMapping(MutableMapping):
+            def __init__(self, *args, **kwargs):
+                self.data = dict(*args, **kwargs)
+
+            def __delitem__(self, key):
+                del self.data[key]
+
+            def __getitem__(self, key):
+                return self.data[key]
+
+            def __setitem__(self, key, value):
+                self.data[key] = value
+
+            def __iter__(self):
+                return iter(self.data)
+
+            def __len__(self):
+                return len(self.data)
+
+        data = CustomMapping({"some": "data"})
+        url = httpbin("post")
+        found_json = requests.post(url, data=data).json().get("form")
+        assert found_json == {"some": "data"}
+
+    def test_conflicting_post_params(self, httpbin):
+        url = httpbin("post")
+        with open("requirements-dev.txt") as f:
+            with pytest.raises(ValueError):
+                requests.post(url, data='[{"some": "data"}]', files={"some": f})
+
+    def test_request_ok_set(self, httpbin):
+        r = requests.get(httpbin("status", "404"))
+        assert not r.ok
+
+    def test_status_raising(self, httpbin):
+        r = requests.get(httpbin("status", "404"))
+        with pytest.raises(requests.exceptions.HTTPError):
+            r.raise_for_status()
+
+        r = requests.get(httpbin("status", "500"))
+        assert not r.ok
+
+    def test_decompress_gzip(self, httpbin):
+        r = requests.get(httpbin("gzip"))
+        r.content.decode("ascii")
+
+    @pytest.mark.parametrize(
+        "url, params",
+        (
+            ("/get", {"foo": "føø"}),
+            ("/get", {"føø": "føø"}),
+            ("/get", {"føø": "føø"}),
+            ("/get", {"foo": "foo"}),
+            ("ø", {"foo": "foo"}),
+        ),
+    )
+    def test_unicode_get(self, httpbin, url, params):
+        requests.get(httpbin(url), params=params)
+
+    def test_unicode_header_name(self, httpbin):
+        requests.put(
+            httpbin("put"),
+            headers={"Content-Type": "application/octet-stream"},
+            data="\xff",
+        )  # compat.str is unicode.
+
+    def test_pyopenssl_redirect(self, httpbin_secure, httpbin_ca_bundle):
+        requests.get(httpbin_secure("status", "301"), verify=httpbin_ca_bundle)
+
+    def test_invalid_ca_certificate_path(self, httpbin_secure):
+        INVALID_PATH = "/garbage"
+        with pytest.raises(IOError) as e:
+            requests.get(httpbin_secure(), verify=INVALID_PATH)
+        assert (
+            str(e.value)
+            == f"Could not find a suitable TLS CA certificate bundle, invalid path: {INVALID_PATH}"
+        )
+
+    def test_invalid_ssl_certificate_files(self, httpbin_secure):
+        INVALID_PATH = "/garbage"
+        with pytest.raises(IOError) as e:
+            requests.get(httpbin_secure(), cert=INVALID_PATH)
+        assert (
+            str(e.value)
+            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+        )
+
+        with pytest.raises(IOError) as e:
+            requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
+        assert str(e.value) == (
+            f"Could not find the TLS key file, invalid path: {INVALID_PATH}"
+        )
+
+    @pytest.mark.parametrize(
+        "env, expected",
+        (
+            ({}, True),
+            ({"REQUESTS_CA_BUNDLE": "/some/path"}, "/some/path"),
+            ({"REQUESTS_CA_BUNDLE": ""}, True),
+            ({"CURL_CA_BUNDLE": "/some/path"}, "/some/path"),
+            ({"CURL_CA_BUNDLE": ""}, True),
+            ({"REQUESTS_CA_BUNDLE": "", "CURL_CA_BUNDLE": ""}, True),
+            (
+                {
+                    "REQUESTS_CA_BUNDLE": "/some/path",
+                    "CURL_CA_BUNDLE": "/curl/path",
+                },
+                "/some/path",
+            ),
+            (
+                {
+                    "REQUESTS_CA_BUNDLE": "",
+                    "CURL_CA_BUNDLE": "/curl/path",
+                },
+                "/curl/path",
+            ),
+        ),
+    )
+    def test_env_cert_bundles(self, httpbin, env, expected):
+        s = requests.Session()
+        with mock.patch("os.environ", env):
+            settings = s.merge_environment_settings(
+                url=httpbin("get"), proxies={}, stream=False, verify=True, cert=None
+            )
+        assert settings["verify"] == expected
+
+    def test_http_with_certificate(self, httpbin):
+        r = requests.get(httpbin(), cert=".")
+        assert r.status_code == 200
+
+    @pytest.mark.skipif(
+        SNIMissingWarning is None,
+        reason="urllib3 2.0 removed that warning and errors out instead",
+    )
+    def test_https_warnings(self, nosan_server):
+        """warnings are emitted with requests.get"""
+        host, port, ca_bundle = nosan_server
+        if HAS_MODERN_SSL or HAS_PYOPENSSL:
+            warnings_expected = ("SubjectAltNameWarning",)
+        else:
+            warnings_expected = (
+
+exec
+/bin/bash -lc 'rg -n -C 15 "def merge_environment_settings|verify is None|verify.*self.verify" src/requests/sessions.py tests && rg -n "class.*Session|def test_.*session" tests/test_requests.py | head -80 && git status --short' in /workspace/repo
+ succeeded in 0ms:
+src/requests/sessions.py-745-        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py-746-        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py-747-        :rtype: requests.Response
+src/requests/sessions.py-748-        """
+src/requests/sessions.py-749-
+src/requests/sessions.py-750-        return self.request("DELETE", url, **kwargs)
+src/requests/sessions.py-751-
+src/requests/sessions.py-752-    def send(self, request: PreparedRequest, **kwargs: Any) -> Response:
+src/requests/sessions.py-753-        """Send a given PreparedRequest.
+src/requests/sessions.py-754-
+src/requests/sessions.py-755-        :rtype: requests.Response
+src/requests/sessions.py-756-        """
+src/requests/sessions.py-757-        # Set defaults that the hooks can utilize to ensure they always have
+src/requests/sessions.py-758-        # the correct parameters to reproduce the previous request.
+src/requests/sessions.py-759-        kwargs.setdefault("stream", self.stream)
+src/requests/sessions.py:760:        kwargs.setdefault("verify", self.verify)
+src/requests/sessions.py-761-        kwargs.setdefault("cert", self.cert)
+src/requests/sessions.py-762-        if "proxies" not in kwargs:
+src/requests/sessions.py-763-            kwargs["proxies"] = resolve_proxies(request, self.proxies, self.trust_env)
+src/requests/sessions.py-764-
+src/requests/sessions.py-765-        # It's possible that users might accidentally send a Request object.
+src/requests/sessions.py-766-        # Guard against that specific failure case.
+src/requests/sessions.py-767-        if isinstance(request, Request):
+src/requests/sessions.py-768-            raise ValueError("You can only send PreparedRequests.")
+src/requests/sessions.py-769-
+src/requests/sessions.py-770-        assert _is_prepared(request)
+src/requests/sessions.py-771-
+src/requests/sessions.py-772-        # Set up variables needed for resolve_redirects and dispatching of hooks
+src/requests/sessions.py-773-        allow_redirects = kwargs.pop("allow_redirects", True)
+src/requests/sessions.py-774-        stream = kwargs.get("stream")
+src/requests/sessions.py-775-        hooks = request.hooks
+--
+src/requests/sessions.py-816-
+src/requests/sessions.py-817-        # If redirects aren't being followed, store the response on the Request for Response.next().
+src/requests/sessions.py-818-        if not allow_redirects:
+src/requests/sessions.py-819-            try:
+src/requests/sessions.py-820-                r._next = next(  # type: ignore[assignment]  # yield_requests=True returns PreparedRequest
+src/requests/sessions.py-821-                    self.resolve_redirects(r, request, yield_requests=True, **kwargs)
+src/requests/sessions.py-822-                )
+src/requests/sessions.py-823-            except StopIteration:
+src/requests/sessions.py-824-                pass
+src/requests/sessions.py-825-
+src/requests/sessions.py-826-        if not stream:
+src/requests/sessions.py-827-            r.content
+src/requests/sessions.py-828-
+src/requests/sessions.py-829-        return r
+src/requests/sessions.py-830-
+src/requests/sessions.py:831:    def merge_environment_settings(
+src/requests/sessions.py-832-        self,
+src/requests/sessions.py-833-        url: str,
+src/requests/sessions.py-834-        proxies: dict[str, str] | None,
+src/requests/sessions.py-835-        stream: bool | None,
+src/requests/sessions.py-836-        verify: _t.VerifyType | None,
+src/requests/sessions.py-837-        cert: _t.CertType,
+src/requests/sessions.py-838-    ) -> dict[str, Any]:
+src/requests/sessions.py-839-        """
+src/requests/sessions.py-840-        Check the environment and merge it with some settings.
+src/requests/sessions.py-841-
+src/requests/sessions.py-842-        :rtype: dict
+src/requests/sessions.py-843-        """
+src/requests/sessions.py-844-        # Gather clues from the surrounding environment.
+src/requests/sessions.py-845-        if self.trust_env:
+src/requests/sessions.py-846-            # Set environment's proxies.
+src/requests/sessions.py-847-            no_proxy = proxies.get("no_proxy") if proxies is not None else None
+src/requests/sessions.py-848-            env_proxies = get_environ_proxies(url, no_proxy=no_proxy)
+src/requests/sessions.py-849-            if proxies is not None:
+src/requests/sessions.py-850-                for k, v in env_proxies.items():
+src/requests/sessions.py-851-                    proxies.setdefault(k, v)
+src/requests/sessions.py-852-
+src/requests/sessions.py-853-            # Look for requests environment configuration
+src/requests/sessions.py-854-            # and be compatible with cURL.
+src/requests/sessions.py:855:            if verify is True or verify is None:
+src/requests/sessions.py-856-                verify = (
+src/requests/sessions.py-857-                    os.environ.get("REQUESTS_CA_BUNDLE")
+src/requests/sessions.py-858-                    or os.environ.get("CURL_CA_BUNDLE")
+src/requests/sessions.py-859-                    or verify
+src/requests/sessions.py-860-                )
+src/requests/sessions.py-861-
+src/requests/sessions.py-862-        # Merge all the kwargs.
+src/requests/sessions.py-863-        proxies = merge_setting(proxies, self.proxies)
+src/requests/sessions.py-864-        stream = merge_setting(stream, self.stream)
+src/requests/sessions.py:865:        verify = merge_setting(verify, self.verify)
+src/requests/sessions.py-866-        cert = merge_setting(cert, self.cert)
+src/requests/sessions.py-867-
+src/requests/sessions.py-868-        return {"proxies": proxies, "stream": stream, "verify": verify, "cert": cert}
+src/requests/sessions.py-869-
+src/requests/sessions.py-870-    def get_adapter(self, url: str) -> BaseAdapter:
+src/requests/sessions.py-871-        """
+src/requests/sessions.py-872-        Returns the appropriate connection adapter for the given URL.
+src/requests/sessions.py-873-
+src/requests/sessions.py-874-        :rtype: requests.adapters.BaseAdapter
+src/requests/sessions.py-875-        """
+src/requests/sessions.py-876-        for prefix, adapter in self.adapters.items():
+src/requests/sessions.py-877-            if url.lower().startswith(prefix.lower()):
+src/requests/sessions.py-878-                return adapter
+src/requests/sessions.py-879-
+src/requests/sessions.py-880-        # Nothing matches :-/
+417:    def test_request_cookie_overrides_session_cookie(self, httpbin):
+496:    def test_headers_on_session_with_None_are_not_sent(self, httpbin):
+624:    def test_respect_proxy_env_on_send_session_prepared_request(self, httpbin):
+1200:    def test_session_hooks_are_used_with_no_request_hooks(self, httpbin):
+1211:    def test_session_hooks_are_overridden_by_request_hooks(self, httpbin):
+1239:    def test_prepared_from_session(self, httpbin):
+1619:    def test_session_pickling(self, httpbin):
+1685:    def test_session_get_adapter_prefix_matching(self):
+1709:    def test_session_get_adapter_prefix_matching_mixed_case(self):
+1719:    def test_session_get_adapter_prefix_matching_is_case_insensitive(self):
+1731:    def test_session_get_adapter_prefix_with_trailing_slash(self):
+1744:    def test_session_get_adapter_prefix_without_trailing_slash(self):
+2191:    def test_unconsumed_session_response_closes_connection(self, httpbin):
+2209:    def test_session_close_proxy_clear(self):
+2289:        Ensures a subclassed ``requests.Session`` can handle a certain type of
+2309:        class CustomRedirectSession(requests.Session):
+2608:class RedirectSession(SessionRedirectMixin):
+
+codex
+Hypothesis: the implementation already distinguishes an omitted `verify` (`None`) from `verify=True` and merges the omitted value with `session.verify`; the defect is the stale docstring sentence claiming a `True` default. I’ll add a narrow documentation-contract test that checks the stated default, then run only that test.
+exec
+/bin/bash -lc "sed -n '1,110p' tests/test_requests.py && sed -n '360,440p' tests/test_requests.py && git status --short" in /workspace/repo
+ succeeded in 0ms:
+"""Tests for Requests."""
+
+import collections
+import contextlib
+import io
+import json
+import os
+import pickle
+import re
+import tempfile
+import threading
+import warnings
+from unittest import mock
+
+import pytest
+import urllib3
+from urllib3.util import Timeout as Urllib3Timeout
+
+import requests
+from requests.adapters import HTTPAdapter
+from requests.auth import HTTPDigestAuth, _basic_auth_str
+from requests.compat import (
+    JSONDecodeError,
+    Morsel,
+    MutableMapping,
+    builtin_str,
+    cookielib,
+    getproxies,
+    is_urllib3_1,
+    urlparse,
+)
+from requests.cookies import cookiejar_from_dict, morsel_to_cookie
+from requests.exceptions import (
+    ChunkedEncodingError,
+    ConnectionError,
+    ConnectTimeout,
+    ContentDecodingError,
+    InvalidHeader,
+    InvalidProxyURL,
+    InvalidSchema,
+    InvalidURL,
+    MissingSchema,
+    ProxyError,
+    ReadTimeout,
+    RequestException,
+    RetryError,
+    Timeout,
+    TooManyRedirects,
+    UnrewindableBodyError,
+)
+from requests.exceptions import SSLError as RequestsSSLError
+from requests.hooks import default_hooks
+from requests.models import PreparedRequest, urlencode
+from requests.sessions import SessionRedirectMixin
+from requests.structures import CaseInsensitiveDict
+
+from . import SNIMissingWarning
+from .compat import StringIO
+from .testserver.server import TLSServer, consume_socket_content
+from .utils import override_environ
+
+# Requests to this URL should always fail with a connection timeout (nothing
+# listening on that port)
+TARPIT = "http://10.255.255.1"
+
+# This is to avoid waiting the timeout of using TARPIT
+INVALID_PROXY = "http://localhost:1"
+
+try:
+    from ssl import SSLContext
+
+    del SSLContext
+    HAS_MODERN_SSL = True
+except ImportError:
+    HAS_MODERN_SSL = False
+
+try:
+    requests.pyopenssl
+    HAS_PYOPENSSL = True
+except AttributeError:
+    HAS_PYOPENSSL = False
+
+
+class TestRequests:
+    digest_auth_algo = ("MD5", "SHA-256", "SHA-512")
+
+    def test_entry_points(self):
+        requests.session
+        requests.session().get
+        requests.session().head
+        requests.get
+        requests.head
+        requests.put
+        requests.patch
+        requests.post
+        # Not really an entry point, but people rely on it.
+        from requests.packages.urllib3.poolmanager import PoolManager  # noqa:F401
+
+    @pytest.mark.parametrize(
+        "exception, url",
+        (
+            (MissingSchema, "hiwpefhipowhefopw"),
+            (InvalidSchema, "localhost:3128"),
+            (InvalidSchema, "localhost.localdomain:3128/"),
+            (InvalidSchema, "10.122.1.1:3128/"),
+            (InvalidURL, "http://"),
+            (InvalidURL, "http://*example.com"),
+            (InvalidURL, "http://.example.com"),
+        ),
+    )
+    def test_fragment_maintained_on_redirect(self, httpbin):
+        fragment = "#view=edit&token=hunter2"
+        r = requests.get(httpbin("redirect-to?url=get") + fragment)
+
+        assert len(r.history) > 0
+        assert r.history[0].request.url == httpbin("redirect-to?url=get") + fragment
+        assert r.url == httpbin("get") + fragment
+
+    def test_HTTP_200_OK_GET_WITH_PARAMS(self, httpbin):
+        heads = {"User-agent": "Mozilla/5.0"}
+
+        r = requests.get(httpbin("user-agent"), headers=heads)
+
+        assert heads["User-agent"] in r.text
+        assert r.status_code == 200
+
+    def test_HTTP_200_OK_GET_WITH_MIXED_PARAMS(self, httpbin):
+        heads = {"User-agent": "Mozilla/5.0"}
+
+        r = requests.get(
+            httpbin("get") + "?test=true", params={"q": "test"}, headers=heads
+        )
+        assert r.status_code == 200
+
+    def test_set_cookie_on_301(self, httpbin):
+        s = requests.session()
+        url = httpbin("cookies/set?foo=bar")
+        s.get(url)
+        assert s.cookies["foo"] == "bar"
+
+    def test_cookie_sent_on_redirect(self, httpbin):
+        s = requests.session()
+        s.get(httpbin("cookies/set?foo=bar"))
+        r = s.get(httpbin("redirect/1"))  # redirects to httpbin('get')
+        assert "Cookie" in r.json()["headers"]
+
+    def test_cookie_removed_on_expire(self, httpbin):
+        s = requests.session()
+        s.get(httpbin("cookies/set?foo=bar"))
+        assert s.cookies["foo"] == "bar"
+        s.get(
+            httpbin("response-headers"),
+            params={"Set-Cookie": "foo=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT"},
+        )
+        assert "foo" not in s.cookies
+
+    def test_cookie_quote_wrapped(self, httpbin):
+        s = requests.session()
+        s.get(httpbin('cookies/set?foo="bar:baz"'))
+        assert s.cookies["foo"] == '"bar:baz"'
+
+    def test_cookie_persists_via_api(self, httpbin):
+        s = requests.session()
+        r = s.get(httpbin("redirect/1"), cookies={"foo": "bar"})
+        assert "foo" in r.request.headers["Cookie"]
+        assert "foo" in r.history[0].request.headers["Cookie"]
+
+    def test_request_cookie_overrides_session_cookie(self, httpbin):
+        s = requests.session()
+        s.cookies["foo"] = "bar"
+        r = s.get(httpbin("cookies"), cookies={"foo": "baz"})
+        assert r.json()["cookies"]["foo"] == "baz"
+        # Session cookie should not be modified
+        assert s.cookies["foo"] == "bar"
+
+    def test_request_cookies_not_persisted(self, httpbin):
+        s = requests.session()
+        s.get(httpbin("cookies"), cookies={"foo": "baz"})
+        # Sending a request with cookies should not add cookies to the session
+        assert not s.cookies
+
+    def test_generic_cookiejar_works(self, httpbin):
+        cj = cookielib.CookieJar()
+        cookiejar_from_dict({"foo": "bar"}, cj)
+        s = requests.session()
+        s.cookies = cj
+        r = s.get(httpbin("cookies"))
+        # Make sure the cookie was sent
+        assert r.json()["cookies"]["foo"] == "bar"
+        # Make sure the session cj is still the custom one
+        assert s.cookies is cj
+
+apply patch
+patch: completed
+/workspace/repo/tests/test_requests.py
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d8b17f28cd76188b210035036cdd401975..c9d86c822d16e31d7e1e83eaffe2bc80efeff395
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -1023,6 +1023,11 @@
+             )
+         assert settings["verify"] == expected
+ 
++    def test_session_request_verify_documentation_uses_session_default(self):
++        assert "Defaults to the Session value, which defaults to ``True``." in (
++            requests.Session.request.__doc__
++        )
++
+     def test_http_with_certificate(self, httpbin):
+         r = requests.get(httpbin(), cert=".")
+         assert r.status_code == 200
+
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d8b17f28cd76188b210035036cdd401975..c9d86c822d16e31d7e1e83eaffe2bc80efeff395
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -1023,6 +1023,11 @@
+             )
+         assert settings["verify"] == expected
+ 
++    def test_session_request_verify_documentation_uses_session_default(self):
++        assert "Defaults to the Session value, which defaults to ``True``." in (
++            requests.Session.request.__doc__
++        )
++
+     def test_http_with_certificate(self, httpbin):
+         r = requests.get(httpbin(), cert=".")
+         assert r.status_code == 200
+
+exec
+/bin/bash -lc 'pytest -q tests/test_requests.py::TestRequests::test_session_request_verify_documentation_uses_session_default' in /workspace/repo
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d8b17f28cd76188b210035036cdd401975..c9d86c822d16e31d7e1e83eaffe2bc80efeff395
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -1023,6 +1023,11 @@
+             )
+         assert settings["verify"] == expected
+ 
++    def test_session_request_verify_documentation_uses_session_default(self):
++        assert "Defaults to the Session value, which defaults to ``True``." in (
++            requests.Session.request.__doc__
++        )
++
+     def test_http_with_certificate(self, httpbin):
+         r = requests.get(httpbin(), cert=".")
+         assert r.status_code == 200
+
+ exited 1 in 457ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ TestRequests.test_session_request_verify_documentation_uses_session_default __
+
+self = <tests.test_requests.TestRequests object at 0xffffabfbf500>
+
+    def test_session_request_verify_documentation_uses_session_default(self):
+>       assert "Defaults to the Session value, which defaults to ``True``." in (
+            requests.Session.request.__doc__
+        )
+E       assert 'Defaults to the Session value, which defaults to ``True``.' in "Constructs a :class:`Request <Request>`, prepares it and sends it.\n        Returns :class:`Response <Response>` obje...ssl client cert file (.pem).\n            If Tuple, ('cert', 'key') pair.\n        :rtype: requests.Response\n        "
+E        +  where "Constructs a :class:`Request <Request>`, prepares it and sends it.\n        Returns :class:`Response <Response>` obje...ssl client cert file (.pem).\n            If Tuple, ('cert', 'key') pair.\n        :rtype: requests.Response\n        " = <function Session.request at 0xffffabcca020>.__doc__
+E        +    where <function Session.request at 0xffffabcca020> = <class 'requests.sessions.Session'>.request
+E        +      where <class 'requests.sessions.Session'> = requests.Session
+
+tests/test_requests.py:1027: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_requests.py::TestRequests::test_session_request_verify_documentation_uses_session_default
+1 failed in 0.24s
+
+codex
+Confirmed the reported documentation defect with a focused failing test.
+
+- Added a regression test in [tests/test_requests.py](/workspace/repo/tests/test_requests.py:1026) requiring `Session.request` to state that `verify` defaults to the Session value.
+- Ran:
+
+```text
+pytest -q tests/test_requests.py::TestRequests::test_session_request_verify_documentation_uses_session_default
+```
+
+- Result: failed because the current docstring still says `Defaults to ``True``.`
+
+No production code was changed.
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d8b17f28cd76188b210035036cdd401975..c9d86c822d16e31d7e1e83eaffe2bc80efeff395
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -1023,6 +1023,11 @@
+             )
+         assert settings["verify"] == expected
+ 
++    def test_session_request_verify_documentation_uses_session_default(self):
++        assert "Defaults to the Session value, which defaults to ``True``." in (
++            requests.Session.request.__doc__
++        )
++
+     def test_http_with_certificate(self, httpbin):
+         r = requests.get(httpbin(), cert=".")
+         assert r.status_code == 200
+
+tokens used
+17,069
+Confirmed the reported documentation defect with a focused failing test.
+
+- Added a regression test in [tests/test_requests.py](/workspace/repo/tests/test_requests.py:1026) requiring `Session.request` to state that `verify` defaults to the Session value.
+- Ran:
+
+```text
+pytest -q tests/test_requests.py::TestRequests::test_session_request_verify_documentation_uses_session_default
+```
+
+- Result: failed because the current docstring still says `Defaults to ``True``.`
+
+No production code was changed.
+[exit 0; elapsed 40944ms; Docker-isolated fallback]
+$ python -m pytest -q 'tests/test_requests.py'
+[2026-07-20 17:50:23,035] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+..............................127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /get HTTP/1.1" 200 208
+..............127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /get HTTP/1.1" 200 272
+............................ [ 21%]
+................127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /digest-auth/auth/user/pass/SHA-512/never HTTP/1.1" 200 46
+..127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 200 46
+..127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 401 0
+.........127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /status/500 HTTP/1.1" 500 0
+...................F.s..................... [ 42%]
+.............127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /get HTTP/1.1" 200 272
+................................127.0.0.1 - - [20/Jul/2026 17:50:24] "GET /get HTTP/1.1" 200 348
+........................... [ 63%]
+...........................x....127.0.0.1 - - [20/Jul/2026 17:50:24] "GET /status/204 HTTP/1.1" 204 0
+........................................ [ 84%]
+......................................................                   [100%]
+=================================== FAILURES ===================================
+_ TestRequests.test_session_request_verify_documentation_uses_session_default __
+
+self = <tests.test_requests.TestRequests object at 0xffffa3337b00>
+
+    def test_session_request_verify_documentation_uses_session_default(self):
+>       assert "Defaults to the Session value, which defaults to ``True``." in (
+            requests.Session.request.__doc__
+        )
+E       assert 'Defaults to the Session value, which defaults to ``True``.' in "Constructs a :class:`Request <Request>`, prepares it and sends it.\n        Returns :class:`Response <Response>` obje...ssl client cert file (.pem).\n            If Tuple, ('cert', 'key') pair.\n        :rtype: requests.Response\n        "
+E        +  where "Constructs a :class:`Request <Request>`, prepares it and sends it.\n        Returns :class:`Response <Response>` obje...ssl client cert file (.pem).\n            If Tuple, ('cert', 'key') pair.\n        :rtype: requests.Response\n        " = <function Session.request at 0xffffa34bcb80>.__doc__
+E        +    where <function Session.request at 0xffffa34bcb80> = <class 'requests.sessions.Session'>.request
+E        +      where <class 'requests.sessions.Session'> = requests.Session
+
+tests/test_requests.py:1027: AssertionError
+=============================== warnings summary ===============================
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+  /workspace/repo/src/requests/auth.py:45: DeprecationWarning: Non-string usernames will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (42) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+  /workspace/repo/src/requests/auth.py:55: DeprecationWarning: Non-string passwords will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (<class 'int'>) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+  /workspace/repo/src/requests/auth.py:45: DeprecationWarning: Non-string usernames will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (None) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+  /workspace/repo/src/requests/auth.py:55: DeprecationWarning: Non-string passwords will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (<class 'NoneType'>) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_True
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_bundle_expired_cert
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_bundle_unexpired_cert
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_mtls_settings
+  /usr/local/lib/python3.12/site-packages/urllib3/connectionpool.py:1110: InsecureRequestWarning: Unverified HTTPS request is being made to host 'localhost'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_requests.py::TestRequests::test_session_request_verify_documentation_uses_session_default
+1 failed, 339 passed, 1 skipped, 1 xfailed, 12 warnings in 39.68s
+[exit 1]
+$ git diff --no-ext-diff
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d..c9d86c8 100644
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -1023,6 +1023,11 @@ class TestRequests:
+             )
+         assert settings["verify"] == expected
+ 
++    def test_session_request_verify_documentation_uses_session_default(self):
++        assert "Defaults to the Session value, which defaults to ``True``." in (
++            requests.Session.request.__doc__
++        )
++
+     def test_http_with_certificate(self, httpbin):
+         r = requests.get(httpbin(), cert=".")
+         assert r.status_code == 200

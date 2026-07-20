@@ -1,0 +1,20 @@
+[2026-07-20 17:53:11,276] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_traditional_chinese_translation_catalogs_are_available __________
+
+    def test_traditional_chinese_translation_catalogs_are_available():
+        """The zh_TW HTML build needs Sphinx message catalogs to translate docs."""
+        locale_dir = DOCS_DIR / "locales" / "zh_TW" / "LC_MESSAGES"
+    
+>       assert list(locale_dir.glob("*.po")), "zh_TW documentation catalogs are missing"
+E       AssertionError: zh_TW documentation catalogs are missing
+E       assert []
+E        +  where [] = list(<generator object Path.glob at 0xffff874d6790>)
+E        +    where <generator object Path.glob at 0xffff874d6790> = glob('*.po')
+E        +      where glob = PosixPath('/workspace/repo/docs/locales/zh_TW/LC_MESSAGES').glob
+
+tests/test_documentation_localization.py:11: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_documentation_localization.py::test_traditional_chinese_translation_catalogs_are_available
+1 failed in 0.01s

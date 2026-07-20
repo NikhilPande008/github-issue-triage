@@ -1,0 +1,1315 @@
+$ codex exec --sandbox workspace-write --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Documentation suggestion to add troubleshooting guidance for common SSL verification errors encountered while using Requests.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The documentation should include a troubleshooting section covering common causes of SSL verification failures, basic debugging steps, when verify=False may be appropriate for testing purposes, and the security implications of disabling SSL verification.",
+  "actual_behavior": "New users may encounter requests.exceptions.SSLError, and these errors can be difficult to understand for users unfamiliar with HTTPS certificate verification.",
+  "environment": {},
+  "affected_area": "Requests documentation",
+  "repro_code": null,
+  "missing_info": [
+    "Concrete reproduction steps",
+    "A specific HTTPS request or URL",
+    "Environment details"
+  ],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019f809f-8942-7e81-b2d5-3a6ab90a3750
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Documentation suggestion to add troubleshooting guidance for common SSL verification errors encountered while using Requests.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The documentation should include a troubleshooting section covering common causes of SSL verification failures, basic debugging steps, when verify=False may be appropriate for testing purposes, and the security implications of disabling SSL verification.",
+  "actual_behavior": "New users may encounter requests.exceptions.SSLError, and these errors can be difficult to understand for users unfamiliar with HTTPS certificate verification.",
+  "environment": {},
+  "affected_area": "Requests documentation",
+  "repro_code": null,
+  "missing_info": [
+    "Concrete reproduction steps",
+    "A specific HTTPS request or URL",
+    "Environment details"
+  ],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+Hypothesis: the SSL documentation explains `verify=False` but lacks a consolidated troubleshooting section explaining certificate-failure causes, safe debugging, and its security trade-offs. I’ll first locate the existing SSL documentation and any docs checks, then run only a focused validation if one covers this content.
+exec
+/bin/bash -lc 'pwd && rg -n -i "verify=false|ssl verification|sslerror|certificate verification|ssl cert" docs tests README.md 2>/dev/null | head -240 && git status --short' in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+Investigation blocked before repository inspection: the workspace command runner cannot create its required sandbox namespace (`bwrap: No permissions to create a new namespace`). No files or tests were changed, and I have no evidence of a documentation failure yet.
+tokens used
+3,173
+Investigation blocked before repository inspection: the workspace command runner cannot create its required sandbox namespace (`bwrap: No permissions to create a new namespace`). No files or tests were changed, and I have no evidence of a documentation failure yet.
+[exit 0; elapsed 13252ms; preferred]
+$ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Documentation suggestion to add troubleshooting guidance for common SSL verification errors encountered while using Requests.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The documentation should include a troubleshooting section covering common causes of SSL verification failures, basic debugging steps, when verify=False may be appropriate for testing purposes, and the security implications of disabling SSL verification.",
+  "actual_behavior": "New users may encounter requests.exceptions.SSLError, and these errors can be difficult to understand for users unfamiliar with HTTPS certificate verification.",
+  "environment": {},
+  "affected_area": "Requests documentation",
+  "repro_code": null,
+  "missing_info": [
+    "Concrete reproduction steps",
+    "A specific HTTPS request or URL",
+    "Environment details"
+  ],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: none
+session id: 019f809f-b9de-7931-835c-90157215f305
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Documentation suggestion to add troubleshooting guidance for common SSL verification errors encountered while using Requests.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The documentation should include a troubleshooting section covering common causes of SSL verification failures, basic debugging steps, when verify=False may be appropriate for testing purposes, and the security implications of disabling SSL verification.",
+  "actual_behavior": "New users may encounter requests.exceptions.SSLError, and these errors can be difficult to understand for users unfamiliar with HTTPS certificate verification.",
+  "environment": {},
+  "affected_area": "Requests documentation",
+  "repro_code": null,
+  "missing_info": [
+    "Concrete reproduction steps",
+    "A specific HTTPS request or URL",
+    "Environment details"
+  ],
+  "confidence": 0.99
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+codex
+I’ll treat this as a documentation-coverage hypothesis: first I’ll locate the Requests docs and any documentation tests, then add only the smallest failing test that demonstrates the missing SSL troubleshooting guidance.
+exec
+/bin/bash -lc "pwd && rg --files -g '"'!*'"\\.pyc' | sed -n '1,160p'" in /workspace/repo
+ succeeded in 0ms:
+/workspace/repo
+MANIFEST.in
+setup.py
+NOTICE
+README.md
+tox.ini
+requirements-dev.txt
+AUTHORS.rst
+HISTORY.md
+Makefile
+LICENSE
+pyproject.toml
+docs/api.rst
+ext/requests-logo-compressed.png
+tests/test_lowlevel.py
+ext/requests-logo.svg
+ext/kr.png
+ext/LICENSE
+ext/psf.png
+ext/requests-logo.ai
+ext/requests-logo.png
+tests/compat.py
+tests/test_testserver.py
+tests/test_help.py
+tests/test_adapters.py
+tests/utils.py
+tests/test_requests.py
+src/requests/adapters.py
+src/requests/help.py
+src/requests/structures.py
+src/requests/exceptions.py
+src/requests/py.typed
+src/requests/utils.py
+src/requests/_internal_utils.py
+src/requests/api.py
+src/requests/__version__.py
+src/requests/packages.py
+src/requests/status_codes.py
+src/requests/__init__.py
+src/requests/certs.py
+src/requests/models.py
+src/requests/compat.py
+src/requests/hooks.py
+src/requests/_types.py
+src/requests/sessions.py
+src/requests/auth.py
+src/requests/cookies.py
+tests/conftest.py
+tests/test_utils.py
+tests/test_structures.py
+tests/test_packages.py
+tests/__init__.py
+tests/test_hooks.py
+docs/Makefile
+docs/make.bat
+docs/conf.py
+docs/index.rst
+docs/requirements.txt
+tests/testserver/__init__.py
+tests/testserver/server.py
+docs/community/updates.rst
+docs/community/faq.rst
+docs/community/recommended.rst
+docs/community/vulnerabilities.rst
+docs/community/out-there.rst
+docs/community/release-process.rst
+docs/community/support.rst
+docs/_templates/sidebar.html
+tests/certs/README.md
+docs/dev/authors.rst
+docs/dev/contributing.rst
+docs/_static/custom.css
+docs/_static/requests-sidebar.png
+docs/user/advanced.rst
+docs/user/quickstart.rst
+docs/user/authentication.rst
+docs/user/install.rst
+tests/certs/expired/README.md
+docs/_themes/LICENSE
+docs/_themes/flask_theme_support.py
+tests/certs/mtls/Makefile
+tests/certs/mtls/README.md
+tests/certs/expired/Makefile
+tests/certs/mtls/client/client.key
+tests/certs/mtls/client/cert.cnf
+tests/certs/mtls/client/client.csr
+tests/certs/mtls/client/client.pem
+tests/certs/valid/server/server.pem
+tests/certs/expired/server/cert.cnf
+tests/certs/valid/server/Makefile
+tests/certs/expired/server/server.csr
+tests/certs/valid/server/server.key
+tests/certs/expired/server/server.pem
+tests/certs/valid/server/server.csr
+tests/certs/valid/server/cert.cnf
+tests/certs/mtls/client/Makefile
+tests/certs/expired/server/Makefile
+tests/certs/expired/ca/Makefile
+tests/certs/expired/ca/ca-private.key
+tests/certs/expired/ca/ca.cnf
+tests/certs/expired/ca/ca.crt
+tests/certs/expired/server/server.key
+tests/certs/expired/ca/ca.srl
+
+exec
+/bin/bash -lc "rg -n -i -C 3 'ssl|certif|verify=false|unverified' docs tests pyproject.toml tox.ini Makefile" in /workspace/repo
+ succeeded in 0ms:
+pyproject.toml-19-    "charset_normalizer>=2,<4",
+pyproject.toml-20-    "idna>=2.5,<4",
+pyproject.toml-21-    "urllib3>=1.26,<3",
+pyproject.toml:22:    "certifi>=2023.5.7"
+pyproject.toml-23-]
+pyproject.toml-24-dynamic = ["version"]
+pyproject.toml-25-
+--
+pyproject.toml-71-    "typing_extensions",
+pyproject.toml-72-    "chardet",
+pyproject.toml-73-    "cryptography",
+pyproject.toml:74:    "PyOpenSSL",
+pyproject.toml-75-]
+pyproject.toml-76-
+pyproject.toml-77-[tool.setuptools]
+--
+tests/test_help.py-3-from requests.help import info
+tests/test_help.py-4-
+tests/test_help.py-5-
+tests/test_help.py:6:def test_system_ssl():
+tests/test_help.py:7:    """Verify we're actually setting system_ssl when it should be available."""
+tests/test_help.py:8:    assert info()["system_ssl"]["version"] != ""
+tests/test_help.py-9-
+tests/test_help.py-10-
+tests/test_help.py-11-class VersionedPackage:
+--
+tests/test_requests.py-48-    TooManyRedirects,
+tests/test_requests.py-49-    UnrewindableBodyError,
+tests/test_requests.py-50-)
+tests/test_requests.py:51:from requests.exceptions import SSLError as RequestsSSLError
+tests/test_requests.py-52-from requests.hooks import default_hooks
+tests/test_requests.py-53-from requests.models import PreparedRequest, urlencode
+tests/test_requests.py-54-from requests.sessions import SessionRedirectMixin
+--
+tests/test_requests.py-67-INVALID_PROXY = "http://localhost:1"
+tests/test_requests.py-68-
+tests/test_requests.py-69-try:
+tests/test_requests.py:70:    from ssl import SSLContext
+tests/test_requests.py-71-
+tests/test_requests.py:72:    del SSLContext
+tests/test_requests.py:73:    HAS_MODERN_SSL = True
+tests/test_requests.py-74-except ImportError:
+tests/test_requests.py:75:    HAS_MODERN_SSL = False
+tests/test_requests.py-76-
+tests/test_requests.py-77-try:
+tests/test_requests.py:78:    requests.pyopenssl
+tests/test_requests.py:79:    HAS_PYOPENSSL = True
+tests/test_requests.py-80-except AttributeError:
+tests/test_requests.py:81:    HAS_PYOPENSSL = False
+tests/test_requests.py-82-
+tests/test_requests.py-83-
+tests/test_requests.py-84-class TestRequests:
+--
+tests/test_requests.py-963-            data="\xff",
+tests/test_requests.py-964-        )  # compat.str is unicode.
+tests/test_requests.py-965-
+tests/test_requests.py:966:    def test_pyopenssl_redirect(self, httpbin_secure, httpbin_ca_bundle):
+tests/test_requests.py-967-        requests.get(httpbin_secure("status", "301"), verify=httpbin_ca_bundle)
+tests/test_requests.py-968-
+tests/test_requests.py:969:    def test_invalid_ca_certificate_path(self, httpbin_secure):
+tests/test_requests.py-970-        INVALID_PATH = "/garbage"
+tests/test_requests.py-971-        with pytest.raises(IOError) as e:
+tests/test_requests.py-972-            requests.get(httpbin_secure(), verify=INVALID_PATH)
+tests/test_requests.py-973-        assert (
+tests/test_requests.py-974-            str(e.value)
+tests/test_requests.py:975:            == f"Could not find a suitable TLS CA certificate bundle, invalid path: {INVALID_PATH}"
+tests/test_requests.py-976-        )
+tests/test_requests.py-977-
+tests/test_requests.py:978:    def test_invalid_ssl_certificate_files(self, httpbin_secure):
+tests/test_requests.py-979-        INVALID_PATH = "/garbage"
+tests/test_requests.py-980-        with pytest.raises(IOError) as e:
+tests/test_requests.py-981-            requests.get(httpbin_secure(), cert=INVALID_PATH)
+tests/test_requests.py-982-        assert (
+tests/test_requests.py-983-            str(e.value)
+tests/test_requests.py:984:            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
+tests/test_requests.py-985-        )
+tests/test_requests.py-986-
+tests/test_requests.py-987-        with pytest.raises(IOError) as e:
+--
+tests/test_requests.py-1023-            )
+tests/test_requests.py-1024-        assert settings["verify"] == expected
+tests/test_requests.py-1025-
+tests/test_requests.py:1026:    def test_http_with_certificate(self, httpbin):
+tests/test_requests.py-1027-        r = requests.get(httpbin(), cert=".")
+tests/test_requests.py-1028-        assert r.status_code == 200
+tests/test_requests.py-1029-
+--
+tests/test_requests.py-1034-    def test_https_warnings(self, nosan_server):
+tests/test_requests.py-1035-        """warnings are emitted with requests.get"""
+tests/test_requests.py-1036-        host, port, ca_bundle = nosan_server
+tests/test_requests.py:1037:        if HAS_MODERN_SSL or HAS_PYOPENSSL:
+tests/test_requests.py-1038-            warnings_expected = ("SubjectAltNameWarning",)
+tests/test_requests.py-1039-        else:
+tests/test_requests.py-1040-            warnings_expected = (
+--
+tests/test_requests.py-1056-        warnings_category = tuple(item.category.__name__ for item in warning_records)
+tests/test_requests.py-1057-        assert warnings_category == warnings_expected
+tests/test_requests.py-1058-
+tests/test_requests.py:1059:    def test_certificate_failure(self, httpbin_secure):
+tests/test_requests.py-1060-        """
+tests/test_requests.py:1061:        When underlying SSL problems occur, an SSLError is raised.
+tests/test_requests.py-1062-        """
+tests/test_requests.py:1063:        with pytest.raises(RequestsSSLError):
+tests/test_requests.py-1064-            # Our local httpbin does not have a trusted CA, so this call will
+tests/test_requests.py-1065-            # fail if we use our default trust bundle.
+tests/test_requests.py-1066-            requests.get(httpbin_secure("status", "200"))
+--
+tests/test_requests.py-1530-            (urllib3.exceptions.ProtocolError, tuple(), ChunkedEncodingError),
+tests/test_requests.py-1531-            (urllib3.exceptions.DecodeError, tuple(), ContentDecodingError),
+tests/test_requests.py-1532-            (urllib3.exceptions.ReadTimeoutError, (None, "", ""), ConnectionError),
+tests/test_requests.py:1533:            (urllib3.exceptions.SSLError, tuple(), RequestsSSLError),
+tests/test_requests.py-1534-        ),
+tests/test_requests.py-1535-    )
+tests/test_requests.py-1536-    def test_iter_content_wraps_exceptions(self, httpbin, exception, args, expected):
+--
+tests/test_requests.py-2946-
+tests/test_requests.py-2947-        with server as (host, port):
+tests/test_requests.py-2948-            url = f"https://{host}:{port}"
+tests/test_requests.py:2949:            r1 = s.get(url, verify=False)
+tests/test_requests.py-2950-            assert r1.status_code == 200
+tests/test_requests.py-2951-
+tests/test_requests.py:2952:            # Cannot verify self-signed certificate
+tests/test_requests.py:2953:            with pytest.raises(requests.exceptions.SSLError):
+tests/test_requests.py-2954-                s.get(url)
+tests/test_requests.py-2955-
+tests/test_requests.py-2956-            close_server.set()
+--
+tests/test_requests.py-2979-
+tests/test_requests.py-2980-        with server as (host, port):
+tests/test_requests.py-2981-            url = f"https://{host}:{port}"
+tests/test_requests.py:2982:            r1 = s.get(url, verify=False)
+tests/test_requests.py-2983-            assert r1.status_code == 200
+tests/test_requests.py-2984-
+tests/test_requests.py:2985:            # Has right trust bundle, but certificate expired
+tests/test_requests.py:2986:            with pytest.raises(requests.exceptions.SSLError):
+tests/test_requests.py-2987-                s.get(url, verify="tests/certs/expired/ca/ca.crt")
+tests/test_requests.py-2988-
+tests/test_requests.py-2989-            close_server.set()
+--
+tests/test_requests.py-3012-
+tests/test_requests.py-3013-        with server as (host, port):
+tests/test_requests.py-3014-            url = f"https://{host}:{port}"
+tests/test_requests.py:3015:            r1 = s.get(url, verify=False)
+tests/test_requests.py-3016-            assert r1.status_code == 200
+tests/test_requests.py-3017-
+tests/test_requests.py-3018-            r2 = s.get(url, verify="tests/certs/valid/ca/ca.crt")
+--
+tests/test_requests.py-3052-        )
+tests/test_requests.py-3053-        with server as (host, port):
+tests/test_requests.py-3054-            url = f"https://{host}:{port}"
+tests/test_requests.py:3055:            r1 = s.get(url, verify=False, cert=cert)
+tests/test_requests.py-3056-            assert r1.status_code == 200
+tests/test_requests.py:3057:            with pytest.raises(requests.exceptions.SSLError):
+tests/test_requests.py-3058-                s.get(url, cert=cert)
+tests/test_requests.py-3059-            close_server.set()
+tests/test_requests.py-3060-
+--
+tests/testserver/server.py-1-import select
+tests/testserver/server.py-2-import socket
+tests/testserver/server.py:3:import ssl
+tests/testserver/server.py-4-import threading
+tests/testserver/server.py-5-
+tests/testserver/server.py-6-
+--
+tests/testserver/server.py-158-        )
+tests/testserver/server.py-159-        self.cert_chain = cert_chain
+tests/testserver/server.py-160-        self.keyfile = keyfile
+tests/testserver/server.py:161:        self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+tests/testserver/server.py:162:        self.ssl_context.load_cert_chain(self.cert_chain, keyfile=self.keyfile)
+tests/testserver/server.py-163-        self.mutual_tls = mutual_tls
+tests/testserver/server.py-164-        self.cacert = cacert
+tests/testserver/server.py-165-        if mutual_tls:
+tests/testserver/server.py-166-            # For simplicity, we're going to assume that the client cert is
+tests/testserver/server.py:167:            # issued by the same CA as our Server certificate
+tests/testserver/server.py:168:            self.ssl_context.verify_mode = ssl.CERT_OPTIONAL
+tests/testserver/server.py:169:            self.ssl_context.load_verify_locations(self.cacert)
+tests/testserver/server.py-170-
+tests/testserver/server.py-171-    def _create_socket_and_bind(self):
+tests/testserver/server.py-172-        sock = socket.socket()
+tests/testserver/server.py:173:        sock = self.ssl_context.wrap_socket(sock, server_side=True)
+tests/testserver/server.py-174-        sock.bind((self.host, self.port))
+tests/testserver/server.py-175-        sock.listen()
+tests/testserver/server.py-176-        return sock
+--
+tests/conftest.py-4-    from BaseHTTPServer import HTTPServer
+tests/conftest.py-5-    from SimpleHTTPServer import SimpleHTTPRequestHandler
+tests/conftest.py-6-
+tests/conftest.py:7:import ssl
+tests/conftest.py-8-import threading
+tests/conftest.py-9-
+tests/conftest.py-10-import pytest
+--
+tests/conftest.py-54-    ca_bundle = str(tmpdir / "ca.pem")
+tests/conftest.py-55-    ca.cert_pem.write_to_path(ca_bundle)
+tests/conftest.py-56-
+tests/conftest.py:57:    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+tests/conftest.py-58-    server_cert.configure_cert(context)
+tests/conftest.py-59-    server = HTTPServer(("localhost", 0), SimpleHTTPRequestHandler)
+tests/conftest.py-60-    server.socket = context.wrap_socket(server.socket, server_side=True)
+--
+docs/community/faq.rst-71-What are "hostname doesn't match" errors?
+docs/community/faq.rst-72------------------------------------------
+docs/community/faq.rst-73-
+docs/community/faq.rst:74:These errors occur when :ref:`SSL certificate verification <verification>`
+docs/community/faq.rst:75:fails to match the certificate the server responds with to the hostname
+docs/community/faq.rst:76:Requests thinks it's contacting. If you're certain the server's SSL setup is
+docs/community/faq.rst-77-correct (for example, because you can visit the site with your browser) and
+docs/community/faq.rst-78-you're using Python 2.7, a possible explanation is that you need
+docs/community/faq.rst-79-Server-Name-Indication.
+docs/community/faq.rst-80-
+docs/community/faq.rst:81:`Server-Name-Indication`_, or SNI, is an official extension to SSL where the
+docs/community/faq.rst-82-client tells the server what hostname it is contacting. This is important
+docs/community/faq.rst-83-when servers are using `Virtual Hosting`_. When such servers are hosting
+docs/community/faq.rst:84:more than one SSL site they need to be able to return the appropriate
+docs/community/faq.rst:85:certificate based on the hostname the client is connecting to.
+docs/community/faq.rst-86-
+docs/community/faq.rst:87:Python 3 already includes native support for SNI in their SSL modules.
+docs/community/faq.rst-88-
+docs/community/faq.rst-89-.. _`Server-Name-Indication`: https://en.wikipedia.org/wiki/Server_Name_Indication
+docs/community/faq.rst-90-.. _`virtual hosting`: https://en.wikipedia.org/wiki/Virtual_hosting
+--
+tests/certs/README.md:1:# Testing Certificates
+tests/certs/README.md-2-
+tests/certs/README.md:3:This is a collection of certificates useful for testing aspects of Requests'
+tests/certs/README.md-4-behaviour.
+tests/certs/README.md-5-
+tests/certs/README.md:6:The certificates include:
+tests/certs/README.md-7-
+tests/certs/README.md:8:* [expired](./expired) server certificate with a valid certificate authority
+tests/certs/README.md:9:* [mtls](./mtls) provides a valid client certificate with a 2 year validity
+tests/certs/README.md:10:* [valid](./valid) has a valid server certificate
+--
+docs/community/recommended.rst-6-Requests has a great variety of powerful and useful third-party extensions.
+docs/community/recommended.rst-7-This page provides an overview of some of the best of them.
+docs/community/recommended.rst-8-
+docs/community/recommended.rst:9:Certifi CA Bundle
+docs/community/recommended.rst-10------------------
+docs/community/recommended.rst-11-
+docs/community/recommended.rst:12:`Certifi`_ is a carefully curated collection of Root Certificates for
+docs/community/recommended.rst:13:validating the trustworthiness of SSL certificates while verifying the
+docs/community/recommended.rst-14-identity of TLS hosts. It has been extracted from the Requests project.
+docs/community/recommended.rst-15-
+docs/community/recommended.rst:16:.. _Certifi: https://github.com/certifi/python-certifi
+docs/community/recommended.rst-17-
+docs/community/recommended.rst-18-CacheControl
+docs/community/recommended.rst-19-------------
+--
+docs/index.rst-63-- Keep-Alive & Connection Pooling
+docs/index.rst-64-- International Domains and URLs
+docs/index.rst-65-- Sessions with Cookie Persistence
+docs/index.rst:66:- Browser-style SSL Verification
+docs/index.rst-67-- Automatic Content Decoding
+docs/index.rst-68-- Basic/Digest Authentication
+docs/index.rst-69-- Elegant Key/Value Cookies
+--
+docs/user/advanced.rst-189-
+docs/user/advanced.rst-190-When you are using the prepared request flow, keep in mind that it does not take into account the environment.
+docs/user/advanced.rst-191-This can cause problems if you are using environment variables to change the behaviour of requests.
+docs/user/advanced.rst:192:For example: Self-signed SSL certificates specified in ``REQUESTS_CA_BUNDLE`` will not be taken into account.
+docs/user/advanced.rst:193:As a result an ``SSL: CERTIFICATE_VERIFY_FAILED`` is thrown.
+docs/user/advanced.rst-194-You can get around this behaviour by explicitly merging the environment settings into your session::
+docs/user/advanced.rst-195-
+docs/user/advanced.rst-196-    from requests import Request, Session
+--
+docs/user/advanced.rst-208-
+docs/user/advanced.rst-209-.. _verification:
+docs/user/advanced.rst-210-
+docs/user/advanced.rst:211:SSL Cert Verification
+docs/user/advanced.rst-212----------------------
+docs/user/advanced.rst-213-
+docs/user/advanced.rst:214:Requests verifies SSL certificates for HTTPS requests, just like a web browser.
+docs/user/advanced.rst:215:By default, SSL verification is enabled, and Requests will throw a SSLError if
+docs/user/advanced.rst:216:it's unable to verify the certificate::
+docs/user/advanced.rst-217-
+docs/user/advanced.rst-218-    >>> requests.get('https://requestb.in')
+docs/user/advanced.rst:219:    requests.exceptions.SSLError: hostname 'requestb.in' doesn't match either of '*.herokuapp.com', 'herokuapp.com'
+docs/user/advanced.rst-220-
+docs/user/advanced.rst:221:I don't have SSL setup on this domain, so it throws an exception. Excellent. GitHub does though::
+docs/user/advanced.rst-222-
+docs/user/advanced.rst-223-    >>> requests.get('https://github.com')
+docs/user/advanced.rst-224-    <Response [200]>
+docs/user/advanced.rst-225-
+docs/user/advanced.rst:226:You can pass ``verify`` the path to a CA_BUNDLE file or directory with certificates of trusted CAs::
+docs/user/advanced.rst-227-
+docs/user/advanced.rst-228-    >>> requests.get('https://github.com', verify='/path/to/certfile')
+docs/user/advanced.rst-229-
+--
+docs/user/advanced.rst-233-    s.verify = '/path/to/certfile'
+docs/user/advanced.rst-234-
+docs/user/advanced.rst-235-.. note:: If ``verify`` is set to a path to a directory, the directory must have been processed using
+docs/user/advanced.rst:236:  the ``c_rehash`` utility supplied with OpenSSL.
+docs/user/advanced.rst-237-
+docs/user/advanced.rst-238-This list of trusted CAs can also be specified through the ``REQUESTS_CA_BUNDLE`` environment variable.
+docs/user/advanced.rst-239-If ``REQUESTS_CA_BUNDLE`` is not set, ``CURL_CA_BUNDLE`` will be used as fallback.
+docs/user/advanced.rst-240-
+docs/user/advanced.rst:241:Requests can also ignore verifying the SSL certificate if you set ``verify`` to False::
+docs/user/advanced.rst-242-
+docs/user/advanced.rst:243:    >>> requests.get('https://kennethreitz.org', verify=False)
+docs/user/advanced.rst-244-    <Response [200]>
+docs/user/advanced.rst-245-
+docs/user/advanced.rst-246-Note that when ``verify`` is set to ``False``, requests will accept any TLS
+docs/user/advanced.rst:247:certificate presented by the server, and will ignore hostname mismatches
+docs/user/advanced.rst:248:and/or expired certificates, which will make your application vulnerable to
+docs/user/advanced.rst-249-man-in-the-middle (MitM) attacks. Setting verify to ``False`` may be useful
+docs/user/advanced.rst-250-during local development or testing.
+docs/user/advanced.rst-251-
+docs/user/advanced.rst-252-By default, ``verify`` is set to True. Option ``verify`` only applies to host certs.
+docs/user/advanced.rst-253-
+docs/user/advanced.rst:254:Client Side Certificates
+docs/user/advanced.rst-255-------------------------
+docs/user/advanced.rst-256-
+docs/user/advanced.rst:257:You can also specify a local cert to use as client side certificate, as a single
+docs/user/advanced.rst:258:file (containing the private key and the certificate) or as a tuple of both
+docs/user/advanced.rst-259-files' paths::
+docs/user/advanced.rst-260-
+docs/user/advanced.rst-261-    >>> requests.get('https://kennethreitz.org', cert=('/path/client.cert', '/path/client.key'))
+--
+docs/user/advanced.rst-266-    s = requests.Session()
+docs/user/advanced.rst-267-    s.cert = '/path/client.cert'
+docs/user/advanced.rst-268-
+docs/user/advanced.rst:269:If you specify a wrong path or an invalid cert, you'll get a SSLError::
+docs/user/advanced.rst-270-
+docs/user/advanced.rst-271-    >>> requests.get('https://kennethreitz.org', cert='/wrong_path/client.pem')
+docs/user/advanced.rst:272:    SSLError: [Errno 336265225] _ssl.c:347: error:140B0009:SSL routines:SSL_CTX_use_PrivateKey_file:PEM lib
+docs/user/advanced.rst-273-
+docs/user/advanced.rst:274:.. warning:: The private key to your local certificate *must* be unencrypted.
+docs/user/advanced.rst-275-   Currently, Requests does not support using encrypted keys.
+docs/user/advanced.rst-276-
+docs/user/advanced.rst:277:.. _ca-certificates:
+docs/user/advanced.rst-278-
+docs/user/advanced.rst:279:CA Certificates
+docs/user/advanced.rst-280----------------
+docs/user/advanced.rst-281-
+docs/user/advanced.rst:282:Requests uses certificates from the package `certifi`_. This allows for users
+docs/user/advanced.rst:283:to update their trusted certificates without changing the version of Requests.
+docs/user/advanced.rst-284-
+docs/user/advanced.rst-285-Before version 2.16, Requests bundled a set of root CAs that it trusted,
+docs/user/advanced.rst:286:sourced from the `Mozilla trust store`_. The certificates were only updated
+docs/user/advanced.rst:287:once for each Requests version. When ``certifi`` was not installed, this led to
+docs/user/advanced.rst:288:extremely out-of-date certificate bundles when using significantly older
+docs/user/advanced.rst-289-versions of Requests.
+docs/user/advanced.rst-290-
+docs/user/advanced.rst:291:For the sake of security we recommend upgrading certifi frequently!
+docs/user/advanced.rst-292-
+docs/user/advanced.rst-293-.. _HTTP persistent connection: https://en.wikipedia.org/wiki/HTTP_persistent_connection
+docs/user/advanced.rst-294-.. _connection pooling: https://urllib3.readthedocs.io/en/latest/reference/urllib3.connectionpool.html
+docs/user/advanced.rst:295:.. _certifi: https://certifiio.readthedocs.io/
+docs/user/advanced.rst-296-.. _Mozilla trust store: https://hg.mozilla.org/mozilla-central/raw-file/tip/security/nss/lib/ckfw/builtins/certdata.txt
+docs/user/advanced.rst-297-
+docs/user/advanced.rst-298-.. _body-content-workflow:
+--
+docs/user/advanced.rst-651-Note that proxy URLs must include the scheme.
+docs/user/advanced.rst-652-
+docs/user/advanced.rst-653-Finally, note that using a proxy for https connections typically requires your
+docs/user/advanced.rst:654:local machine to trust the proxy's root certificate. By default the list of
+docs/user/advanced.rst:655:certificates trusted by Requests can be found with::
+docs/user/advanced.rst-656-
+docs/user/advanced.rst-657-    from requests.utils import DEFAULT_CA_BUNDLE_PATH
+docs/user/advanced.rst-658-    print(DEFAULT_CA_BUNDLE_PATH)
+docs/user/advanced.rst-659-
+docs/user/advanced.rst:660:You override this default certificate bundle by setting the ``REQUESTS_CA_BUNDLE``
+docs/user/advanced.rst-661-(or ``CURL_CA_BUNDLE``) environment variable to another file path::
+docs/user/advanced.rst-662-
+docs/user/advanced.rst-663-    $ export REQUESTS_CA_BUNDLE="/usr/local/myproxy_info/cacert.pem"
+--
+docs/user/advanced.rst-998-   or ``http://localhost@other.com``. It's recommended to terminate full hostnames with a ``/``.
+docs/user/advanced.rst-999-
+docs/user/advanced.rst-1000-Many of the details of implementing a Transport Adapter are beyond the scope of
+docs/user/advanced.rst:1001:this documentation, but take a look at the next example for a simple SSL use-
+docs/user/advanced.rst-1002-case. For more than that, you might look at subclassing the
+docs/user/advanced.rst-1003-:class:`BaseAdapter <requests.adapters.BaseAdapter>`.
+docs/user/advanced.rst-1004-
+docs/user/advanced.rst:1005:Example: Specific SSL Version
+docs/user/advanced.rst-1006-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+docs/user/advanced.rst-1007-
+docs/user/advanced.rst:1008:The Requests team has made a specific choice to use whatever SSL version is
+docs/user/advanced.rst-1009-default in the underlying library (`urllib3`_). Normally this is fine, but from
+docs/user/advanced.rst-1010-time to time, you might find yourself needing to connect to a service-endpoint
+docs/user/advanced.rst-1011-that uses a version that isn't compatible with the default.
+docs/user/advanced.rst-1012-
+docs/user/advanced.rst-1013-You can use Transport Adapters for this by taking most of the existing
+docs/user/advanced.rst:1014:implementation of HTTPAdapter, and adding a parameter *ssl_version* that gets
+docs/user/advanced.rst-1015-passed-through to `urllib3`. We'll make a Transport Adapter that instructs the
+docs/user/advanced.rst:1016:library to use SSLv3::
+docs/user/advanced.rst-1017-
+docs/user/advanced.rst:1018:    import ssl
+docs/user/advanced.rst-1019-    from urllib3.poolmanager import PoolManager
+docs/user/advanced.rst-1020-
+docs/user/advanced.rst-1021-    from requests.adapters import HTTPAdapter
+docs/user/advanced.rst-1022-
+docs/user/advanced.rst-1023-
+docs/user/advanced.rst:1024:    class Ssl3HttpAdapter(HTTPAdapter):
+docs/user/advanced.rst:1025:        """"Transport adapter" that allows us to use SSLv3."""
+docs/user/advanced.rst-1026-
+docs/user/advanced.rst-1027-        def init_poolmanager(self, connections, maxsize, block=False):
+docs/user/advanced.rst-1028-            self.poolmanager = PoolManager(
+docs/user/advanced.rst-1029-                num_pools=connections, maxsize=maxsize,
+docs/user/advanced.rst:1030:                block=block, ssl_version=ssl.PROTOCOL_SSLv3)
+docs/user/advanced.rst-1031-
+docs/user/advanced.rst-1032-Example: Automatic Retries
+docs/user/advanced.rst-1033-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--
+docs/user/quickstart.rst-94-    '[{"repository":{"open_issues":0,"url":"https://github.com/...
+docs/user/quickstart.rst-95-
+docs/user/quickstart.rst-96-Requests will automatically decode content from the server. Most unicode
+docs/user/quickstart.rst:97:charsets are seamlessly decoded.
+docs/user/quickstart.rst-98-
+docs/user/quickstart.rst-99-When you make a request, Requests makes educated guesses about the encoding of
+docs/user/quickstart.rst-100-the response based on the HTTP headers. The text encoding guessed by Requests
+--
+tests/certs/expired/README.md:1:# Expired Certificates and Configuration for Testing
+tests/certs/expired/README.md-2-
+tests/certs/expired/README.md:3:This has a valid certificate authority in [ca](./ca) and an invalid server
+tests/certs/expired/README.md:4:certificate in [server](./server).
+tests/certs/expired/README.md-5-
+tests/certs/expired/README.md-6-This can all be regenerated with:
+tests/certs/expired/README.md-7-
+--
+tests/certs/mtls/README.md:1:# Certificate Examples for mTLS
+tests/certs/mtls/README.md-2-
+tests/certs/mtls/README.md:3:This has some generated certificates for mTLS utilization. The idea is to be
+tests/certs/mtls/README.md:4:able to have testing around how Requests handles client certificates.
+--
+tests/certs/expired/server/cert.cnf-11-CN = localhost
+tests/certs/expired/server/cert.cnf-12-
+tests/certs/expired/server/cert.cnf-13-[v3_req]
+tests/certs/expired/server/cert.cnf:14:# Extensions to add to a certificate request
+tests/certs/expired/server/cert.cnf-15-basicConstraints = CA:FALSE
+tests/certs/expired/server/cert.cnf-16-keyUsage = digitalSignature, keyEncipherment
+tests/certs/expired/server/cert.cnf-17-extendedKeyUsage = serverAuth
+--
+tests/certs/mtls/client/cert.cnf-11-CN = requests
+tests/certs/mtls/client/cert.cnf-12-
+tests/certs/mtls/client/cert.cnf-13-[v3_req]
+tests/certs/mtls/client/cert.cnf:14:# Extensions to add to a certificate request
+tests/certs/mtls/client/cert.cnf-15-basicConstraints = CA:FALSE
+tests/certs/mtls/client/cert.cnf-16-keyUsage = digitalSignature, keyEncipherment
+tests/certs/mtls/client/cert.cnf-17-extendedKeyUsage = clientAuth
+--
+tests/certs/expired/ca/ca.crt:1:-----BEGIN CERTIFICATE-----
+tests/certs/expired/ca/ca.crt-2-MIIDpDCCAoygAwIBAgIUQt0yyZmppkHKNx4aXRrmD5tvjbswDQYJKoZIhvcNAQEL
+tests/certs/expired/ca/ca.crt-3-BQAwajELMAkGA1UEBhMCVVMxIzAhBgNVBAoMGlB5dGhvbiBTb2Z0d2FyZSBGb3Vu
+tests/certs/expired/ca/ca.crt-4-ZGF0aW9uMRgwFgYDVQQLDA9weXRob24tcmVxdWVzdHMxHDAaBgNVBAMME1NlbGYt
+--
+tests/certs/expired/ca/ca.crt-19-rmI+KVpm5C+Nz6ekm3TR8rFgPIsiDTbY3qj/DNYX2+NhpU1DZfm687vhOr3Ekljx
+tests/certs/expired/ca/ca.crt-20-NHNu9++STEjGpirrI8EqQnK+FP2fRJ5D82YZM0d++8tmHKpY0+FRCr8//459sgun
+tests/certs/expired/ca/ca.crt-21-CojmhIobDa2NuF81Jx6Cc7lagCPG3/Ts
+tests/certs/expired/ca/ca.crt:22:-----END CERTIFICATE-----
+--
+tests/certs/mtls/client/client.csr:1:-----BEGIN CERTIFICATE REQUEST-----
+tests/certs/mtls/client/client.csr-2-MIIEGjCCAwICAQAwbDELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkRFMSMwIQYDVQQK
+tests/certs/mtls/client/client.csr-3-DBpQeXRob24gU29mdHdhcmUgRm91bmRhdGlvbjEYMBYGA1UECwwPcHl0aG9uLXJl
+tests/certs/mtls/client/client.csr-4-cXVlc3RzMREwDwYDVQQDDAhyZXF1ZXN0czCCASIwDQYJKoZIhvcNAQEBBQADggEP
+--
+tests/certs/mtls/client/client.csr-21-sSutzU0B/l/FKZRc8thuFoeKqHwVePLGD9p2+2nYI9I08QoGqEokTcFAq0tZ858F
+tests/certs/mtls/client/client.csr-22-9PdxBZYOKOMpnLZhiJ8qZo23v3ycBXPOjg5ILtQ9EzHoNEA5Mxx/mfNLKJ0NktZD
+tests/certs/mtls/client/client.csr-23-KXANLWKbXm+w9gTcBLtCPWNeqj5DIGPsHSfq/Bmjbp/o+uOJs6oq3s5rA7WrAA==
+tests/certs/mtls/client/client.csr:24:-----END CERTIFICATE REQUEST-----
+--
+tests/certs/expired/server/server.csr:1:-----BEGIN CERTIFICATE REQUEST-----
+tests/certs/expired/server/server.csr-2-MIIDHjCCAgYCAQAwbTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkRFMSMwIQYDVQQK
+tests/certs/expired/server/server.csr-3-DBpQeXRob24gU29mdHdhcmUgRm91bmRhdGlvbjEYMBYGA1UECwwPcHl0aG9uLXJl
+tests/certs/expired/server/server.csr-4-cXVlc3RzMRIwEAYDVQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+--
+tests/certs/expired/server/server.csr-16-Bg8xpbXdoRc7CYW1ZACme+d2U063GVqQsrIfwGJ+BtE6aNo62T/oEm+G4Wy5iBay
+tests/certs/expired/server/server.csr-17-jNv/imwf+JKQ75bTvha9YLUg2scqdYwJj8JlBw7cvkBIHW8GydA3fX4dtV9YBbFi
+tests/certs/expired/server/server.csr-18-8RTlWhhLgCXpYbLoDGOqF6f/MuPSIGkV1wVhCUfYA+p+Gw==
+tests/certs/expired/server/server.csr:19:-----END CERTIFICATE REQUEST-----
+--
+tests/certs/expired/ca/Makefile-3-root_files = ca-private.key ca.crt
+tests/certs/expired/ca/Makefile-4-
+tests/certs/expired/ca/Makefile-5-ca-private.key:
+tests/certs/expired/ca/Makefile:6:	openssl genrsa -out ca-private.key 2048
+tests/certs/expired/ca/Makefile-7-
+tests/certs/expired/ca/Makefile-8-all: ca-private.key
+tests/certs/expired/ca/Makefile:9:	openssl req -x509 -sha256 -days 7300 -key ca-private.key -out ca.crt -config ca.cnf
+tests/certs/expired/ca/Makefile-10-	ln -s ca.crt cacert.pem
+tests/certs/expired/ca/Makefile-11-
+tests/certs/expired/ca/Makefile-12-clean:
+--
+tests/certs/valid/server/Makefile-1-.PHONY: all clean
+tests/certs/valid/server/Makefile-2-
+tests/certs/valid/server/Makefile-3-server.key:
+tests/certs/valid/server/Makefile:4:	openssl genrsa -out $@ 2048
+tests/certs/valid/server/Makefile-5-
+tests/certs/valid/server/Makefile-6-server.csr: server.key
+tests/certs/valid/server/Makefile:7:	openssl req -key $< -config cert.cnf -new -out $@
+tests/certs/valid/server/Makefile-8-
+tests/certs/valid/server/Makefile-9-server.pem: server.csr
+tests/certs/valid/server/Makefile:10:	openssl x509 -req -CA ../ca/ca.crt -CAkey ../ca/ca-private.key -in server.csr -outform PEM -out server.pem -extfile cert.cnf -extensions v3_ca -days 7200 -CAcreateserial
+tests/certs/valid/server/Makefile:11:	openssl x509 -in ../ca/ca.crt -outform PEM >> $@
+tests/certs/valid/server/Makefile-12-
+tests/certs/valid/server/Makefile-13-all: server.pem
+tests/certs/valid/server/Makefile-14-
+--
+tests/certs/mtls/client/client.pem:1:-----BEGIN CERTIFICATE-----
+tests/certs/mtls/client/client.pem-2-MIIDpjCCAo6gAwIBAgIUTzbDp+B1umRS0Q7rgefxif9Im4IwDQYJKoZIhvcNAQEL
+tests/certs/mtls/client/client.pem-3-BQAwajELMAkGA1UEBhMCVVMxIzAhBgNVBAoMGlB5dGhvbiBTb2Z0d2FyZSBGb3Vu
+tests/certs/mtls/client/client.pem-4-ZGF0aW9uMRgwFgYDVQQLDA9weXRob24tcmVxdWVzdHMxHDAaBgNVBAMME1NlbGYt
+--
+tests/certs/mtls/client/client.pem-19-ohHkyYm0gV79izaFRpA6mdYoyHOR4gyWAKaj942doU794fT4gqQacRNifl/kUbWI
+tests/certs/mtls/client/client.pem-20-lilktTLyLnmBJgrxHVBxcGe8kwnPafA1k3Gb1w7mY5BSoGKglKjutTfqR3uTjAQb
+tests/certs/mtls/client/client.pem-21-vskS4SGXmsEIjLrXYWFNHyoC3pCBXWhX6Kc=
+tests/certs/mtls/client/client.pem:22:-----END CERTIFICATE-----
+tests/certs/mtls/client/client.pem:23:-----BEGIN CERTIFICATE-----
+tests/certs/mtls/client/client.pem-24-MIIDlDCCAnygAwIBAgIUG/CTOPIQbH2BI36TyThUChQyR8wwDQYJKoZIhvcNAQEL
+tests/certs/mtls/client/client.pem-25-BQAwajELMAkGA1UEBhMCVVMxIzAhBgNVBAoMGlB5dGhvbiBTb2Z0d2FyZSBGb3Vu
+tests/certs/mtls/client/client.pem-26-ZGF0aW9uMRgwFgYDVQQLDA9weXRob24tcmVxdWVzdHMxHDAaBgNVBAMME1NlbGYt
+--
+tests/certs/mtls/client/client.pem-41-b5ygoxqhm+SEyXC2/LAktwmFawkv1SsMeYpT790VIFqJ/TVVnUl+gQ2RjSEl2WLb
+tests/certs/mtls/client/client.pem-42-UO4Hwq4FZbWF9NrY6JVThLmbcr8eW6+UxWfiXHLw/qTRre4/3367QAUQRt7EuEsb
+tests/certs/mtls/client/client.pem-43-KOWpOS3fbsI=
+tests/certs/mtls/client/client.pem:44:-----END CERTIFICATE-----
+--
+tests/certs/valid/server/cert.cnf-11-CN = localhost
+tests/certs/valid/server/cert.cnf-12-
+tests/certs/valid/server/cert.cnf-13-[v3_req]
+tests/certs/valid/server/cert.cnf:14:# Extensions to add to a certificate request
+tests/certs/valid/server/cert.cnf-15-basicConstraints = critical, CA:FALSE
+tests/certs/valid/server/cert.cnf-16-keyUsage = critical, digitalSignature, keyEncipherment
+tests/certs/valid/server/cert.cnf-17-extendedKeyUsage = critical, serverAuth
+tests/certs/valid/server/cert.cnf-18-subjectAltName = critical, @alt_names
+tests/certs/valid/server/cert.cnf-19-
+tests/certs/valid/server/cert.cnf-20-[v3_ca]
+tests/certs/valid/server/cert.cnf:21:# Extensions to add to a certificate request
+tests/certs/valid/server/cert.cnf-22-basicConstraints = critical, CA:FALSE
+tests/certs/valid/server/cert.cnf-23-keyUsage = critical, digitalSignature, keyEncipherment
+tests/certs/valid/server/cert.cnf-24-extendedKeyUsage = critical, serverAuth
+--
+tests/certs/expired/server/Makefile-1-.PHONY: all clean
+tests/certs/expired/server/Makefile-2-
+tests/certs/expired/server/Makefile-3-server.key:
+tests/certs/expired/server/Makefile:4:	openssl genrsa -out $@ 2048
+tests/certs/expired/server/Makefile-5-
+tests/certs/expired/server/Makefile-6-server.csr: server.key
+tests/certs/expired/server/Makefile:7:	openssl req -key $< -new -out $@ -config cert.cnf
+tests/certs/expired/server/Makefile-8-
+tests/certs/expired/server/Makefile-9-server.pem: server.csr
+tests/certs/expired/server/Makefile:10:	openssl x509 -req -CA ../ca/ca.crt -CAkey ../ca/ca-private.key -in server.csr -outform PEM -out server.pem -days 0 -CAcreateserial
+tests/certs/expired/server/Makefile:11:	openssl x509 -in ../ca/ca.crt -outform PEM >> $@
+tests/certs/expired/server/Makefile-12-
+tests/certs/expired/server/Makefile-13-all: server.pem
+tests/certs/expired/server/Makefile-14-
+--
+tests/certs/valid/server/server.csr:1:-----BEGIN CERTIFICATE REQUEST-----
+tests/certs/valid/server/server.csr-2-MIIDKjCCAhICAQAwbTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkRFMSMwIQYDVQQK
+tests/certs/valid/server/server.csr-3-DBpQeXRob24gU29mdHdhcmUgRm91bmRhdGlvbjEYMBYGA1UECwwPcHl0aG9uLXJl
+tests/certs/valid/server/server.csr-4-cXVlc3RzMRIwEAYDVQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+--
+tests/certs/valid/server/server.csr-16-Dey+MzWUQvpTVqoaP7cLgzMy+XfcyGuWSoL6pX5XKkt4+A2wiCTsHul1sXOn4vQz
+tests/certs/valid/server/server.csr-17-4xY96AUVnkKosXMWXvhbMkncLNH+gs+ZeQI0MekakuMa42N+0BAad3Zx60lifG3N
+tests/certs/valid/server/server.csr-18-ugyVUmvVI0Fq6QUlYp3YV6QQj3FDjbgOVsSJNh+2s4SIARJsb/k//Tddzxei7g==
+tests/certs/valid/server/server.csr:19:-----END CERTIFICATE REQUEST-----
+--
+tests/certs/expired/server/server.pem:1:-----BEGIN CERTIFICATE-----
+tests/certs/expired/server/server.pem-2-MIIDpzCCAo+gAwIBAgIUTzbDp+B1umRS0Q7rgefxif9Im4EwDQYJKoZIhvcNAQEL
+tests/certs/expired/server/server.pem-3-BQAwajELMAkGA1UEBhMCVVMxIzAhBgNVBAoMGlB5dGhvbiBTb2Z0d2FyZSBGb3Vu
+tests/certs/expired/server/server.pem-4-ZGF0aW9uMRgwFgYDVQQLDA9weXRob24tcmVxdWVzdHMxHDAaBgNVBAMME1NlbGYt
+--
+tests/certs/expired/server/server.pem-19-3JCs3ARF6XWORuZs5Y8cNloOy2brAC/4EHnTfOZBQf8cL8CfHlcNa+nbG1j+wVNO
+tests/certs/expired/server/server.pem-20-60e/0v9zTxa2wNzdnLBCW4rqJFJ44aGClxat5tWuypv0snA/0xrqIYWTQGXZPVT6
+tests/certs/expired/server/server.pem-21-rET47dfVbj1QxmW3sAyuy5PskZA9T7pOhcjR
+tests/certs/expired/server/server.pem:22:-----END CERTIFICATE-----
+tests/certs/expired/server/server.pem:23:-----BEGIN CERTIFICATE-----
+tests/certs/expired/server/server.pem-24-MIIDlDCCAnygAwIBAgIUG/CTOPIQbH2BI36TyThUChQyR8wwDQYJKoZIhvcNAQEL
+tests/certs/expired/server/server.pem-25-BQAwajELMAkGA1UEBhMCVVMxIzAhBgNVBAoMGlB5dGhvbiBTb2Z0d2FyZSBGb3Vu
+tests/certs/expired/server/server.pem-26-ZGF0aW9uMRgwFgYDVQQLDA9weXRob24tcmVxdWVzdHMxHDAaBgNVBAMME1NlbGYt
+--
+tests/certs/expired/server/server.pem-41-b5ygoxqhm+SEyXC2/LAktwmFawkv1SsMeYpT790VIFqJ/TVVnUl+gQ2RjSEl2WLb
+tests/certs/expired/server/server.pem-42-UO4Hwq4FZbWF9NrY6JVThLmbcr8eW6+UxWfiXHLw/qTRre4/3367QAUQRt7EuEsb
+tests/certs/expired/server/server.pem-43-KOWpOS3fbsI=
+tests/certs/expired/server/server.pem:44:-----END CERTIFICATE-----
+--
+tests/certs/mtls/client/Makefile-1-.PHONY: all clean
+tests/certs/mtls/client/Makefile-2-
+tests/certs/mtls/client/Makefile-3-client.key:
+tests/certs/mtls/client/Makefile:4:	openssl genrsa -out $@ 2048
+tests/certs/mtls/client/Makefile-5-
+tests/certs/mtls/client/Makefile-6-client.csr: client.key
+tests/certs/mtls/client/Makefile:7:	openssl req -key $< -new -out $@ -config cert.cnf
+tests/certs/mtls/client/Makefile-8-
+tests/certs/mtls/client/Makefile-9-client.pem: client.csr
+tests/certs/mtls/client/Makefile:10:	openssl x509 -req -CA ./ca/ca.crt -CAkey ./ca/ca-private.key -in client.csr -outform PEM -out client.pem -days 730 -CAcreateserial
+tests/certs/mtls/client/Makefile:11:	openssl x509 -in ./ca/ca.crt -outform PEM >> $@
+tests/certs/mtls/client/Makefile-12-
+tests/certs/mtls/client/Makefile-13-all: client.pem
+tests/certs/mtls/client/Makefile-14-
+--
+tests/certs/valid/server/server.pem:1:-----BEGIN CERTIFICATE-----
+tests/certs/valid/server/server.pem-2-MIIEEDCCAvigAwIBAgIUTzbDp+B1umRS0Q7rgefxif9Im4MwDQYJKoZIhvcNAQEL
+tests/certs/valid/server/server.pem-3-BQAwajELMAkGA1UEBhMCVVMxIzAhBgNVBAoMGlB5dGhvbiBTb2Z0d2FyZSBGb3Vu
+tests/certs/valid/server/server.pem-4-ZGF0aW9uMRgwFgYDVQQLDA9weXRob24tcmVxdWVzdHMxHDAaBgNVBAMME1NlbGYt
+--
+tests/certs/valid/server/server.pem-21-knKbvuKAiRbCd584eG8HFOW7xv+YqGZ257Ic9flbarkPrazmAJg2P709w7/fP83x
+tests/certs/valid/server/server.pem-22-7lnkPZY09jS3lcIpEdtWvzfm+anGF190hKA1yfPdO5bYPvUcEMxXdMtQ6/pbZd5i
+tests/certs/valid/server/server.pem-23-F6t95o9CPCqI/lLIn5jAf9Z+Iil3GmKefEZYIGmKJ85HGUqE
+tests/certs/valid/server/server.pem:24:-----END CERTIFICATE-----
+tests/certs/valid/server/server.pem:25:-----BEGIN CERTIFICATE-----
+tests/certs/valid/server/server.pem-26-MIIDlDCCAnygAwIBAgIUG/CTOPIQbH2BI36TyThUChQyR8wwDQYJKoZIhvcNAQEL
+tests/certs/valid/server/server.pem-27-BQAwajELMAkGA1UEBhMCVVMxIzAhBgNVBAoMGlB5dGhvbiBTb2Z0d2FyZSBGb3Vu
+tests/certs/valid/server/server.pem-28-ZGF0aW9uMRgwFgYDVQQLDA9weXRob24tcmVxdWVzdHMxHDAaBgNVBAMME1NlbGYt
+--
+tests/certs/valid/server/server.pem-43-b5ygoxqhm+SEyXC2/LAktwmFawkv1SsMeYpT790VIFqJ/TVVnUl+gQ2RjSEl2WLb
+tests/certs/valid/server/server.pem-44-UO4Hwq4FZbWF9NrY6JVThLmbcr8eW6+UxWfiXHLw/qTRre4/3367QAUQRt7EuEsb
+tests/certs/valid/server/server.pem-45-KOWpOS3fbsI=
+tests/certs/valid/server/server.pem:46:-----END CERTIFICATE-----
+
+exec
+/bin/bash -lc "git status --short && sed -n '1,150p' pyproject.toml && sed -n '205,255p' docs/user/advanced.rst && sed -n '1,120p' docs/community/faq.rst && rg -n 'docs|sphinx|advanced\\.rst|read_text' tests pyproject.toml tox.ini Makefile" in /workspace/repo
+ succeeded in 0ms:
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "requests"
+description = "Python HTTP for Humans."
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    { name = "Kenneth Reitz", email = "me@kennethreitz.org" },
+]
+maintainers = [
+    {name = "Ian Stapleton Cordasco", email="graffatcolmingov@gmail.com"},
+    {name = "Nate Prewitt", email="nate.prewitt@gmail.com"}
+]
+requires-python = ">=3.10"
+dependencies = [
+    "charset_normalizer>=2,<4",
+    "idna>=2.5,<4",
+    "urllib3>=1.26,<3",
+    "certifi>=2023.5.7"
+]
+dynamic = ["version"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python :: Free Threading :: 2 - Beta",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries"
+]
+
+[project.urls]
+Documentation = "https://requests.readthedocs.io"
+Source = "https://github.com/psf/requests"
+
+[project.optional-dependencies]
+security = []
+socks = ["PySocks>=1.5.6, !=1.5.7"]
+use_chardet_on_py3 = ["chardet>=3.0.2,<8"]
+
+[dependency-groups]
+test = [
+    "requests[socks]",
+    "pytest-httpbin==2.1.0",
+    "httpbin~=0.10.0",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-xdist",
+    "pytest>=3",
+    "trustme",
+]
+typecheck = [
+    "pyright",
+    "typing_extensions",
+    "chardet",
+    "cryptography",
+    "PyOpenSSL",
+]
+
+[tool.setuptools]
+license-files = ["LICENSE", "NOTICE"]
+
+[tool.setuptools.dynamic]
+version = {attr = "requests.__version__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py310"
+src = ["src/requests", "tests"]
+exclude = ["docs/", "ext/"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade
+    "T10",    # flake8-debugger (replaces debug-statements hook)
+]
+ignore = ["E203", "E501", "UP031"]
+per-file-ignores = {"src/requests/__init__.py" = ["E402", "F401"], "src/requests/compat.py" = ["E402", "F401"], "tests/compat.py" = ["F401"]}
+
+[tool.ruff.lint.isort]
+known-first-party = ["requests"]
+
+[tool.ruff.format]
+# Use black-compatible formatting
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+minversion = "6.2"
+testpaths = ["tests"]
+
+
+[tool.pyright]
+include = ["src/requests"]
+typeCheckingMode = "strict"
+# linting rules unrelated to type checking
+reportPrivateUsage = false
+reportPrivateImportUsage = false
+reportUnnecessaryIsInstance = false
+reportUnusedImport = false  # duplicate of Ruff's F401 rule
+    resp = s.send(prepped, **settings)
+
+    print(resp.status_code)
+
+.. _verification:
+
+SSL Cert Verification
+---------------------
+
+Requests verifies SSL certificates for HTTPS requests, just like a web browser.
+By default, SSL verification is enabled, and Requests will throw a SSLError if
+it's unable to verify the certificate::
+
+    >>> requests.get('https://requestb.in')
+    requests.exceptions.SSLError: hostname 'requestb.in' doesn't match either of '*.herokuapp.com', 'herokuapp.com'
+
+I don't have SSL setup on this domain, so it throws an exception. Excellent. GitHub does though::
+
+    >>> requests.get('https://github.com')
+    <Response [200]>
+
+You can pass ``verify`` the path to a CA_BUNDLE file or directory with certificates of trusted CAs::
+
+    >>> requests.get('https://github.com', verify='/path/to/certfile')
+
+or persistent::
+
+    s = requests.Session()
+    s.verify = '/path/to/certfile'
+
+.. note:: If ``verify`` is set to a path to a directory, the directory must have been processed using
+  the ``c_rehash`` utility supplied with OpenSSL.
+
+This list of trusted CAs can also be specified through the ``REQUESTS_CA_BUNDLE`` environment variable.
+If ``REQUESTS_CA_BUNDLE`` is not set, ``CURL_CA_BUNDLE`` will be used as fallback.
+
+Requests can also ignore verifying the SSL certificate if you set ``verify`` to False::
+
+    >>> requests.get('https://kennethreitz.org', verify=False)
+    <Response [200]>
+
+Note that when ``verify`` is set to ``False``, requests will accept any TLS
+certificate presented by the server, and will ignore hostname mismatches
+and/or expired certificates, which will make your application vulnerable to
+man-in-the-middle (MitM) attacks. Setting verify to ``False`` may be useful
+during local development or testing.
+
+By default, ``verify`` is set to True. Option ``verify`` only applies to host certs.
+
+Client Side Certificates
+------------------------
+.. _faq:
+
+Frequently Asked Questions
+==========================
+
+This part of the documentation answers common questions about Requests.
+
+Encoded Data?
+-------------
+
+Requests automatically decompresses gzip-encoded responses, and does
+its best to decode response content to unicode when possible.
+
+When either the `brotli <https://pypi.org/project/Brotli/>`_ or `brotlicffi <https://pypi.org/project/brotlicffi/>`_
+package is installed, requests also decodes Brotli-encoded responses.
+
+You can get direct access to the raw response (and even the socket),
+if needed as well.
+
+
+Custom User-Agents?
+-------------------
+
+Requests allows you to easily override User-Agent strings, along with
+any other HTTP Header. See :ref:`documentation about headers <custom-headers>`.
+
+
+
+Why not Httplib2?
+-----------------
+
+Chris Adams gave an excellent summary on
+`Hacker News <https://news.ycombinator.com/item?id=2884406>`_:
+
+    httplib2 is part of why you should use requests: it's far more respectable
+    as a client but not as well documented and it still takes way too much code
+    for basic operations. I appreciate what httplib2 is trying to do, that
+    there's a ton of hard low-level annoyances in building a modern HTTP
+    client, but really, just use requests instead. Kenneth Reitz is very
+    motivated and he gets the degree to which simple things should be simple
+    whereas httplib2 feels more like an academic exercise than something
+    people should use to build production systems[1].
+
+    Disclosure: I'm listed in the requests AUTHORS file but can claim credit
+    for, oh, about 0.0001% of the awesomeness.
+
+    1. https://code.google.com/p/httplib2/issues/detail?id=96 is a good example:
+    an annoying bug that affected many people, there was a fix available for
+    months, which worked great when I applied it in a fork and pounded a couple
+    TB of data through it, but it took over a year to make it into trunk and
+    even longer to make it onto PyPI where any other project which required "
+    httplib2" would get the working version.
+
+
+Python 3 Support?
+-----------------
+
+Yes! Requests supports all `officially supported versions of Python <https://devguide.python.org/versions/>`_
+and recent releases of PyPy.
+
+Python 2 Support?
+-----------------
+
+No! As of Requests 2.28.0, Requests no longer supports Python 2.7. Users who
+have been unable to migrate should pin to `requests<2.28`. Full information
+can be found in `psf/requests#6023 <https://github.com/psf/requests/issues/6023>`_.
+
+It is *highly* recommended users migrate to a supported Python 3.x version now since
+Python 2.7 is no longer receiving bug fixes or security updates as of January 1, 2020.
+
+What are "hostname doesn't match" errors?
+-----------------------------------------
+
+These errors occur when :ref:`SSL certificate verification <verification>`
+fails to match the certificate the server responds with to the hostname
+Requests thinks it's contacting. If you're certain the server's SSL setup is
+correct (for example, because you can visit the site with your browser) and
+you're using Python 2.7, a possible explanation is that you need
+Server-Name-Indication.
+
+`Server-Name-Indication`_, or SNI, is an official extension to SSL where the
+client tells the server what hostname it is contacting. This is important
+when servers are using `Virtual Hosting`_. When such servers are hosting
+more than one SSL site they need to be able to return the appropriate
+certificate based on the hostname the client is connecting to.
+
+Python 3 already includes native support for SNI in their SSL modules.
+
+.. _`Server-Name-Indication`: https://en.wikipedia.org/wiki/Server_Name_Indication
+.. _`virtual hosting`: https://en.wikipedia.org/wiki/Virtual_hosting
+pyproject.toml:50:Documentation = "https://requests.readthedocs.io"
+pyproject.toml:89:exclude = ["docs/", "ext/"]
+Makefile:1:.PHONY: docs
+Makefile:25:docs:
+Makefile:26:	cd docs && make html
+Makefile:27:	@echo "\033[95m\n\nBuild successful! View the docs homepage at docs/_build/html/index.html.\n\033[0m"
+tests/test_requests.py:2345:    def test_docstring_example(self):
+
+codex
+The existing verification page already documents `verify=False` and its MitM risk, plus custom CA bundles. The gap is a dedicated troubleshooting path explaining why `SSLError` occurs and how to diagnose it; I’ll encode that expectation in one focused documentation test.
+apply patch
+patch: completed
+/workspace/repo/tests/test_docs.py
+diff --git a/tests/test_docs.py b/tests/test_docs.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d14b301fdb32c85998e695ba3efaf10315c2aa51
+--- /dev/null
++++ b/tests/test_docs.py
+@@ -0,0 +1,7 @@
++from pathlib import Path
++
++
++def test_ssl_verification_troubleshooting_guidance_is_documented():
++    documentation = (Path(__file__).parents[1] / "docs/user/advanced.rst").read_text()
++
++    assert "Troubleshooting SSL Verification Errors" in documentation
+
+diff --git a/tests/test_docs.py b/tests/test_docs.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d14b301fdb32c85998e695ba3efaf10315c2aa51
+--- /dev/null
++++ b/tests/test_docs.py
+@@ -0,0 +1,7 @@
++from pathlib import Path
++
++
++def test_ssl_verification_troubleshooting_guidance_is_documented():
++    documentation = (Path(__file__).parents[1] / "docs/user/advanced.rst").read_text()
++
++    assert "Troubleshooting SSL Verification Errors" in documentation
+
+exec
+/bin/bash -lc 'pytest -q tests/test_docs.py' in /workspace/repo
+diff --git a/tests/test_docs.py b/tests/test_docs.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d14b301fdb32c85998e695ba3efaf10315c2aa51
+--- /dev/null
++++ b/tests/test_docs.py
+@@ -0,0 +1,7 @@
++from pathlib import Path
++
++
++def test_ssl_verification_troubleshooting_guidance_is_documented():
++    documentation = (Path(__file__).parents[1] / "docs/user/advanced.rst").read_text()
++
++    assert "Troubleshooting SSL Verification Errors" in documentation
+
+ exited 1 in 251ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_ssl_verification_troubleshooting_guidance_is_documented _________
+
+    def test_ssl_verification_troubleshooting_guidance_is_documented():
+        documentation = (Path(__file__).parents[1] / "docs/user/advanced.rst").read_text()
+    
+>       assert "Troubleshooting SSL Verification Errors" in documentation
+E       AssertionError: assert 'Troubleshooting SSL Verification Errors' in '.. _advanced:\n\nAdvanced Usage\n==============\n\nThis document covers some of Requests more advanced features.\n\n....`wall clock`: https://wiki.php.net/rfc/max_execution_wall_time\n.. _`connect()`: https://linux.die.net/man/2/connect\n'
+
+tests/test_docs.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_docs.py::test_ssl_verification_troubleshooting_guidance_is_documented
+1 failed in 0.03s
+
+codex
+Hypothesis confirmed: Requests lacks a dedicated SSL verification troubleshooting section.
+
+Added a focused regression test in [tests/test_docs.py](/workspace/repo/tests/test_docs.py:1) requiring that section in the SSL verification documentation.
+
+Evidence:
+
+```text
+pytest -q tests/test_docs.py
+1 failed
+AssertionError: 'Troubleshooting SSL Verification Errors' not in docs/user/advanced.rst
+```
+
+No production or documentation changes were made.
+diff --git a/tests/test_docs.py b/tests/test_docs.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d14b301fdb32c85998e695ba3efaf10315c2aa51
+--- /dev/null
++++ b/tests/test_docs.py
+@@ -0,0 +1,7 @@
++from pathlib import Path
++
++
++def test_ssl_verification_troubleshooting_guidance_is_documented():
++    documentation = (Path(__file__).parents[1] / "docs/user/advanced.rst").read_text()
++
++    assert "Troubleshooting SSL Verification Errors" in documentation
+
+tokens used
+21,431
+Hypothesis confirmed: Requests lacks a dedicated SSL verification troubleshooting section.
+
+Added a focused regression test in [tests/test_docs.py](/workspace/repo/tests/test_docs.py:1) requiring that section in the SSL verification documentation.
+
+Evidence:
+
+```text
+pytest -q tests/test_docs.py
+1 failed
+AssertionError: 'Troubleshooting SSL Verification Errors' not in docs/user/advanced.rst
+```
+
+No production or documentation changes were made.
+[exit 0; elapsed 28544ms; Docker-isolated fallback]
+$ python -m pytest -q 'tests/test_docs.py'
+[2026-07-20 17:43:27,891] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_ssl_verification_troubleshooting_guidance_is_documented _________
+
+    def test_ssl_verification_troubleshooting_guidance_is_documented():
+        documentation = (Path(__file__).parents[1] / "docs/user/advanced.rst").read_text()
+    
+>       assert "Troubleshooting SSL Verification Errors" in documentation
+E       AssertionError: assert 'Troubleshooting SSL Verification Errors' in '.. _advanced:\n\nAdvanced Usage\n==============\n\nThis document covers some of Requests more advanced features.\n\n....`wall clock`: https://wiki.php.net/rfc/max_execution_wall_time\n.. _`connect()`: https://linux.die.net/man/2/connect\n'
+
+tests/test_docs.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_docs.py::test_ssl_verification_troubleshooting_guidance_is_documented
+1 failed in 0.02s
+[exit 1]
+$ git diff --no-ext-diff

@@ -188,7 +188,7 @@ def _process_batch_issue(settings: Settings, issue) -> BatchItem:
             investigations.update(investigation, status=InvestigationStatus.FAILED)
             raise
     duration = (datetime.now(timezone.utc) - started).total_seconds()
-    return BatchItem(issue, result.investigation_id, classification, duration, None)
+    return BatchItem(issue, result.investigation_id, classification, duration, llm_calls.tracked_cost_usd(investigation.id))
 
 
 def _start_investigation(investigations: InvestigationRepository, issue) -> Investigation:

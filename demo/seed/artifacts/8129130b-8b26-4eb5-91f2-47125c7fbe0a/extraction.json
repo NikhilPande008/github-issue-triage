@@ -1,0 +1,16 @@
+{
+  "summary": "Request to support the newly proposed HTTP QUERY method.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "Support the newly proposed QUERY HTTP method.",
+  "actual_behavior": "Requests supports arbitrary HTTP verbs through the requests.request() API, but the issue states that using this approach has a caveat regarding redirections.",
+  "environment": {},
+  "affected_area": "requests.request() API and HTTP QUERY method",
+  "repro_code": null,
+  "missing_info": [
+    "A concrete request example using the QUERY method",
+    "A target URL or server that accepts QUERY",
+    "The specific redirection behavior to reproduce",
+    "Requests and Python versions"
+  ],
+  "confidence": 0.97
+}

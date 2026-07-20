@@ -1,0 +1,15 @@
+[2026-07-20 17:43:27,891] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_ssl_verification_troubleshooting_guidance_is_documented _________
+
+    def test_ssl_verification_troubleshooting_guidance_is_documented():
+        documentation = (Path(__file__).parents[1] / "docs/user/advanced.rst").read_text()
+    
+>       assert "Troubleshooting SSL Verification Errors" in documentation
+E       AssertionError: assert 'Troubleshooting SSL Verification Errors' in '.. _advanced:\n\nAdvanced Usage\n==============\n\nThis document covers some of Requests more advanced features.\n\n....`wall clock`: https://wiki.php.net/rfc/max_execution_wall_time\n.. _`connect()`: https://linux.die.net/man/2/connect\n'
+
+tests/test_docs.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_docs.py::test_ssl_verification_troubleshooting_guidance_is_documented
+1 failed in 0.02s

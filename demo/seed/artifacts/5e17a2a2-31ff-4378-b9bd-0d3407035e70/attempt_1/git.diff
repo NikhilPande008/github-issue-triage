@@ -1,0 +1,16 @@
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d..c9d86c8 100644
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -1023,6 +1023,11 @@ class TestRequests:
+             )
+         assert settings["verify"] == expected
+ 
++    def test_session_request_verify_documentation_uses_session_default(self):
++        assert "Defaults to the Session value, which defaults to ``True``." in (
++            requests.Session.request.__doc__
++        )
++
+     def test_http_with_certificate(self, httpbin):
+         r = requests.get(httpbin(), cert=".")
+         assert r.status_code == 200

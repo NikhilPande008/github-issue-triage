@@ -1,0 +1,20 @@
+diff --git a/tests/test_requests.py b/tests/test_requests.py
+index 8bcb81d..f79d37d 100644
+--- a/tests/test_requests.py
++++ b/tests/test_requests.py
+@@ -303,6 +303,15 @@ class TestRequests:
+         assert r.history[0].status_code == 302
+         assert r.history[0].is_redirect
+ 
++    def test_http_302_doesnt_change_query_to_get(self, httpbin):
++        session = RedirectSession([302])
++        request = requests.Request("QUERY", httpbin("query")).prepare()
++        response = session.send(request)
++
++        redirected = next(session.resolve_redirects(response, request))
++
++        assert redirected.request.method == "QUERY"
++
+     def test_http_303_changes_post_to_get(self, httpbin):
+         r = requests.post(httpbin("status", "303"))
+         assert r.status_code == 200

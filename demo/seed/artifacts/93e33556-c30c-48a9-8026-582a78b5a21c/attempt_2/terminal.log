@@ -1,0 +1,1327 @@
+$ codex exec --sandbox workspace-write --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "mypy warns about invalid types for the `json` argument to `requests.post` when using intermediate dictionary variables.",
+  "steps_to_reproduce": [
+    "Define `fn(d: dict[str, str]) -> None`.",
+    "Assign `j = {\"foo\": d, \"bar\": \"hi\"}`.",
+    "Call `requests.post(\"https://example.com\", json=j)`.",
+    "Assign `k = {\"foo\": d, \"bool\": True}`.",
+    "Call `requests.post(\"https://example.com\", json=k)`.",
+    "Run mypy on the code."
+  ],
+  "expected_behavior": "The `json` argument should not produce invalid-type warnings; the issue states that these warnings did not occur when using `types-requests`.",
+  "actual_behavior": "mypy reports `Argument \"json\" to \"post\" has incompatible type \"dict[str, Collection[str]]\"; expected \"JsonType\"` and `Argument \"json\" to \"post\" has incompatible type \"dict[str, object]\"; expected \"JsonType\"`.",
+  "environment": {
+    "charset_normalizer.version": "3.4.7",
+    "idna.version": "3.15",
+    "implementation.name": "CPython",
+    "implementation.version": "3.13.5",
+    "platform.release": "6.12.74+deb13+1-amd64",
+    "platform.system": "Linux",
+    "requests.version": "2.34.1",
+    "system_ssl.version": "30500050",
+    "urllib3.version": "2.7.0",
+    "using_charset_normalizer": "true",
+    "using_pyopenssl": "false",
+    "cryptography.version": ""
+  },
+  "affected_area": "Requests `json` argument typing",
+  "repro_code": "import requests\n\ndef fn(d: dict[str, str]) -> None:\n    j = {\"foo\": d, \"bar\": \"hi\"}\n    requests.post(\"https://example.com\", json=j)\n\n    k = {\"foo\": d, \"bool\": True}\n    requests.post(\"https://example.com\", json=k)\n",
+  "missing_info": [
+    "mypy version",
+    "The exact mypy command or configuration used"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+2
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete reproduction path. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+portPrivateImportUsage = false
+reportUnnecessaryIsInstance = false
+reportUnusedImport = false  # duplicate of Ruff'"'"'s F401 rule
+[tox]
+envlist = py{310,311,312,313,314}-{default, use_chardet_on_py3}
+
+[testenv]
+deps = -rrequirements-dev.txt
+extras =
+    security
+    socks
+commands =
+    pytest {posargs:tests}
+
+[testenv:default]
+
+[testenv:use_chardet_on_py3]
+extras =
+    security
+    socks
+    use_chardet_on_py3
+.github/AI_POLICY.md:13:> - Every contribution has to be backed by a human who unequivocally owns the copyright for all changes.
+.github/AI_POLICY.md:25:> - You either hold the copyright to the changes or have explicit legal authorization to contribute them under this project'"'"'s license.
+.github/AI_POLICY.md:32:There is ongoing legal uncertainty regarding the copyright status of LLM-generated works and their provenance.
+.github/AI_POLICY.md:33:Since we do not have a formal [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_license_agreement) (CLA), you retain your copyright to your changes to this project.
+.github/AI_POLICY.md:35:Therefore, allowing contributions by LLMs has unpredictable consequences for the copyright status of this project – even when leaving aside possible copyright violations due to plagiarism.
+.github/AI_POLICY.md:57:  We cannot risk the copyright status of this project.
+.github/AI_POLICY.md:61:- By submitting a pull request, **you** take full **technical and legal** responsibility for the contents of the pull request and promise that **you** hold the copyright for the changes submitted.
+docs/conf.py:61:copyright = u"Kenneth Reitz and contributors"
+docs/conf.py:204:# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+docs/conf.py:205:html_show_copyright = True
+docs/conf.py:319:epub_copyright = copyright
+docs/_themes/LICENSE:3:Copyright (c) 2011 Kenneth Reitz.
+docs/_themes/LICENSE:8:Copyright (c) 2010 by Armin Ronacher.
+docs/_themes/LICENSE:17:* Redistributions of source code must retain the above copyright
+docs/_themes/LICENSE:21:  copyright notice, this list of conditions and the following
+.github/workflows/typecheck.yml:9:  typecheck:
+.github/workflows/typecheck.yml:29:        python -m pip install -e . --group typecheck
+.github/workflows/typecheck.yml:31:    - name: Run pyright
+.github/workflows/typecheck.yml:32:      run: python -m pyright src/requests/
+
+codex
+The current public alias is a recursive `Mapping[str, JsonType]`. My hypothesis is that mypy’s inferred least-common value types (`Collection[str]` and `object`) are too broad for that recursive JSON-only mapping, even though both concrete dictionaries are JSON-serializable. I’ll reproduce this directly against the checked-out package before adding any test scaffolding.
+exec
+/bin/bash -lc '"'"'python -m mypy --version; python -m pyright --version; git log -1 --oneline'"'"' in /workspace/repo
+ succeeded in 0ms:
+/usr/local/bin/python: No module named mypy
+/usr/local/bin/python: No module named pyright
+f361ead Bump https://github.com/astral-sh/ruff-pre-commit (#7562)
+
+exec
+/bin/bash -lc "find . -maxdepth 3 -type d \\( -name '"'"'.venv'"'"' -o -name '"'"'venv'"'"' \\) -print && command -v uv || true && command -v pipx || true && python -m pip --version && git status --short" in /workspace/repo
+ succeeded in 0ms:
+pip 26.1.2 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
+
+codex
+Mypy is not installed in this checkout, while the repository’s CI currently runs pyright only. I’ll use an isolated temporary mypy install and add a minimal type-check fixture (not production code) containing the report’s two calls; then I’ll run mypy on that single fixture and stop at the observed failure.
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(mktemp -d /tmp/requests-mypy.XXXXXX) && python -m pip install --quiet --target "$TASK_MYPY_DIR" mypy && printf '"'"'"'"'"'%s'"'"' \""'"'"'$TASK_MYPY_DIR" > /tmp/requests-mypy-path && PYTHONPATH="$TASK_MYPY_DIR" python -m mypy --version'"'"' in /workspace/repo
+ succeeded in 2370ms:
+WARNING: Running pip as the '"'"'root'"'"' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+mypy 2.3.0 (compiled: yes)
+
+apply patch
+patch: completed
+/workspace/repo/tests/typing/json_argument_inference.py
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental tests/typing/json_argument_inference.py'"'"' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --show-traceback tests/typing/json_argument_inference.py'"'"' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+Please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: use --pdb to drop into pdb
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/tmp/requests-mypy.3Kutk8/mypy/__main__.py", line 16, in console_entry
+    main()
+  File "mypy/main.py", line 154, in main
+  File "mypy/main.py", line 244, in run_build
+  File "mypy/build.py", line 385, in build
+  File "mypy/build.py", line 1908, in create_metastore
+  File "mypy/metastore.py", line 200, in __init__
+  File "mypy/metastore.py", line 166, in connect_db
+  File "/usr/local/lib/python3.12/sqlite3/__init__.py", line 57, in <module>
+    from sqlite3.dbapi2 import *
+  File "/usr/local/lib/python3.12/sqlite3/dbapi2.py", line 27, in <module>
+    from _sqlite3 import *
+ImportError: libsqlite3.so.0: cannot open shared object file: No such file or directory
+
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --cache-dir=/dev/null tests/typing/json_argument_inference.py'"'"' in /workspace/repo
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+ exited 2 in 1208ms:
+tests/__init__.py:6: error: Module "urllib3.exceptions" has no attribute "SNIMissingWarning"  [attr-defined]
+tests/typing/json_argument_inference.py:6: error: Argument "json" to "post" has incompatible type "dict[str, Collection[str]]"; expected "JsonType"  [arg-type]
+tests/typing/json_argument_inference.py:9: error: Argument "json" to "post" has incompatible type "dict[str, object]"; expected "JsonType"  [arg-type]
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+codex
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+tokens used
+13,746
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+[exit 0; elapsed 62329ms; Docker-isolated fallback]
+$ python -m pytest -q '"'"'tests/typing/json_argument_inference.py'"'"'
+[2026-07-20 17:45:43,568] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+
+no tests ran in 0.02s
+[exit 5]
+$ git diff --no-ext-diff
+
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019f80a2-3d67-7ab1-a37a-a000ee95e7ec
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "mypy warns about invalid types for the `json` argument to `requests.post` when using intermediate dictionary variables.",
+  "steps_to_reproduce": [
+    "Define `fn(d: dict[str, str]) -> None`.",
+    "Assign `j = {\"foo\": d, \"bar\": \"hi\"}`.",
+    "Call `requests.post(\"https://example.com\", json=j)`.",
+    "Assign `k = {\"foo\": d, \"bool\": True}`.",
+    "Call `requests.post(\"https://example.com\", json=k)`.",
+    "Run mypy on the code."
+  ],
+  "expected_behavior": "The `json` argument should not produce invalid-type warnings; the issue states that these warnings did not occur when using `types-requests`.",
+  "actual_behavior": "mypy reports `Argument \"json\" to \"post\" has incompatible type \"dict[str, Collection[str]]\"; expected \"JsonType\"` and `Argument \"json\" to \"post\" has incompatible type \"dict[str, object]\"; expected \"JsonType\"`.",
+  "environment": {
+    "charset_normalizer.version": "3.4.7",
+    "idna.version": "3.15",
+    "implementation.name": "CPython",
+    "implementation.version": "3.13.5",
+    "platform.release": "6.12.74+deb13+1-amd64",
+    "platform.system": "Linux",
+    "requests.version": "2.34.1",
+    "system_ssl.version": "30500050",
+    "urllib3.version": "2.7.0",
+    "using_charset_normalizer": "true",
+    "using_pyopenssl": "false",
+    "cryptography.version": ""
+  },
+  "affected_area": "Requests `json` argument typing",
+  "repro_code": "import requests\n\ndef fn(d: dict[str, str]) -> None:\n    j = {\"foo\": d, \"bar\": \"hi\"}\n    requests.post(\"https://example.com\", json=j)\n\n    k = {\"foo\": d, \"bool\": True}\n    requests.post(\"https://example.com\", json=k)\n",
+  "missing_info": [
+    "mypy version",
+    "The exact mypy command or configuration used"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+2
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete reproduction path. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+portPrivateImportUsage = false
+reportUnnecessaryIsInstance = false
+reportUnusedImport = false  # duplicate of Ruff's F401 rule
+[tox]
+envlist = py{310,311,312,313,314}-{default, use_chardet_on_py3}
+
+[testenv]
+deps = -rrequirements-dev.txt
+extras =
+    security
+    socks
+commands =
+    pytest {posargs:tests}
+
+[testenv:default]
+
+[testenv:use_chardet_on_py3]
+extras =
+    security
+    socks
+    use_chardet_on_py3
+.github/AI_POLICY.md:13:> - Every contribution has to be backed by a human who unequivocally owns the copyright for all changes.
+.github/AI_POLICY.md:25:> - You either hold the copyright to the changes or have explicit legal authorization to contribute them under this project's license.
+.github/AI_POLICY.md:32:There is ongoing legal uncertainty regarding the copyright status of LLM-generated works and their provenance.
+.github/AI_POLICY.md:33:Since we do not have a formal [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_license_agreement) (CLA), you retain your copyright to your changes to this project.
+.github/AI_POLICY.md:35:Therefore, allowing contributions by LLMs has unpredictable consequences for the copyright status of this project – even when leaving aside possible copyright violations due to plagiarism.
+.github/AI_POLICY.md:57:  We cannot risk the copyright status of this project.
+.github/AI_POLICY.md:61:- By submitting a pull request, **you** take full **technical and legal** responsibility for the contents of the pull request and promise that **you** hold the copyright for the changes submitted.
+docs/conf.py:61:copyright = u"Kenneth Reitz and contributors"
+docs/conf.py:204:# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+docs/conf.py:205:html_show_copyright = True
+docs/conf.py:319:epub_copyright = copyright
+docs/_themes/LICENSE:3:Copyright (c) 2011 Kenneth Reitz.
+docs/_themes/LICENSE:8:Copyright (c) 2010 by Armin Ronacher.
+docs/_themes/LICENSE:17:* Redistributions of source code must retain the above copyright
+docs/_themes/LICENSE:21:  copyright notice, this list of conditions and the following
+.github/workflows/typecheck.yml:9:  typecheck:
+.github/workflows/typecheck.yml:29:        python -m pip install -e . --group typecheck
+.github/workflows/typecheck.yml:31:    - name: Run pyright
+.github/workflows/typecheck.yml:32:      run: python -m pyright src/requests/
+
+codex
+The current public alias is a recursive `Mapping[str, JsonType]`. My hypothesis is that mypy’s inferred least-common value types (`Collection[str]` and `object`) are too broad for that recursive JSON-only mapping, even though both concrete dictionaries are JSON-serializable. I’ll reproduce this directly against the checked-out package before adding any test scaffolding.
+exec
+/bin/bash -lc 'python -m mypy --version; python -m pyright --version; git log -1 --oneline' in /workspace/repo
+ succeeded in 0ms:
+/usr/local/bin/python: No module named mypy
+/usr/local/bin/python: No module named pyright
+f361ead Bump https://github.com/astral-sh/ruff-pre-commit (#7562)
+
+exec
+/bin/bash -lc "find . -maxdepth 3 -type d \\( -name '.venv' -o -name 'venv' \\) -print && command -v uv || true && command -v pipx || true && python -m pip --version && git status --short" in /workspace/repo
+ succeeded in 0ms:
+pip 26.1.2 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
+
+codex
+Mypy is not installed in this checkout, while the repository’s CI currently runs pyright only. I’ll use an isolated temporary mypy install and add a minimal type-check fixture (not production code) containing the report’s two calls; then I’ll run mypy on that single fixture and stop at the observed failure.
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(mktemp -d /tmp/requests-mypy.XXXXXX) && python -m pip install --quiet --target "$TASK_MYPY_DIR" mypy && printf '"'%s' \""'$TASK_MYPY_DIR" > /tmp/requests-mypy-path && PYTHONPATH="$TASK_MYPY_DIR" python -m mypy --version' in /workspace/repo
+ succeeded in 2370ms:
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+mypy 2.3.0 (compiled: yes)
+
+apply patch
+patch: completed
+/workspace/repo/tests/typing/json_argument_inference.py
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental tests/typing/json_argument_inference.py' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --show-traceback tests/typing/json_argument_inference.py' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+Please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: use --pdb to drop into pdb
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/tmp/requests-mypy.3Kutk8/mypy/__main__.py", line 16, in console_entry
+    main()
+  File "mypy/main.py", line 154, in main
+  File "mypy/main.py", line 244, in run_build
+  File "mypy/build.py", line 385, in build
+  File "mypy/build.py", line 1908, in create_metastore
+  File "mypy/metastore.py", line 200, in __init__
+  File "mypy/metastore.py", line 166, in connect_db
+  File "/usr/local/lib/python3.12/sqlite3/__init__.py", line 57, in <module>
+    from sqlite3.dbapi2 import *
+  File "/usr/local/lib/python3.12/sqlite3/dbapi2.py", line 27, in <module>
+    from _sqlite3 import *
+ImportError: libsqlite3.so.0: cannot open shared object file: No such file or directory
+
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --cache-dir=/dev/null tests/typing/json_argument_inference.py' in /workspace/repo
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+ exited 2 in 1208ms:
+tests/__init__.py:6: error: Module "urllib3.exceptions" has no attribute "SNIMissingWarning"  [attr-defined]
+tests/typing/json_argument_inference.py:6: error: Argument "json" to "post" has incompatible type "dict[str, Collection[str]]"; expected "JsonType"  [arg-type]
+tests/typing/json_argument_inference.py:9: error: Argument "json" to "post" has incompatible type "dict[str, object]"; expected "JsonType"  [arg-type]
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+codex
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+tokens used
+13,746
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+[exit 0; elapsed 62329ms; Docker-isolated fallback]
+$ python -m pytest -q 'tests/typing/json_argument_inference.py'
+[2026-07-20 17:45:43,568] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+
+no tests ran in 0.02s
+[exit 5]
+$ git diff --no-ext-diff
+
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+Hypothesis: the recursive `JsonType` annotation rejects mypy’s widened intermediate dictionary types. I’ll turn the reproduction into an executable, focused pytest regression check and run it, stopping at the reported type errors.
+exec
+/bin/bash -lc "git status --short && rg -n \"JsonType|typing\" src/requests tests -g '*.py' -g 'pyproject.toml' -g 'requirements*.txt' | head -160 && rg --files tests | rg 'typing|type' | head -80" in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+exec
+/bin/bash -c pwd in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+The earlier fixture is not pytest-collectable, and this environment currently cannot start shell commands due to its namespace sandbox. I’ll add one executable regression test that invokes mypy on an isolated copy of the reproduction and expects it to type-check; with mypy available, the current annotations should make that test fail on the two reported calls.
+apply patch
+2026-07-20T17:46:24.986863Z ERROR codex_core::tools::router: error=Exit code: 1
+Wall time: 0 seconds
+Output:
+Failed to write file /workspace/repo/tests/test_json_argument_inference.py
+
+patch: failed
+/workspace/repo/tests/test_json_argument_inference.py
+apply patch
+2026-07-20T17:46:35.236755Z ERROR codex_core::tools::router: error=Exit code: 1
+Wall time: 0 seconds
+Output:
+Failed to write file /workspace/repo/tests/test_json_argument_inference.py
+
+patch: failed
+/workspace/repo/tests/test_json_argument_inference.py
+codex
+Hypothesis confirmed from the supplied run: mypy widens the intermediate dict values to `Collection[str]` and `object`, which are rejected by `JsonType`.
+
+The prior focused mypy command reproduced both reported errors. I could not add the executable pytest regression because this environment currently rejects both shell execution and workspace writes (`bwrap` namespace error; patch write failed). No further repository changes were made in this attempt.
+tokens used
+17,120
+Hypothesis confirmed from the supplied run: mypy widens the intermediate dict values to `Collection[str]` and `object`, which are rejected by `JsonType`.
+
+The prior focused mypy command reproduced both reported errors. I could not add the executable pytest regression because this environment currently rejects both shell execution and workspace writes (`bwrap` namespace error; patch write failed). No further repository changes were made in this attempt.
+[exit 0; elapsed 62952ms; preferred]
+$ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "mypy warns about invalid types for the `json` argument to `requests.post` when using intermediate dictionary variables.",
+  "steps_to_reproduce": [
+    "Define `fn(d: dict[str, str]) -> None`.",
+    "Assign `j = {\"foo\": d, \"bar\": \"hi\"}`.",
+    "Call `requests.post(\"https://example.com\", json=j)`.",
+    "Assign `k = {\"foo\": d, \"bool\": True}`.",
+    "Call `requests.post(\"https://example.com\", json=k)`.",
+    "Run mypy on the code."
+  ],
+  "expected_behavior": "The `json` argument should not produce invalid-type warnings; the issue states that these warnings did not occur when using `types-requests`.",
+  "actual_behavior": "mypy reports `Argument \"json\" to \"post\" has incompatible type \"dict[str, Collection[str]]\"; expected \"JsonType\"` and `Argument \"json\" to \"post\" has incompatible type \"dict[str, object]\"; expected \"JsonType\"`.",
+  "environment": {
+    "charset_normalizer.version": "3.4.7",
+    "idna.version": "3.15",
+    "implementation.name": "CPython",
+    "implementation.version": "3.13.5",
+    "platform.release": "6.12.74+deb13+1-amd64",
+    "platform.system": "Linux",
+    "requests.version": "2.34.1",
+    "system_ssl.version": "30500050",
+    "urllib3.version": "2.7.0",
+    "using_charset_normalizer": "true",
+    "using_pyopenssl": "false",
+    "cryptography.version": ""
+  },
+  "affected_area": "Requests `json` argument typing",
+  "repro_code": "import requests\n\ndef fn(d: dict[str, str]) -> None:\n    j = {\"foo\": d, \"bar\": \"hi\"}\n    requests.post(\"https://example.com\", json=j)\n\n    k = {\"foo\": d, \"bool\": True}\n    requests.post(\"https://example.com\", json=k)\n",
+  "missing_info": [
+    "mypy version",
+    "The exact mypy command or configuration used"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+2
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete reproduction path. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+portPrivateImportUsage = false
+reportUnnecessaryIsInstance = false
+reportUnusedImport = false  # duplicate of Ruff'"'"'s F401 rule
+[tox]
+envlist = py{310,311,312,313,314}-{default, use_chardet_on_py3}
+
+[testenv]
+deps = -rrequirements-dev.txt
+extras =
+    security
+    socks
+commands =
+    pytest {posargs:tests}
+
+[testenv:default]
+
+[testenv:use_chardet_on_py3]
+extras =
+    security
+    socks
+    use_chardet_on_py3
+.github/AI_POLICY.md:13:> - Every contribution has to be backed by a human who unequivocally owns the copyright for all changes.
+.github/AI_POLICY.md:25:> - You either hold the copyright to the changes or have explicit legal authorization to contribute them under this project'"'"'s license.
+.github/AI_POLICY.md:32:There is ongoing legal uncertainty regarding the copyright status of LLM-generated works and their provenance.
+.github/AI_POLICY.md:33:Since we do not have a formal [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_license_agreement) (CLA), you retain your copyright to your changes to this project.
+.github/AI_POLICY.md:35:Therefore, allowing contributions by LLMs has unpredictable consequences for the copyright status of this project – even when leaving aside possible copyright violations due to plagiarism.
+.github/AI_POLICY.md:57:  We cannot risk the copyright status of this project.
+.github/AI_POLICY.md:61:- By submitting a pull request, **you** take full **technical and legal** responsibility for the contents of the pull request and promise that **you** hold the copyright for the changes submitted.
+docs/conf.py:61:copyright = u"Kenneth Reitz and contributors"
+docs/conf.py:204:# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+docs/conf.py:205:html_show_copyright = True
+docs/conf.py:319:epub_copyright = copyright
+docs/_themes/LICENSE:3:Copyright (c) 2011 Kenneth Reitz.
+docs/_themes/LICENSE:8:Copyright (c) 2010 by Armin Ronacher.
+docs/_themes/LICENSE:17:* Redistributions of source code must retain the above copyright
+docs/_themes/LICENSE:21:  copyright notice, this list of conditions and the following
+.github/workflows/typecheck.yml:9:  typecheck:
+.github/workflows/typecheck.yml:29:        python -m pip install -e . --group typecheck
+.github/workflows/typecheck.yml:31:    - name: Run pyright
+.github/workflows/typecheck.yml:32:      run: python -m pyright src/requests/
+
+codex
+The current public alias is a recursive `Mapping[str, JsonType]`. My hypothesis is that mypy’s inferred least-common value types (`Collection[str]` and `object`) are too broad for that recursive JSON-only mapping, even though both concrete dictionaries are JSON-serializable. I’ll reproduce this directly against the checked-out package before adding any test scaffolding.
+exec
+/bin/bash -lc '"'"'python -m mypy --version; python -m pyright --version; git log -1 --oneline'"'"' in /workspace/repo
+ succeeded in 0ms:
+/usr/local/bin/python: No module named mypy
+/usr/local/bin/python: No module named pyright
+f361ead Bump https://github.com/astral-sh/ruff-pre-commit (#7562)
+
+exec
+/bin/bash -lc "find . -maxdepth 3 -type d \\( -name '"'"'.venv'"'"' -o -name '"'"'venv'"'"' \\) -print && command -v uv || true && command -v pipx || true && python -m pip --version && git status --short" in /workspace/repo
+ succeeded in 0ms:
+pip 26.1.2 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
+
+codex
+Mypy is not installed in this checkout, while the repository’s CI currently runs pyright only. I’ll use an isolated temporary mypy install and add a minimal type-check fixture (not production code) containing the report’s two calls; then I’ll run mypy on that single fixture and stop at the observed failure.
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(mktemp -d /tmp/requests-mypy.XXXXXX) && python -m pip install --quiet --target "$TASK_MYPY_DIR" mypy && printf '"'"'"'"'"'%s'"'"' \""'"'"'$TASK_MYPY_DIR" > /tmp/requests-mypy-path && PYTHONPATH="$TASK_MYPY_DIR" python -m mypy --version'"'"' in /workspace/repo
+ succeeded in 2370ms:
+WARNING: Running pip as the '"'"'root'"'"' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+mypy 2.3.0 (compiled: yes)
+
+apply patch
+patch: completed
+/workspace/repo/tests/typing/json_argument_inference.py
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental tests/typing/json_argument_inference.py'"'"' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --show-traceback tests/typing/json_argument_inference.py'"'"' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+Please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: use --pdb to drop into pdb
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/tmp/requests-mypy.3Kutk8/mypy/__main__.py", line 16, in console_entry
+    main()
+  File "mypy/main.py", line 154, in main
+  File "mypy/main.py", line 244, in run_build
+  File "mypy/build.py", line 385, in build
+  File "mypy/build.py", line 1908, in create_metastore
+  File "mypy/metastore.py", line 200, in __init__
+  File "mypy/metastore.py", line 166, in connect_db
+  File "/usr/local/lib/python3.12/sqlite3/__init__.py", line 57, in <module>
+    from sqlite3.dbapi2 import *
+  File "/usr/local/lib/python3.12/sqlite3/dbapi2.py", line 27, in <module>
+    from _sqlite3 import *
+ImportError: libsqlite3.so.0: cannot open shared object file: No such file or directory
+
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc '"'"'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --cache-dir=/dev/null tests/typing/json_argument_inference.py'"'"' in /workspace/repo
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+ exited 2 in 1208ms:
+tests/__init__.py:6: error: Module "urllib3.exceptions" has no attribute "SNIMissingWarning"  [attr-defined]
+tests/typing/json_argument_inference.py:6: error: Argument "json" to "post" has incompatible type "dict[str, Collection[str]]"; expected "JsonType"  [arg-type]
+tests/typing/json_argument_inference.py:9: error: Argument "json" to "post" has incompatible type "dict[str, object]"; expected "JsonType"  [arg-type]
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+codex
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+tokens used
+13,746
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+[exit 0; elapsed 62329ms; Docker-isolated fallback]
+$ python -m pytest -q '"'"'tests/typing/json_argument_inference.py'"'"'
+[2026-07-20 17:45:43,568] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+
+no tests ran in 0.02s
+[exit 5]
+$ git diff --no-ext-diff
+
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: none
+session id: 019f80a3-3354-77e0-b83d-29cf9100dea7
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "mypy warns about invalid types for the `json` argument to `requests.post` when using intermediate dictionary variables.",
+  "steps_to_reproduce": [
+    "Define `fn(d: dict[str, str]) -> None`.",
+    "Assign `j = {\"foo\": d, \"bar\": \"hi\"}`.",
+    "Call `requests.post(\"https://example.com\", json=j)`.",
+    "Assign `k = {\"foo\": d, \"bool\": True}`.",
+    "Call `requests.post(\"https://example.com\", json=k)`.",
+    "Run mypy on the code."
+  ],
+  "expected_behavior": "The `json` argument should not produce invalid-type warnings; the issue states that these warnings did not occur when using `types-requests`.",
+  "actual_behavior": "mypy reports `Argument \"json\" to \"post\" has incompatible type \"dict[str, Collection[str]]\"; expected \"JsonType\"` and `Argument \"json\" to \"post\" has incompatible type \"dict[str, object]\"; expected \"JsonType\"`.",
+  "environment": {
+    "charset_normalizer.version": "3.4.7",
+    "idna.version": "3.15",
+    "implementation.name": "CPython",
+    "implementation.version": "3.13.5",
+    "platform.release": "6.12.74+deb13+1-amd64",
+    "platform.system": "Linux",
+    "requests.version": "2.34.1",
+    "system_ssl.version": "30500050",
+    "urllib3.version": "2.7.0",
+    "using_charset_normalizer": "true",
+    "using_pyopenssl": "false",
+    "cryptography.version": ""
+  },
+  "affected_area": "Requests `json` argument typing",
+  "repro_code": "import requests\n\ndef fn(d: dict[str, str]) -> None:\n    j = {\"foo\": d, \"bar\": \"hi\"}\n    requests.post(\"https://example.com\", json=j)\n\n    k = {\"foo\": d, \"bool\": True}\n    requests.post(\"https://example.com\", json=k)\n",
+  "missing_info": [
+    "mypy version",
+    "The exact mypy command or configuration used"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+2
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete reproduction path. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+portPrivateImportUsage = false
+reportUnnecessaryIsInstance = false
+reportUnusedImport = false  # duplicate of Ruff's F401 rule
+[tox]
+envlist = py{310,311,312,313,314}-{default, use_chardet_on_py3}
+
+[testenv]
+deps = -rrequirements-dev.txt
+extras =
+    security
+    socks
+commands =
+    pytest {posargs:tests}
+
+[testenv:default]
+
+[testenv:use_chardet_on_py3]
+extras =
+    security
+    socks
+    use_chardet_on_py3
+.github/AI_POLICY.md:13:> - Every contribution has to be backed by a human who unequivocally owns the copyright for all changes.
+.github/AI_POLICY.md:25:> - You either hold the copyright to the changes or have explicit legal authorization to contribute them under this project's license.
+.github/AI_POLICY.md:32:There is ongoing legal uncertainty regarding the copyright status of LLM-generated works and their provenance.
+.github/AI_POLICY.md:33:Since we do not have a formal [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_license_agreement) (CLA), you retain your copyright to your changes to this project.
+.github/AI_POLICY.md:35:Therefore, allowing contributions by LLMs has unpredictable consequences for the copyright status of this project – even when leaving aside possible copyright violations due to plagiarism.
+.github/AI_POLICY.md:57:  We cannot risk the copyright status of this project.
+.github/AI_POLICY.md:61:- By submitting a pull request, **you** take full **technical and legal** responsibility for the contents of the pull request and promise that **you** hold the copyright for the changes submitted.
+docs/conf.py:61:copyright = u"Kenneth Reitz and contributors"
+docs/conf.py:204:# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+docs/conf.py:205:html_show_copyright = True
+docs/conf.py:319:epub_copyright = copyright
+docs/_themes/LICENSE:3:Copyright (c) 2011 Kenneth Reitz.
+docs/_themes/LICENSE:8:Copyright (c) 2010 by Armin Ronacher.
+docs/_themes/LICENSE:17:* Redistributions of source code must retain the above copyright
+docs/_themes/LICENSE:21:  copyright notice, this list of conditions and the following
+.github/workflows/typecheck.yml:9:  typecheck:
+.github/workflows/typecheck.yml:29:        python -m pip install -e . --group typecheck
+.github/workflows/typecheck.yml:31:    - name: Run pyright
+.github/workflows/typecheck.yml:32:      run: python -m pyright src/requests/
+
+codex
+The current public alias is a recursive `Mapping[str, JsonType]`. My hypothesis is that mypy’s inferred least-common value types (`Collection[str]` and `object`) are too broad for that recursive JSON-only mapping, even though both concrete dictionaries are JSON-serializable. I’ll reproduce this directly against the checked-out package before adding any test scaffolding.
+exec
+/bin/bash -lc 'python -m mypy --version; python -m pyright --version; git log -1 --oneline' in /workspace/repo
+ succeeded in 0ms:
+/usr/local/bin/python: No module named mypy
+/usr/local/bin/python: No module named pyright
+f361ead Bump https://github.com/astral-sh/ruff-pre-commit (#7562)
+
+exec
+/bin/bash -lc "find . -maxdepth 3 -type d \\( -name '.venv' -o -name 'venv' \\) -print && command -v uv || true && command -v pipx || true && python -m pip --version && git status --short" in /workspace/repo
+ succeeded in 0ms:
+pip 26.1.2 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
+
+codex
+Mypy is not installed in this checkout, while the repository’s CI currently runs pyright only. I’ll use an isolated temporary mypy install and add a minimal type-check fixture (not production code) containing the report’s two calls; then I’ll run mypy on that single fixture and stop at the observed failure.
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(mktemp -d /tmp/requests-mypy.XXXXXX) && python -m pip install --quiet --target "$TASK_MYPY_DIR" mypy && printf '"'%s' \""'$TASK_MYPY_DIR" > /tmp/requests-mypy-path && PYTHONPATH="$TASK_MYPY_DIR" python -m mypy --version' in /workspace/repo
+ succeeded in 2370ms:
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+mypy 2.3.0 (compiled: yes)
+
+apply patch
+patch: completed
+/workspace/repo/tests/typing/json_argument_inference.py
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental tests/typing/json_argument_inference.py' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --show-traceback tests/typing/json_argument_inference.py' in /workspace/repo
+ exited 2 in 0ms:
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+Please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: use --pdb to drop into pdb
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/tmp/requests-mypy.3Kutk8/mypy/__main__.py", line 16, in console_entry
+    main()
+  File "mypy/main.py", line 154, in main
+  File "mypy/main.py", line 244, in run_build
+  File "mypy/build.py", line 385, in build
+  File "mypy/build.py", line 1908, in create_metastore
+  File "mypy/metastore.py", line 200, in __init__
+  File "mypy/metastore.py", line 166, in connect_db
+  File "/usr/local/lib/python3.12/sqlite3/__init__.py", line 57, in <module>
+    from sqlite3.dbapi2 import *
+  File "/usr/local/lib/python3.12/sqlite3/dbapi2.py", line 27, in <module>
+    from _sqlite3 import *
+ImportError: libsqlite3.so.0: cannot open shared object file: No such file or directory
+
+
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path) && PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --cache-dir=/dev/null tests/typing/json_argument_inference.py' in /workspace/repo
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+ exited 2 in 1208ms:
+tests/__init__.py:6: error: Module "urllib3.exceptions" has no attribute "SNIMissingWarning"  [attr-defined]
+tests/typing/json_argument_inference.py:6: error: Argument "json" to "post" has incompatible type "dict[str, Collection[str]]"; expected "JsonType"  [arg-type]
+tests/typing/json_argument_inference.py:9: error: Argument "json" to "post" has incompatible type "dict[str, object]"; expected "JsonType"  [arg-type]
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+codex
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+diff --git a/tests/typing/json_argument_inference.py b/tests/typing/json_argument_inference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..481e06f5bf8c180837033a8d23d8c7f169c52846
+--- /dev/null
++++ b/tests/typing/json_argument_inference.py
+@@ -0,0 +1,9 @@
++import requests
++
++
++def fn(d: dict[str, str]) -> None:
++    j = {"foo": d, "bar": "hi"}
++    requests.post("https://example.com", json=j)
++
++    k = {"foo": d, "bool": True}
++    requests.post("https://example.com", json=k)
+
+tokens used
+13,746
+Reproduced the reported mypy failure with a minimal regression fixture at [tests/typing/json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1).
+
+Focused mypy output includes:
+
+```text
+json_argument_inference.py:6: error: ... "dict[str, Collection[str]]"; expected "JsonType"
+json_argument_inference.py:9: error: ... "dict[str, object]"; expected "JsonType"
+```
+
+Hypothesis confirmed: mypy widens the intermediate dictionary value type beyond the recursive `JsonType` alias, causing both `requests.post(..., json=...)` calls to be rejected. No production code was changed.
+[exit 0; elapsed 62329ms; Docker-isolated fallback]
+$ python -m pytest -q 'tests/typing/json_argument_inference.py'
+[2026-07-20 17:45:43,568] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+
+no tests ran in 0.02s
+[exit 5]
+$ git diff --no-ext-diff
+
+
+codex
+I’ll verify the existing regression fixture and reproduce the reported type-check error with a single focused mypy run. My hypothesis is that mypy infers the heterogeneous intermediate dictionaries too broadly for Requests’ recursive JSON alias.
+exec
+/bin/bash -lc 'git status --short && rg -n "JsonType|json_argument_inference" src tests pyproject.toml setup.cfg tox.ini 2>/dev/null || true && rg --files tests/typing 2>/dev/null | head -80' in /workspace/repo
+ succeeded in 0ms:
+?? tests/typing/
+src/requests/api.py:120:    json: _t.JsonType = None,
+src/requests/_types.py:145:    JsonType: TypeAlias = (
+src/requests/_types.py:151:        | Sequence["JsonType"]
+src/requests/_types.py:152:        | Mapping[str, "JsonType"]
+src/requests/_types.py:175:        json: JsonType
+src/requests/_types.py:179:        json: JsonType
+src/requests/_types.py:188:        json: JsonType
+src/requests/models.py:318:    json: _t.JsonType
+src/requests/models.py:334:        json: _t.JsonType = None,
+src/requests/models.py:435:        json: _t.JsonType = None,
+src/requests/models.py:577:        self, data: _t.DataType, files: _t.FilesType, json: _t.JsonType = None
+src/requests/sessions.py:574:        json: _t.JsonType = None,
+src/requests/sessions.py:699:        json: _t.JsonType = None,
+tests/typing/json_argument_inference.py
+
+exec
+/bin/bash -lc 'TASK_MYPY_DIR=$(cat /tmp/requests-mypy-path 2>/dev/null || true)
+if [ -n "$TASK_MYPY_DIR" ] && [ -d "$TASK_MYPY_DIR/mypy" ]; then
+  PYTHONPATH="$TASK_MYPY_DIR" MYPYPATH=src python -m mypy --no-incremental --cache-dir=/dev/null tests/typing/json_argument_inference.py
+else
+  python -m mypy --no-incremental --cache-dir=/dev/null tests/typing/json_argument_inference.py
+fi' in /workspace/repo
+ exited 2 in 1243ms:
+tests/__init__.py:6: error: Module "urllib3.exceptions" has no attribute "SNIMissingWarning"  [attr-defined]
+tests/typing/json_argument_inference.py:6: error: Argument "json" to "post" has incompatible type "dict[str, Collection[str]]"; expected "JsonType"  [arg-type]
+tests/typing/json_argument_inference.py:9: error: Argument "json" to "post" has incompatible type "dict[str, object]"; expected "JsonType"  [arg-type]
+error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 2.3.0
+note: please use --show-traceback to print a traceback when reporting a bug
+
+codex
+Confirmed the reported mypy defect.
+
+The regression fixture is present at [json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1). Focused mypy output includes:
+
+```text
+...:6: error: Argument "json" to "post" has incompatible type
+"dict[str, Collection[str]]"; expected "JsonType"
+...:9: error: Argument "json" to "post" has incompatible type
+"dict[str, object]"; expected "JsonType"
+```
+
+This supports the hypothesis: mypy widens heterogeneous intermediate dictionaries beyond the recursive `JsonType` alias. The run also emitted an unrelated `urllib3` typing error and a mypy internal-error notice after reporting the target failures.
+tokens used
+5,935
+Confirmed the reported mypy defect.
+
+The regression fixture is present at [json_argument_inference.py](/workspace/repo/tests/typing/json_argument_inference.py:1). Focused mypy output includes:
+
+```text
+...:6: error: Argument "json" to "post" has incompatible type
+"dict[str, Collection[str]]"; expected "JsonType"
+...:9: error: Argument "json" to "post" has incompatible type
+"dict[str, object]"; expected "JsonType"
+```
+
+This supports the hypothesis: mypy widens heterogeneous intermediate dictionaries beyond the recursive `JsonType` alias. The run also emitted an unrelated `urllib3` typing error and a mypy internal-error notice after reporting the target failures.
+[exit 0; elapsed 22992ms; Docker-isolated fallback]
+$ python -m pytest -q 'tests/typing/json_argument_inference.py'
+[2026-07-20 17:47:10,055] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+
+no tests ran in 0.01s
+[exit 5]
+$ git diff --no-ext-diff

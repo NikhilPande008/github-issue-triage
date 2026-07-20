@@ -1,0 +1,77 @@
+[2026-07-20 17:41:52,311] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+..............................127.0.0.1 - - [20/Jul/2026 17:41:52] "GET /get HTTP/1.1" 200 208
+.127.0.0.1 - - [20/Jul/2026 17:41:52] "GET /get HTTP/1.1" 200 208
+..........127.0.0.1 - - [20/Jul/2026 17:41:52] "HEAD /get HTTP/1.1" 200 0
+.F..127.0.0.1 - - [20/Jul/2026 17:41:52] "GET /get HTTP/1.1" 200 272
+..127.0.0.1 - - [20/Jul/2026 17:41:52] "GET /get HTTP/1.1" 200 272
+.....127.0.0.1 - - [20/Jul/2026 17:41:52] "GET /response-headers?Set-Cookie=foo%3Ddeleted%3B+expires%3DThu%2C+01-Jan-1970+00%3A00%3A01+GMT HTTP/1.1" 200 138
+.......127.0.0.1 - - [20/Jul/2026 17:41:52] "GET /get HTTP/1.1" 200 247
+............. [ 21%]
+..............................127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /status/500 HTTP/1.1" 500 0
+....................s.pytest-httpbin server hit an exception serving request: [SSL: TLSV1_ALERT_UNKNOWN_CA] tlsv1 alert unknown ca (_ssl.c:1010)
+attempting to ignore so the rest of the tests can run
+.127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /get?test=foo&test=baz HTTP/1.1" 200 338
+.............127.0.0.1 - - [20/Jul/2026 17:41:53] "GET / HTTP/1.1" 200 13760
+...... [ 42%]
+127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /cookies/set?cookie=value HTTP/1.1" 302 203
+......................127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /get HTTP/1.1" 200 272
+.......127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /get HTTP/1.1" 200 285
+.........127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /get?foo=bar&FOO=bar HTTP/1.1" 200 326
+...........................127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /get HTTP/1.1" 200 300
+....... [ 63%]
+127.0.0.1 - - [20/Jul/2026 17:41:53] "GET /get HTTP/1.1" 200 272
+......................127.0.0.1 - - [20/Jul/2026 17:41:53] "POST /post HTTP/1.1" 200 430
+.....x............................................ [ 84%]
+......................................................                   [100%]
+=================================== FAILURES ===================================
+____________ TestRequests.test_http_302_doesnt_change_query_to_get _____________
+
+self = <tests.test_requests.TestRequests object at 0xffff92fdd3a0>
+httpbin = <function prepare_url.<locals>.inner at 0xffff92ec00e0>
+
+    def test_http_302_doesnt_change_query_to_get(self, httpbin):
+        session = RedirectSession([302])
+        request = requests.Request("QUERY", httpbin("query")).prepare()
+        response = session.send(request)
+    
+        redirected = next(session.resolve_redirects(response, request))
+    
+>       assert redirected.request.method == "QUERY"
+E       AssertionError: assert 'GET' == 'QUERY'
+E         
+E         - QUERY
+E         + GET
+
+tests/test_requests.py:313: AssertionError
+=============================== warnings summary ===============================
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+  /workspace/repo/src/requests/auth.py:45: DeprecationWarning: Non-string usernames will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (42) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+  /workspace/repo/src/requests/auth.py:55: DeprecationWarning: Non-string passwords will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (<class 'int'>) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+  /workspace/repo/src/requests/auth.py:45: DeprecationWarning: Non-string usernames will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (None) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+  /workspace/repo/src/requests/auth.py:55: DeprecationWarning: Non-string passwords will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (<class 'NoneType'>) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_True
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_bundle_expired_cert
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_bundle_unexpired_cert
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_mtls_settings
+  /usr/local/lib/python3.12/site-packages/urllib3/connectionpool.py:1110: InsecureRequestWarning: Unverified HTTPS request is being made to host 'localhost'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_requests.py::TestRequests::test_http_302_doesnt_change_query_to_get
+1 failed, 339 passed, 1 skipped, 1 xfailed, 12 warnings in 39.62s

@@ -1,7 +1,10 @@
 import io
 import json
+from urllib.error import HTTPError
 
-from triage.github.client import GitHubClient
+import pytest
+
+from triage.github.client import GitHubClient, GitHubClientError
 import triage.github.client as client_module
 
 
@@ -55,3 +58,12 @@ def test_client_paginates_when_pull_requests_fill_the_first_page(monkeypatch) ->
 
     assert issues == second_page
     assert len(requests) == 2
+
+
+def test_client_explains_how_to_resolve_rate_limit_errors(monkeypatch) -> None:
+    def fake_urlopen(request, timeout):
+        raise HTTPError(request.full_url, 403, "Forbidden", None, io.BytesIO(b'{"message":"rate limit exceeded"}'))
+
+    monkeypatch.setattr(client_module, "urlopen", fake_urlopen)
+    with pytest.raises(GitHubClientError, match="Set GITHUB_TOKEN"):
+        GitHubClient("psf/requests").fetch_issue(1)

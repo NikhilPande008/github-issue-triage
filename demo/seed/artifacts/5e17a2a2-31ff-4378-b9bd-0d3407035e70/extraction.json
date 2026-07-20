@@ -1,0 +1,33 @@
+{
+  "summary": "The documentation for requests.Session.request(verify=...) says it defaults to True, but omitting verify defers to the session's verify value. Passing verify=True can therefore behave differently from leaving verify unspecified, including resetting the CA bundle path.",
+  "steps_to_reproduce": [
+    "Import certifi, requests, ssl, and os.",
+    "Create a requests session.",
+    "Set session.verify to ssl.get_default_verify_paths().capath.",
+    "Verify that session.verify is a directory with os.path.isdir(session.verify).",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\") and observe a successful response.",
+    "Call session.request(url=\"https://example.com\", method=\"HEAD\", verify=True) and observe an OSError stating that the path /inaccessible/path is not a suitable TLS CA certificate bundle."
+  ],
+  "expected_behavior": "Leaving verify unspecified should defer to the session's verify value, including a configured CA bundle path or verify=False. The documentation should state that the method defaults to the Session value, which defaults to True.",
+  "actual_behavior": "Passing verify=True uses the /inaccessible/path certifi CA bundle path and raises OSError, while leaving verify unspecified uses the session's configured CA path and returns <Response [200]>.",
+  "environment": {
+    "certifi_version": "2026.04.22",
+    "certifi_path": "/inaccessible/path",
+    "requests_version": "2.33.1",
+    "python_implementation": "CPython",
+    "python_version": "3.10.12",
+    "operating_system": "Linux",
+    "platform_release": "6.8.0-110-generic",
+    "chardet_version": "4.0.0",
+    "charset_normalizer_version": "3.4.4",
+    "idna_version": "3.3",
+    "urllib3_version": "2.6.3",
+    "system_ssl_version": "30000020",
+    "using_charset_normalizer": "false",
+    "using_pyopenssl": "false"
+  },
+  "affected_area": "requests.Session.request() verify parameter documentation and behavior",
+  "repro_code": "import certifi,requests,ssl,os\n\ncertifi.__version__\ncertifi.where()\nrequests.__version__\nsession = requests.session()\nsession.verify = ssl.get_default_verify_paths().capath\nos.path.isdir(session.verify)\nsession.request(url=\"https://example.com\", method=\"HEAD\")\nsession.request(url=\"https://example.com\", method=\"HEAD\", verify=True)",
+  "missing_info": [],
+  "confidence": 0.99
+}

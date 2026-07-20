@@ -61,3 +61,16 @@ def test_batch_force_reprocesses_existing_issue() -> None:
     selected = Selector([issue(3)])
     summary = BatchTriageService(selected, lambda repository: {3}, lambda item: BatchItem(item, "run-3", Classification.NOT_A_BUG, 1, None)).run("psf/requests", 1, force=True)
     assert summary.items[0].skipped is False
+
+
+def test_batch_preserves_attributable_cost_from_each_processed_investigation() -> None:
+    selector = Selector([issue(2), issue(1)])
+    costs = {2: 0.004184, 1: 0.003070}
+
+    summary = BatchTriageService(
+        selector,
+        lambda repository: set(),
+        lambda item: BatchItem(item, f"run-{item.issue_number}", Classification.NEEDS_INFO, 1, costs[item.issue_number]),
+    ).run("psf/requests", count=2)
+
+    assert [item.cost_usd for item in summary.items] == [0.004184, 0.003070]

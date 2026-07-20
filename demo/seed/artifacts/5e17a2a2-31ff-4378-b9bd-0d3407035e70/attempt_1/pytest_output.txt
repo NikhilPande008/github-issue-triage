@@ -1,0 +1,62 @@
+[2026-07-20 17:50:23,035] WARNING in core: flasgger is not installed; serving the static landing page at / and skipping the Swagger UI and /spec.json.
+..............................127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /get HTTP/1.1" 200 208
+..............127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /get HTTP/1.1" 200 272
+............................ [ 21%]
+................127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /digest-auth/auth/user/pass/SHA-512/never HTTP/1.1" 200 46
+..127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 200 46
+..127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /digest-auth/auth/user/pass/SHA-512 HTTP/1.1" 401 0
+.........127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /status/500 HTTP/1.1" 500 0
+...................F.s..................... [ 42%]
+.............127.0.0.1 - - [20/Jul/2026 17:50:23] "GET /get HTTP/1.1" 200 272
+................................127.0.0.1 - - [20/Jul/2026 17:50:24] "GET /get HTTP/1.1" 200 348
+........................... [ 63%]
+...........................x....127.0.0.1 - - [20/Jul/2026 17:50:24] "GET /status/204 HTTP/1.1" 204 0
+........................................ [ 84%]
+......................................................                   [100%]
+=================================== FAILURES ===================================
+_ TestRequests.test_session_request_verify_documentation_uses_session_default __
+
+self = <tests.test_requests.TestRequests object at 0xffffa3337b00>
+
+    def test_session_request_verify_documentation_uses_session_default(self):
+>       assert "Defaults to the Session value, which defaults to ``True``." in (
+            requests.Session.request.__doc__
+        )
+E       assert 'Defaults to the Session value, which defaults to ``True``.' in "Constructs a :class:`Request <Request>`, prepares it and sends it.\n        Returns :class:`Response <Response>` obje...ssl client cert file (.pem).\n            If Tuple, ('cert', 'key') pair.\n        :rtype: requests.Response\n        "
+E        +  where "Constructs a :class:`Request <Request>`, prepares it and sends it.\n        Returns :class:`Response <Response>` obje...ssl client cert file (.pem).\n            If Tuple, ('cert', 'key') pair.\n        :rtype: requests.Response\n        " = <function Session.request at 0xffffa34bcb80>.__doc__
+E        +    where <function Session.request at 0xffffa34bcb80> = <class 'requests.sessions.Session'>.request
+E        +      where <class 'requests.sessions.Session'> = requests.Session
+
+tests/test_requests.py:1027: AssertionError
+=============================== warnings summary ===============================
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+  /workspace/repo/src/requests/auth.py:45: DeprecationWarning: Non-string usernames will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (42) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+tests/test_requests.py::TestRequests::test_set_basicauth[42-42]
+  /workspace/repo/src/requests/auth.py:55: DeprecationWarning: Non-string passwords will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (<class 'int'>) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+  /workspace/repo/src/requests/auth.py:45: DeprecationWarning: Non-string usernames will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (None) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+tests/test_requests.py::TestRequests::test_set_basicauth[None-None]
+  /workspace/repo/src/requests/auth.py:55: DeprecationWarning: Non-string passwords will no longer be supported in Requests 3.0.0. Please convert the object you've passed in (<class 'NoneType'>) to a string or bytes object in the near future to avoid problems.
+    warnings.warn(
+
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_True
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_bundle_expired_cert
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_tls_settings_verify_bundle_unexpired_cert
+tests/test_requests.py::TestPreparingURLs::test_different_connection_pool_for_mtls_settings
+  /usr/local/lib/python3.12/site-packages/urllib3/connectionpool.py:1110: InsecureRequestWarning: Unverified HTTPS request is being made to host 'localhost'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_requests.py::TestRequests::test_session_request_verify_documentation_uses_session_default
+1 failed, 339 passed, 1 skipped, 1 xfailed, 12 warnings in 39.68s

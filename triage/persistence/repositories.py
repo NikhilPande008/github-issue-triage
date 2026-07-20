@@ -1,7 +1,9 @@
+from decimal import Decimal
 from typing import Generic, TypeVar
 
 from sqlalchemy import select
 from triage.domain.enums import InvestigationStatus
+from triage.llm.pricing import OPENAI_PROVIDER
 from sqlalchemy.orm import Session
 
 from triage.persistence.models import Artifact, Hypothesis, Investigation, LLMCall
@@ -61,3 +63,17 @@ class ArtifactRepository(Repository[Artifact]):
 
 class LLMCallRepository(Repository[LLMCall]):
     model = LLMCall
+
+    def tracked_cost_usd(self, investigation_id: str) -> float | None:
+        """Return only fully priced, linked OpenAI API cost for terminal reporting."""
+        costs = list(
+            self.session.scalars(
+                select(LLMCall.cost_usd).where(
+                    LLMCall.investigation_id == investigation_id,
+                    LLMCall.provider == OPENAI_PROVIDER,
+                )
+            )
+        )
+        if not costs or any(cost is None for cost in costs):
+            return None
+        return float(sum((Decimal(cost) for cost in costs), Decimal("0")))
