@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { Investigations, sortQueue } from "./Investigations";
 
@@ -23,4 +23,17 @@ it("renders the triage queue as the default screen", async () => {
   render(<Investigations />);
   expect(screen.getByRole("status")).toHaveTextContent("Loading triage queue");
   await waitFor(() => expect(screen.getByText("Title")).toBeInTheDocument());
+});
+
+it("offers a single repository filter when multiple repositories are loaded", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [
+    { ...base, id: "requests", repository: "psf/requests", issue_title: "Requests issue", classification: "BEHAVIOR_GAP_CONFIRMED" },
+    { ...base, id: "agents", repository: "openai/openai-agents-python", issue_title: "Agents issue", classification: "NEEDS_INFO" },
+  ], total: 2 }) }));
+  render(<Investigations />);
+  const filter = await screen.findByRole("combobox", { name: "Repository filter" });
+  expect(screen.queryByRole("combobox", { name: "Classification filter" })).not.toBeInTheDocument();
+  fireEvent.change(filter, { target: { value: "openai/openai-agents-python" } });
+  expect(screen.getByText("Agents issue")).toBeInTheDocument();
+  expect(screen.queryByText("Requests issue")).not.toBeInTheDocument();
 });
