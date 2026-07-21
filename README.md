@@ -650,8 +650,10 @@ policy. No GitHub comments, labels, closures, or other GitHub writes occurred.
 | `openai/openai-guardrails-python` | [#38](https://github.com/openai/openai-guardrails-python/issues/38) | `NEEDS_INFO` | No modified executable pytest test |
 
 Distribution: two behavior-gap confirmations, three `NEEDS_INFO`, one
-`WONT_REPRO`, and zero `NOT_A_BUG`. The six selected records used $0.030567 of
-tracked OpenAI API cost, 45.742 seconds of tracked OpenAI API latency, and
-1,362.612 seconds of unpriced Codex execution. Initial #3654 environment and
+`WONT_REPRO`, and zero `NOT_A_BUG`. The system declined to confirm 4 of the 6
+selected issues, returning bounded non-confirming outcomes instead. The six
+selected records used about $0.03 of tracked OpenAI API cost, about 46 seconds
+of tracked OpenAI API latency, and about 23 minutes of unpriced Codex
+execution. Initial #3654 environment and
 network-misconfiguration attempts remain in the audit trail as operational
 failures and are excluded from this distribution.

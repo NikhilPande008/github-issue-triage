@@ -167,19 +167,21 @@ local evidence snapshot, not a live execution environment.
 The system was run sequentially, with no GitHub writes, against six selected
 issues outside the original Requests repository.
 
-| Repository / issue | Result | Key deterministic evidence | Tracked OpenAI cost | Codex wall time |
+| Repository / issue | Result | Key deterministic evidence | Tracked OpenAI cost (rounded) | Codex wall time |
 | --- | --- | --- | ---: | ---: |
-| `openai/openai-agents-python` [#3563](https://github.com/openai/openai-agents-python/issues/3563) | `BEHAVIOR_GAP_CONFIRMED` | New failing assertion in `tests/test_call_model_input_filter.py` | $0.003632 | 120.423s |
-| `openai/openai-agents-python` [#3611](https://github.com/openai/openai-agents-python/issues/3611) | `NEEDS_INFO` | No modified executable pytest test | $0.006934 | 260.691s |
-| `openai/openai-agents-python` [#3654](https://github.com/openai/openai-agents-python/issues/3654) | `WONT_REPRO` | No modified executable pytest test | $0.002991 | 283.849s |
-| `openai/openai-guardrails-python` [#70](https://github.com/openai/openai-guardrails-python/issues/70) | `BEHAVIOR_GAP_CONFIRMED` | New failing assertion in `tests/unit/test_agents.py` | $0.007231 | 160.510s |
-| `openai/openai-guardrails-python` [#75](https://github.com/openai/openai-guardrails-python/issues/75) | `NEEDS_INFO` | No modified executable pytest test | $0.004243 | 278.929s |
-| `openai/openai-guardrails-python` [#38](https://github.com/openai/openai-guardrails-python/issues/38) | `NEEDS_INFO` | No modified executable pytest test | $0.005536 | 258.210s |
+| `openai/openai-agents-python` [#3563](https://github.com/openai/openai-agents-python/issues/3563) | `BEHAVIOR_GAP_CONFIRMED` | New failing assertion in `tests/test_call_model_input_filter.py` | $0.004 | 120.423s |
+| `openai/openai-agents-python` [#3611](https://github.com/openai/openai-agents-python/issues/3611) | `NEEDS_INFO` | No modified executable pytest test | $0.007 | 260.691s |
+| `openai/openai-agents-python` [#3654](https://github.com/openai/openai-agents-python/issues/3654) | `WONT_REPRO` | No modified executable pytest test | $0.003 | 283.849s |
+| `openai/openai-guardrails-python` [#70](https://github.com/openai/openai-guardrails-python/issues/70) | `BEHAVIOR_GAP_CONFIRMED` | New failing assertion in `tests/unit/test_agents.py` | $0.007 | 160.510s |
+| `openai/openai-guardrails-python` [#75](https://github.com/openai/openai-guardrails-python/issues/75) | `NEEDS_INFO` | No modified executable pytest test | $0.004 | 278.929s |
+| `openai/openai-guardrails-python` [#38](https://github.com/openai/openai-guardrails-python/issues/38) | `NEEDS_INFO` | No modified executable pytest test | $0.006 | 258.210s |
 
 Distribution: **2 confirmations, 3 needs-information outcomes, 1
-won't-reproduce, 0 not-a-bug**. The six selected records total **$0.030567** in
-tracked OpenAI API cost, **45.742 seconds** in tracked OpenAI latency, and
-**1,362.612 seconds** of explicitly unpriced Codex execution.
+won't-reproduce, 0 not-a-bug**. Put another way, the system **declined to
+confirm 4 of the 6 selected issues** and returned bounded non-confirming
+outcomes instead. The six records used about **$0.03** in tracked OpenAI API
+cost, about **46 seconds** of tracked OpenAI latency, and about **23 minutes**
+of explicitly unpriced Codex execution.
 
 Initial #3654 runs with isolated agent networking and an unsupported pip
 `--group` setup command were retained as auditable environment/setup failures;
@@ -319,24 +321,23 @@ precision, customer-value, or automated-posting claim.
    and confirmations have neither and are network-isolated by default. This
    reduces test-execution exposure but does not remove agent-runtime risk for
    public or untrusted code.
-3. **Language coverage is narrow.** Only pytest and Vitest are live runner
-   adapters. Rust/Cargo is specifically not supported, which is why
-   `openai/codex` was not included in the cross-repository batch.
+3. **Live validation is deliberately scoped.** The cross-repository batch was
+   selected from Python/JavaScript repositories compatible with the implemented
+   pytest and Vitest adapters. Rust/Cargo and other runner ecosystems were out
+   of scope for this validation, rather than treated as failed investigations.
 4. **Environment setup remains repository-specific.** PEP 735 dependency groups
    exposed a concrete gap: pip cannot consume `--group`, so operators must
    supply an explicit setup command for such repositories.
-5. **Non-confirming status semantics need refinement.** The `FAILED` status can
-   overlap a valid non-confirming classification after attempt exhaustion.
-6. **Scale is local-host bounded.** SQLite job claims/budgets are not a
+5. **Scale is local-host bounded.** SQLite job claims/budgets are not a
    multi-instance production deployment strategy.
-7. **No alternative provider performance claim.** Claude adapter architecture is
+6. **No alternative provider performance claim.** Claude adapter architecture is
    present but no approved live comparison has run.
-8. **No real commercial evidence yet.** There are no external design partners,
+7. **No real commercial evidence yet.** There are no external design partners,
    retention results, willingness-to-pay data, or fully loaded COGS.
-9. **Similarity is advisory.** It is not a duplicate decision engine and does
+8. **Similarity is advisory.** It is not a duplicate decision engine and does
    not yet have vector indexing or maintainer confirm/dismiss controls.
-10. **Replay is best-effort.** Registries, image digests, and dependencies can
-    prevent exact reconstruction.
+9. **Replay is best-effort.** Registries, image digests, and dependencies can
+   prevent exact reconstruction.
 
 ## 12. Validation baseline
 
@@ -354,20 +355,18 @@ not a substitute for a labelled semantic-fidelity evaluation or a security audit
 
 ## 13. Recommended next work
 
-1. Add a terminal non-error status such as `COMPLETED_NO_GAP`, migrate prior
-   records safely, and show outcome/operational state separately in the queue.
-2. Resolve the agent-networking contradiction: use a narrowly scoped egress
+1. Further harden agent egress: use a narrowly scoped egress
    channel or isolated agent service so ordinary test execution can remain
    network-disabled without breaking provider access.
-3. Add first-class dependency-group setup support (for example an explicitly
+2. Add first-class dependency-group setup support (for example an explicitly
    pinned sandbox toolchain) rather than requiring per-repository pip commands.
-4. Recruit consented design partners and collect independently adjudicated
+3. Recruit consented design partners and collect independently adjudicated
    semantic-review packets before considering any relaxation of posting policy.
-5. Establish a real provider-comparison protocol and run it only with approved,
+4. Establish a real provider-comparison protocol and run it only with approved,
    consented examples and fixed budgets.
-6. Move production queue/budget claims to PostgreSQL and add deployment,
+5. Move production queue/budget claims to PostgreSQL and add deployment,
    monitoring, retention, and incident procedures before multi-host operation.
-7. Measure full COGS—including agent billing, infrastructure, and human review—
+6. Measure full COGS—including agent billing, infrastructure, and human review—
    alongside time-to-triage and maintainer acceptance outcomes.
 
 ## 14. Bottom line

@@ -65,8 +65,10 @@ Database migration head is `0022_completed_no_gap_status`.
 
   The two confirmations were anchored in new failing assertions at
   `tests/test_call_model_input_filter.py` and `tests/unit/test_agents.py`.
-  Selected-run totals: $0.030567 tracked OpenAI cost, 45.742 seconds tracked
-  OpenAI latency, and 1,362.612 seconds of explicitly unpriced Codex time.
+  The system declined to confirm 4 of the 6 selected issues, returning bounded
+  non-confirming outcomes instead. Selected-run totals: about $0.03 tracked
+  OpenAI cost, about 46 seconds tracked OpenAI latency, and about 23 minutes of
+  explicitly unpriced Codex time.
   No GitHub writes occurred.
 
 ## Current operational caveats
