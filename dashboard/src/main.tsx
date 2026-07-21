@@ -15,7 +15,7 @@ import "./styles.css";
 
 export function Header() {
   const [live, setLive] = useState(false); useEffect(() => { api.liveDemoConfig().then((config) => setLive(config.enabled)).catch(() => undefined); }, []);
-  return <header className="app-header"><div className="shell header-content"><a className="brand" href="/" aria-label="Issue Triage, investigation list"><span className="brand-mark" aria-hidden="true">IT</span><span className="brand-copy"><strong>Issue Triage</strong><small>Evidence-first GitHub issue investigation</small></span></a><nav className="header-links" aria-label="Primary"><a href="/">Triage Queue</a><a href="?brief=1">Evidence Brief</a><a href="?results=1">Evidence Results</a><a href="?compare=1">Why evidence?</a><a href="?evaluation=1">Retrospective evaluation</a>{live && <a href="?live=1">Live demo</a>}</nav></div></header>;
+  return <header className="app-header"><div className="shell header-content"><a className="brand" href="/" aria-label="EvidenceTrail, investigation list"><span className="brand-mark" aria-hidden="true">ET</span><span className="brand-copy"><strong>EvidenceTrail</strong><small>Evidence-first GitHub issue investigation</small></span></a><nav className="header-links" aria-label="Primary"><a href="/">Triage Queue</a><a href="?brief=1">Evidence Brief</a><a href="?results=1">Evidence Results</a><a href="?compare=1">Why evidence?</a><a href="?evaluation=1">Retrospective evaluation</a>{live && <a href="?live=1">Live demo</a>}</nav></div></header>;
 }
 
 export function App() {

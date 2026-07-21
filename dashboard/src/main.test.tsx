@@ -4,6 +4,7 @@ import { Header } from "./main";
 
 it("provides persistent links to the queue, Evidence Brief, Evidence Results, and comparison", () => {
   render(<Header />);
+  expect(screen.getByRole("link", { name: "EvidenceTrail, investigation list" })).toHaveAttribute("href", "/");
   expect(screen.getByRole("link", { name: "Triage Queue" })).toHaveAttribute("href", "/");
   expect(screen.getByRole("link", { name: "Evidence Brief" })).toHaveAttribute("href", "?brief=1");
   expect(screen.getByRole("link", { name: "Evidence Results" })).toHaveAttribute("href", "?results=1");
