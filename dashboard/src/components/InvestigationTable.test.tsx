@@ -11,7 +11,7 @@ it("renders persisted investigations as real detail links", () => {
   expect(screen.getAllByRole("link", { name: /psf\/requests/i })[0]).toHaveAttribute("href", "?id=run-1");
   expect(screen.getByText("A real issue title")).toBeInTheDocument();
   expect(screen.getByText("Behavior gap confirmed")).toBeInTheDocument();
-  expect(screen.getAllByText("—")).toHaveLength(1);
+  expect(screen.queryByText("—")).not.toBeInTheDocument();
   expect(screen.getByText("1.3s")).toBeInTheDocument();
   expect(screen.getByLabelText("About assertsFailure")).toBeInTheDocument();
   expect(screen.getByText(/Set only when the deterministic pytest-evidence validator/)).toBeInTheDocument();
@@ -19,7 +19,7 @@ it("renders persisted investigations as real detail links", () => {
 
 it("marks unlinked historical metrics unavailable without inventing a zero cost", () => {
   render(<InvestigationTable items={[{ ...item, tracked_llm_api_cost_usd: null, tracked_llm_api_latency_ms: null, tracked_llm_api_cost_status: "unavailable", tracked_llm_api_latency_status: "unavailable", tracked_llm_api_explanation: "No tracked LLM API calls are linked to this investigation." }]} />);
-  expect(screen.getAllByText("—")).toHaveLength(3);
+  expect(screen.getAllByText("—")).toHaveLength(2);
   expect(screen.getAllByTitle(/No tracked LLM API calls/)).toHaveLength(2);
 });
 

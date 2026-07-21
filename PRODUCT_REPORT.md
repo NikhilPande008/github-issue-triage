@@ -1,11 +1,11 @@
-# Issue Triage — Product Report
+# EvidenceTrail — Product Report
 
 **Report date:** 2026-07-21  
 **Product state:** functioning local/pilot system; not a production SaaS claim
 
 ## 1. Executive summary
 
-Issue Triage is an evidence-first system for helping maintainers assess GitHub
+EvidenceTrail is an evidence-first system for helping maintainers assess GitHub
 issues. It does not treat an LLM's judgment as proof. Instead, it extracts a
 bounded behavior specification, asks a sandboxed coding agent to make the
 smallest focused test change it can justify, runs that test, and applies a
@@ -33,7 +33,7 @@ duplicate, an environment mismatch, or simply lack enough reproduction detail.
 The expensive work is often converting prose into a minimal executable claim
 and then determining whether that claim fails cleanly in the current codebase.
 
-Issue Triage aims to shorten that evidence-gathering step while keeping the
+EvidenceTrail aims to shorten that evidence-gathering step while keeping the
 result reviewable. The intended workflow is:
 
 1. An issue is selected from an explicitly scoped GitHub repository.
@@ -371,7 +371,7 @@ not a substitute for a labelled semantic-fidelity evaluation or a security audit
 
 ## 14. Bottom line
 
-Issue Triage is credible as an evidence-generation and maintainer-review tool:
+EvidenceTrail is credible as an evidence-generation and maintainer-review tool:
 it has real reproducible artifacts, a strict structured validation gate,
 negative outcomes in live runs, clear cost provenance, and deliberately
 constrained public-action controls. It is not yet credible to present as an

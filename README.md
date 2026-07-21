@@ -1,6 +1,6 @@
-# Issue Triage
+# EvidenceTrail
 
-Evidence-first, read-only triage for GitHub issues. Issue Triage turns a report
+Evidence-first, read-only triage for GitHub issues. EvidenceTrail turns a report
 into a bounded executable behavior investigation, preserving the extraction, changed
 test, pytest output, terminal log, diff, deterministic validation, and final
 classification for maintainer review.

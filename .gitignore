@@ -15,3 +15,5 @@ sandbox-workspaces/
 *.tsbuildinfo
 dashboard/node_modules/
 dashboard/dist/
+BUYER_DISCOVERY.md
+SUBMISSION_CHECKLIST.md

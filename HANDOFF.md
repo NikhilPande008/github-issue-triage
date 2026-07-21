@@ -6,7 +6,7 @@
 
 ## Current state
 
-Issue Triage is an evidence-first GitHub issue investigation system. It turns a
+EvidenceTrail is an evidence-first GitHub issue investigation system. It turns a
 read-only GitHub issue payload into a bounded sandboxed investigation and makes
 the extraction, changed test, structured JUnit result, terminal output, diff,
 reproducibility manifest, deterministic validation, costs, and classification
