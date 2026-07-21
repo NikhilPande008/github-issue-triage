@@ -1,0 +1,37 @@
+{
+  "schema_version": "retrospective-v1",
+  "captured_at": "2026-07-22",
+  "excluded_case_count": 2,
+  "exclusion_rationale": "Two seeded cases were omitted because this curation did not establish a precise primary maintenance-history relationship beyond the issue record.",
+  "limitations": [
+    "Small manually curated sample from public repository history, not independent experimental ground truth.",
+    "This review does not measure precision, recall, time saved, maintainer agreement, or autonomous correctness.",
+    "Closed issues and issue text alone do not settle the bounded interpretation; ambiguous and insufficient-evidence cases remain unresolved."
+  ],
+  "cases": [
+    {
+      "case_id": "agents-3563-2026-07-22", "repository": "openai/openai-agents-python", "issue_number": 3563,
+      "issue_url": "https://github.com/openai/openai-agents-python/issues/3563", "title": "Add custom ResponseFormat support in CallModelInputFilter callback", "included_at": "2026-07-22", "historical_state": "Issue page displayed Closed when captured.",
+      "investigation_id": "39f93579-1372-46c6-9c46-b53ce8d9e568", "terminal_status": "COMPLETED", "classification": "BEHAVIOR_GAP_CONFIRMED", "assertsFailure": true, "validation_reason": "New failing assertion introduced in tests/test_call_model_input_filter.py.", "tracked_openai_cost": 0.003632, "tracked_openai_latency": 115, "codex_wall_time": 120.423,
+      "external_support": "AMBIGUOUS", "evaluator_note": "The public issue is closed and labeled enhancement, but its public page shows no linked development; that does not settle the focused test interpretation.",
+      "sources": [{"url": "https://github.com/openai/openai-agents-python/issues/3563", "source_type": "OTHER", "title": "Public issue record showing closed enhancement status", "captured_at": "2026-07-22"}],
+      "inclusion_rationale": "Persisted confirmed investigation with a directly matching public issue record.", "limitations": "The issue status and label are not proof of maintainer intent, implementation, or defect status."
+    },
+    {
+      "case_id": "agents-3611-2026-07-22", "repository": "openai/openai-agents-python", "issue_number": 3611,
+      "issue_url": "https://github.com/openai/openai-agents-python/issues/3611", "title": "Native OCI Generative AI model provider", "included_at": "2026-07-22", "historical_state": "Issue page displayed Closed when captured.",
+      "investigation_id": "14bf1a25-e09d-4f03-941f-259a7c60e00a", "terminal_status": "COMPLETED_NO_GAP", "classification": "NEEDS_INFO", "assertsFailure": false, "validation_reason": "No new or modified executable pytest test was detected.", "tracked_openai_cost": 0.006934, "tracked_openai_latency": 233, "codex_wall_time": 260.691,
+      "external_support": "AMBIGUOUS", "evaluator_note": "The public issue describes a feature proposal and is closed, but no linked public maintenance resolution establishes whether the bounded non-confirming review was appropriate.",
+      "sources": [{"url": "https://github.com/openai/openai-agents-python/issues/3611", "source_type": "OTHER", "title": "Public issue record showing a closed feature proposal", "captured_at": "2026-07-22"}],
+      "inclusion_rationale": "Persisted NEEDS_INFO outcome with a directly matching public issue record.", "limitations": "Issue prose and closed status do not provide an independent maintainer resolution."
+    },
+    {
+      "case_id": "guardrails-70-2026-07-22", "repository": "openai/openai-guardrails-python", "issue_number": 70,
+      "issue_url": "https://github.com/openai/openai-guardrails-python/issues/70", "title": "Allow LiteLLM Proxy to be used in Guardrails", "included_at": "2026-07-22", "historical_state": "Issue page displayed Open when captured.",
+      "investigation_id": "e8a71529-ca19-4cfb-ba21-99119c22ec5c", "terminal_status": "COMPLETED", "classification": "BEHAVIOR_GAP_CONFIRMED", "assertsFailure": true, "validation_reason": "New failing assertion introduced in tests/unit/test_agents.py.", "tracked_openai_cost": 0.007231, "tracked_openai_latency": 492, "codex_wall_time": 160.51,
+      "external_support": "INSUFFICIENT_EXTERNAL_EVIDENCE", "evaluator_note": "The public issue remains open and its public page shows no linked pull request or maintainer resolution establishing the bounded interpretation.",
+      "sources": [{"url": "https://github.com/openai/openai-guardrails-python/issues/70", "source_type": "OTHER", "title": "Public issue record showing an open request without linked development", "captured_at": "2026-07-22"}],
+      "inclusion_rationale": "Persisted confirmed investigation with directly matching, but insufficient, public maintenance history.", "limitations": "An open issue without linked maintenance history cannot independently confirm or contradict the focused test interpretation."
+    }
+  ]
+}

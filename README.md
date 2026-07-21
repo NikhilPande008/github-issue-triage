@@ -14,7 +14,7 @@ requires Python and Node.js.
 The committed demo opens directly on real persisted evidence for
 [psf/requests #7564](https://github.com/psf/requests/issues/7564), “Raise
 `FileNotFoundError` for missing TLS material.” Investigation
-`0a379f2f-ee0d-4a60-a7a3-a5682d4e415f` is `COMPLETED`,
+`cdcbeed9-4c1e-498f-98bd-d550a2da635d` is `COMPLETED`,
 `BEHAVIOR_GAP_CONFIRMED`, and `assertsFailure=true`.
 
 Codex changed the existing certificate-path test to require `FileNotFoundError`,
@@ -23,12 +23,16 @@ current implementation, which raises `OSError`; the deterministic validator
 confirms that the described behavior is absent in the current code. This confirms
 a behavior gap, not regression provenance or whether the request is a defect,
 feature, documentation change, or intended product behavior. The dashboard exposes the
-raw extraction JSON, terminal log, pytest output, and Git diff for inspection.
+raw extraction JSON, terminal log, pytest output, Git diff, exact focused-test
+selection, structured JUnit, proof-integrity report, and confirmation manifests
+for inspection. This modern confirmation demonstrates a difference from the
+generated focused test expectation; it does not determine intended behavior,
+regression status, or maintainer priority.
 
 The committed demo snapshot contains five selectively exported investigations:
 Requests #7564; Agents SDK #3563, #3611, and #3654; and Guardrails #70. It
 contains three behavior-gap confirmations, one `NEEDS_INFO`, one
-`WONT_REPRO`/`COMPLETED_NO_GAP` outcome, and 58 referenced artifacts. The live
+`WONT_REPRO`/`COMPLETED_NO_GAP` outcome, and 68 referenced artifacts. The live
 database is never copied wholesale when the demo is refreshed.
 
 ## Judge demo: no keys, no rebuild
@@ -56,6 +60,27 @@ authenticated pilot-reviewer surface is available only when pilot review is
 explicitly enabled; its append-only assessments and approvals never directly
 post to GitHub.
 
+`/?compare=1` explains the product’s evidence-first design in under a minute:
+generic AI triage may offer a label or prose, while Issue Triage gives
+maintainers retained executable evidence to inspect. It uses real persisted
+confirmed/no-gap examples when available and makes no accuracy claim.
+
+`/?evaluation=1` is a retrospective evidence review of three selectively
+curated, source-backed seeded investigations. Its public history is deliberately
+classified only as ambiguous or insufficient where it does not establish the
+bounded interpretation. It is not an accuracy benchmark.
+
+## Controlled live demo (disabled by default)
+
+The offline seed remains the default judge path. A real live run is available
+only when an operator explicitly enables `LIVE_DEMO_ENABLED=true`, configures
+`LIVE_DEMO_REPOSITORIES`, `LIVE_DEMO_ALLOWED_ISSUE_NUMBERS`, and (for any
+hosted deployment) `LIVE_DEMO_REQUEST_TOKEN`. It accepts one allowlisted issue
+through the durable queue, consumes configured bounded resources, and never
+posts to GitHub. The browser action is `/?live=1`; it is absent unless the
+server advertises the enabled capability. A real run requires separate explicit
+operator approval after preflight verification.
+
 ## What Codex accelerated
 
 Codex accelerated the narrow, repetitive investigation work: locating the
@@ -82,16 +107,21 @@ GitHub issue (read only)
 - Extraction and evidence classification are validated structured OpenAI calls;
   their linked, tracked API cost/latency is shown only when recorded. Codex
   billing is explicitly excluded because exact Codex cost data is unavailable.
-- `NEEDS_INFO` detail pages can render a copyable maintainer reply from the
-  persisted extraction; it is a preview and is never posted to GitHub.
+- Detail pages and the Evidence Brief show a persisted-evidence **Maintainer
+  next action**. It is advisory, never modifies GitHub, and distinguishes
+  deterministic confirmation from requests for information, no established
+  behavior gap, possible non-defect framing, and operationally inconclusive
+  work. `NEEDS_INFO` can render a copyable reply from persisted extraction;
+  it is preview-only and is never posted to GitHub.
 
 ## Live investigation setup
 
 Live work needs Docker, a Codex authentication file, network access for the
 target repository, and an OpenAI API key for extraction/classification.
 
-Run the read-only preflight first. It performs no investigation, OpenAI call,
-Codex invocation, artifact creation, or database write:
+Run the read-only preflight first. It performs no GitHub read, investigation,
+OpenAI call, Codex invocation, Docker creation, artifact creation, or database
+write:
 
 ```bash
 TRIAGE_TEST_NETWORK_POLICY=allowed \
@@ -109,11 +139,17 @@ uv run triage investigate 7564
 ### Network and dependency-setup caveat
 
 `TRIAGE_TEST_NETWORK_POLICY=isolated` is the default for focused tests and
-confirmations. Codex runs separately in an agent container with provider
-connectivity and its credential mount; the setup and test containers have no
-agent credential mount. Test network access requires explicit opt-in with
+confirmations. Setup has network only for dependency installation and never
+mounts Codex authentication. Codex runs separately in an agent container with
+provider connectivity and its credential mount; focused test and confirmation
+containers have neither. Test network access requires explicit opt-in with
 `TRIAGE_TEST_NETWORK_POLICY=allowed` and is recorded in the reproducibility
-manifest.
+manifest, together with every role's network/auth boundary.
+
+Focused test and confirmation execution have no Codex credential mount and are
+network-isolated by default. The agent phase still requires provider
+connectivity. This reduces test-execution exposure but does not claim complete
+protection from all agent-runtime supply-chain or credential risks.
 
 Some modern Python projects declare test dependencies in a PEP 735
 `[dependency-groups]` `dev` group. The sandbox image's `pip` does **not**
@@ -194,6 +230,28 @@ or counter-inconsistent XML; all-pass/all-skip results; timeouts/crashes/setup
 failures; and mixed `<failure>` plus `<error>` results are inconclusive. Older
 persisted artifacts remain viewable unchanged; they are not retroactively
 reclassified or supplied with invented structured results.
+
+Confirmed detail pages and the Evidence Brief include **Why this failure
+counts**, a read-only visualization of the persisted deterministic gates:
+changed executable test, valid structured JUnit result, explicit focused
+failure, clean execution, and confirmation match. Structured JUnit is
+authoritative for new investigations. Historical evidence may have a different
+validation provenance, so the explainer marks unavailable JUnit checks instead
+of fabricating a modern all-green checklist. It visualizes deterministic checks;
+it does not create new evidence.
+
+Before new live evidence can pass this gate, a deterministic proof-integrity
+analyzer inspects the changed diff and persists a bounded report. It hard-rejects
+literal false assertions, unconditional failure helpers, disallowed
+production/configuration paths, and modified fixture/snapshot proof paths.
+Suspicious missing API anchors or mocked failures are review flags, not automatic
+rejections. Historical records without a persisted report show proof integrity
+as unavailable; the explainer never invents a pass.
+
+A modern confirmation also requires a deterministically identified changed
+executable test target and a matching structured test failure. When exact
+targeting is unavailable, Issue Triage records inconclusive evidence rather
+than broadening a file-level run into a confirmation.
 
 ## Reproducibility and stable confirmation
 
@@ -387,9 +445,13 @@ The application only inserts packets; it never updates packet content, hash, or
 version. A later controlled reissue creates a new version and leaves every
 earlier packet unchanged. Historical investigations without a packet remain
 readable. `GET /investigations/{id}/review-packets` honestly reports
-`AVAILABLE`, `NOT_ISSUED`, or `UNAVAILABLE`; `GET /review-packets/{packet_id}`
-returns the bounded stored snapshot. Packet issuance failures are recorded as
-operational metadata and do not change an investigation or job outcome.
+`AVAILABLE`, `NOT_ISSUED`, or `UNAVAILABLE`. The public investigation detail
+also presents a compact **Semantic fidelity review** card: bounded behavior
+claim, generated-test claim, assertion-relevant diff lines, retained JUnit
+failure evidence when available, and aggregate review coverage/state. It never
+shows reviewer identities, rationale, session information, or audit hashes.
+Packet issuance failures are recorded as operational metadata and do not change
+an investigation or job outcome.
 
 Reviewer identity, assessments, deterministic consensus, and per-result
 approval are available as pilot-only capabilities below. Production SSO/RBAC,
@@ -413,9 +475,16 @@ is `LOW`, `MEDIUM`, or `HIGH`. Reviewers belong to either the `MAINTAINER` or
 deterministic consensus mechanism described below; no model-generated aggregate
 or score can override any individual label.
 
+The reviewer UI derives `ALIGNED`, `UNCLEAR`, or `MISALIGNED` directly from
+those four judgments: any `NO` is `MISALIGNED`; otherwise any `UNCERTAIN` or
+`NOT_ENOUGH_CONTEXT` is `UNCLEAR`; all `YES` is `ALIGNED`. Confidence never
+changes this derivation. `UNCLEAR` and `MISALIGNED` require a bounded rationale;
+`ALIGNED` may include one. This remains compatible with legacy assessments
+because the outcome is derived, not a new mutable verdict field.
+
 The internal pilot write endpoint is disabled by default. Enable it only with
 `PILOT_REVIEW_ENABLED=true` and a deployment-secret reviewer registry such as
-`PILOT_REVIEWER_REGISTRY='{"reviewer-a":{"cohort":"MAINTAINER","token":"…"}}'`.
+`PILOT_REVIEWER_REGISTRY='{"reviewer-a":{"cohort":"MAINTAINER","token":"…","repositories":["owner/repo"]}}'`.
 The caller supplies the matching internal reviewer ID and token headers. This
 is a narrow configured-registry mechanism for design partners, not SSO or RBAC;
 tokens must be stored in deployment configuration and are never persisted or
@@ -425,9 +494,9 @@ Assessments store the packet ID, hash, and version they reviewed. They are
 append-only: updates/deletes are rejected, and a correction creates a new
 assessment explicitly referencing the prior active assessment. An immutable
 audit row records assessment creation, reviewer ID, packet hash, timestamp, and
-a canonical payload hash. Read-only access is available at
-`GET /review-packets/{packet_id}/assessments` and
-`GET /investigations/{id}/review-assessments`.
+a canonical payload hash. Assessment records and full immutable packets are
+pilot-only, authenticated, and repository-scoped; public pages receive
+aggregate provenance only.
 
 The reviewer queue, deterministic consensus, and per-result approval workflow
 are implemented for internal pilots. SSO/RBAC, multi-tenant isolation,
@@ -500,6 +569,13 @@ and comment previews blocked on review/approval—ordered by review priority and
 then oldest review age. The queue includes verdict, `assertsFailure`, cohort
 coverage, comment state, cost, and Codex wall time without exposing reviewer
 tokens.
+
+Selecting a queue item opens a reviewer packet view with the bounded behavior
+claim, generated-test claim, assertion/diff evidence, structured JUnit failure,
+and the append-only assessment form side by side. Human semantic review assesses
+whether the generated test represents the bounded behavior claim; a clean
+failing test can still be misaligned with issue intent. Semantic review does not
+change deterministic validation or classification.
 
 Pilot login exchanges a configured registry reviewer ID/token at
 `POST /pilot-review/login` for a short-lived HttpOnly, SameSite cookie. The raw

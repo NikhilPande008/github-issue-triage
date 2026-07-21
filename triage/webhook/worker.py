@@ -7,10 +7,10 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Callable
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from triage.config.settings import Settings
-from triage.domain.enums import CommentStatus, WebhookJobStatus
+from triage.domain.enums import CommentStatus, JobSource, WebhookJobStatus
 from triage.github.client import GitHubClient
 from triage.github.service import GitHubIssueService
 from triage.persistence.models import Artifact, Investigation, WebhookJob
@@ -35,6 +35,11 @@ class WebhookWorker:
                 return False
             job_id = job.id
         try:
+            if job.source == JobSource.LIVE_DEMO:
+                self._validate_live_demo(job)
+                self._progress(job_id, "preflight_passed", "Preflight passed; extracting behavior claim")
+                self._progress(job_id, "extracting", "Extracting bounded behavior claim")
+                self._progress(job_id, "preparing_sandbox", "Preparing isolated sandbox")
             investigation_id = self.process_issue(job.repository, job.issue_number)
             with self.session_factory() as session:
                 job = session.get(WebhookJob, job_id)
@@ -52,7 +57,10 @@ class WebhookWorker:
                 # approval to immutable evidence. Issuance remains advisory.
                 from triage.review_packets import ReviewPacketService
                 ReviewPacketService(session).issue_safely(investigation_id)
-                self._decide_comment(session, job)
+                if job.source == JobSource.LIVE_DEMO:
+                    jobs.update(job, comment_status=CommentStatus.SKIPPED, comment_reason="Live demo never creates GitHub comments", progress_stage="completed_outcome", progress_detail="Bounded investigation completed")
+                else:
+                    self._decide_comment(session, job)
                 jobs.finish(job, WebhookJobStatus.SUCCEEDED)
         except Exception as error:
             with self.session_factory() as session:
@@ -70,6 +78,25 @@ class WebhookWorker:
                     else:
                         jobs.finish(job, WebhookJobStatus.DEAD_LETTER if job.attempt_count >= job.max_attempts else WebhookJobStatus.FAILED, error_reason=safe_error, comment_status=CommentStatus.SKIPPED, comment_reason="Operational failure")
         return True
+
+    def _validate_live_demo(self, job: WebhookJob) -> None:
+        from triage.preflight import require_safe_to_start
+        if not self.settings.live_demo_enabled or job.repository.lower() not in self.settings.live_demo_repository_allowlist() or job.issue_number not in self.settings.live_demo_issue_allowlist():
+            raise RuntimeError("Live demo is no longer allowlisted")
+        if not self._live_demo_capacity_at_claim(job):
+            raise RuntimeError("Live-demo capacity is currently full")
+        require_safe_to_start(self.settings, job.repository)
+
+    def _live_demo_capacity_at_claim(self, job: WebhookJob) -> bool:
+        with self.session_factory() as session:
+            count = session.scalar(select(func.count()).select_from(WebhookJob).where(WebhookJob.source == JobSource.LIVE_DEMO, WebhookJob.status == WebhookJobStatus.RUNNING)) or 0
+            return count <= self.settings.live_demo_max_concurrent_runs
+
+    def _progress(self, job_id: str, stage: str, detail: str) -> None:
+        with self.session_factory() as session:
+            job = session.get(WebhookJob, job_id)
+            if job is not None:
+                WebhookJobRepository(session).update(job, progress_stage=stage, progress_detail=detail[:255])
 
     def run(self, concurrency: int | None = None, drain: bool = False) -> int:
         """Claim work up to the configured global bound; each job owns a thread/session."""

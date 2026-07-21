@@ -28,6 +28,7 @@ class InvestigationEvidence(BaseModel):
     structured_results_path: Path | None = None
     execution_failure_reason: str | None = None
     reproducibility_manifest_path: Path | None = None
+    focused_test_selection_path: Path | None = None
     reliability_status: str = "NOT_CONFIRMED"
 
     @property

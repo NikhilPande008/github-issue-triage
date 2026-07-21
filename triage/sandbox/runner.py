@@ -51,26 +51,42 @@ class DockerInvestigationRunner:
         codex_exit_code = 1
         pytest_exit_code = 1
         pytest_command = "python -m pytest -q"
+        selection = None
         structured_container_path = f"/tmp/triage-{artifact_dir.parent.name}-{artifact_dir.name}-junit.xml"
         execution_failure_reason = None
         try:
-            agent = getattr(self.sandbox, "agent_container", getattr(self.sandbox, "container", None))
+            agent = getattr(self.sandbox, "agent_container", None)
+            if agent is None and hasattr(self.manager, "create_agent_container"):
+                agent = self.manager.create_agent_container(self.sandbox)
             if agent is None:
-                raise RuntimeError("agent container unavailable")
+                # Compatibility only for pre-split in-memory test doubles.
+                agent = getattr(self.sandbox, "container", None)
+            if agent is None:
+                raise RuntimeError("agent container unavailable: the investigation agent role could not be created")
             codex = agent.run_codex(prompt, self.manager.overall_timeout_seconds)
             codex_output, codex_exit_code = self._codex_log(codex), codex.result.exit_code
             changed = agent.run("git status --porcelain --untracked-files=all", self.pytest_timeout_seconds)
             self._changed_status = changed.output
-            if hasattr(self.manager, "close_agent_container"):
-                self.manager.close_agent_container(self.sandbox)
-            test_container = self._test_container()
             # Compatibility for lightweight test doubles; production sandboxes
             # receive their adapter during deterministic setup selection.
             runner_adapter = getattr(self.sandbox, "runner", None)
             if runner_adapter is None:
                 from triage.runners.adapters import PytestAdapter
                 runner_adapter = PytestAdapter()
-            pytest_command = runner_adapter.focused_command(changed.output, structured_container_path)
+            workspace = getattr(self.sandbox, "workspace", None)
+            if workspace is None:  # compatibility only for in-memory legacy test doubles
+                pytest_command = runner_adapter.focused_command(changed.output, structured_container_path)
+            else:
+                diff_before_test = agent.run("git diff --no-ext-diff", self.pytest_timeout_seconds)
+                selection = runner_adapter.select_targets(workspace.repository_path, diff_before_test.output, changed.output)
+                self._focused_selection = selection
+                pytest_command = runner_adapter.command_for_selection(selection, structured_container_path)
+                if selection.precision != "EXACT":
+                    execution_failure_reason = f"Focused test selection is {selection.precision}: {selection.reason}"
+                    return self._collect(artifact_dir, codex_output, pytest_command, "", diff_before_test.output, codex_exit_code, 0, started, structured_container_path, execution_failure_reason, selection)
+            if hasattr(self.manager, "close_agent_container"):
+                self.manager.close_agent_container(self.sandbox)
+            test_container = self._test_container()
             pytest = test_container.run(pytest_command, self.pytest_timeout_seconds)
             pytest_output, pytest_exit_code = pytest.output, pytest.exit_code
             diff = test_container.run("git diff --no-ext-diff", self.pytest_timeout_seconds)
@@ -84,7 +100,7 @@ class DockerInvestigationRunner:
         except SandboxTimeout as error:
             codex_output += f"\nTIMEOUT: {error}\n"
             execution_failure_reason = "Test execution timed out or crashed."
-        return self._collect(artifact_dir, codex_output, pytest_command, pytest_output, diff_output, codex_exit_code, pytest_exit_code, started, structured_container_path, execution_failure_reason)
+        return self._collect(artifact_dir, codex_output, pytest_command, pytest_output, diff_output, codex_exit_code, pytest_exit_code, started, structured_container_path, execution_failure_reason, selection)
 
     def run_confirmation(self, repository_path: Path, prompt: str, artifact_dir: Path) -> AttemptExecution:
         """Re-run the identical focused test in the already prepared environment, without Codex."""
@@ -96,16 +112,19 @@ class DockerInvestigationRunner:
             from triage.runners.adapters import PytestAdapter
             runner = PytestAdapter()
         structured = f"/tmp/triage-{artifact_dir.parent.name}-{artifact_dir.name}-junit.xml"
-        command = runner.focused_command(self._changed_status, structured)
+        selection = getattr(self, "_focused_selection", None)
+        if selection is None or selection.precision != "EXACT":
+            return self._collect(artifact_dir, "CONFIRMATION INCONCLUSIVE\n", "", "", "", 0, 1, started, structured, "Focused test selection was not exact.", selection)
+        command = runner.command_for_selection(selection, structured)
         failure = None
         try:
             test_container = self._test_container()
             result = test_container.run(command, self.pytest_timeout_seconds)
             diff = test_container.run("git diff --no-ext-diff", self.pytest_timeout_seconds)
-            return self._collect(artifact_dir, "CONFIRMATION EXECUTION (no Codex)\n", command, result.output, diff.output, 0, result.exit_code, started, structured)
+            return self._collect(artifact_dir, "CONFIRMATION EXECUTION (no Codex)\n", command, result.output, diff.output, 0, result.exit_code, started, structured, None, selection)
         except SandboxTimeout:
             failure = "Test execution timed out or crashed."
-            return self._collect(artifact_dir, "CONFIRMATION TIMEOUT\n", command, "", "", 0, 124, started, structured, failure)
+            return self._collect(artifact_dir, "CONFIRMATION TIMEOUT\n", command, "", "", 0, 124, started, structured, failure, selection)
 
     def close(self) -> None:
         if self.sandbox is not None:
@@ -117,7 +136,7 @@ class DockerInvestigationRunner:
             return self.manager.create_test_container(self.sandbox)
         return getattr(self.sandbox, "test_container", None) or self.sandbox.container
 
-    def _collect(self, artifact_dir: Path, codex: str, pytest_command: str, pytest: str, diff: str, codex_exit_code: int, pytest_exit_code: int, started: float, structured_container_path: str | None = None, execution_failure_reason: str | None = None) -> AttemptExecution:
+    def _collect(self, artifact_dir: Path, codex: str, pytest_command: str, pytest: str, diff: str, codex_exit_code: int, pytest_exit_code: int, started: float, structured_container_path: str | None = None, execution_failure_reason: str | None = None, selection=None) -> AttemptExecution:
         artifact_dir.mkdir(parents=True, exist_ok=True)
         runner_id = getattr(getattr(self.sandbox, "runner", None), "id", "pytest")
         output_name = "pytest_output.txt" if runner_id == "pytest" else f"{runner_id}_output.txt"
@@ -146,6 +165,9 @@ class DockerInvestigationRunner:
         else:
             structured_path = None
         manifest_path = artifact_dir / "reproducibility_manifest.json"
+        selection_path = artifact_dir / "focused_test_selection.json"
+        if selection is not None:
+            selection_path.write_text(json.dumps(selection.as_dict(), indent=2, sort_keys=True), encoding="utf-8")
         manifest = dict(getattr(self.sandbox, "manifest_base", None) or {})
         manifest.update({
             "investigation_agent_provider": self.identifier,
@@ -154,6 +176,7 @@ class DockerInvestigationRunner:
             "runner_exit_code": pytest_exit_code,
             "execution_failure_reason": execution_failure_reason,
             "structured_results_path": str(structured_path) if structured_path else None,
+            "focused_test_selection": {"path": str(selection_path), "sha256": sha256(selection_path.read_bytes()).hexdigest()} if selection is not None else None,
             "artifacts": {
                 name: {"path": str(artifact_dir / name), "sha256": sha256((artifact_dir / name).read_bytes()).hexdigest()}
                 for name in ["terminal.log", output_name, "git.diff"] if (artifact_dir / name).is_file()
@@ -163,7 +186,7 @@ class DockerInvestigationRunner:
             manifest["artifacts"]["junit.xml"] = {"path": str(structured_path), "sha256": sha256(structured_path.read_bytes()).hexdigest()}
         manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
         return AttemptExecution(
-            evidence=InvestigationEvidence(asserts_failure=False, git_diff_path=artifact_dir / "git.diff", pytest_output_path=artifact_dir / output_name, pytest_exit_code=pytest_exit_code, runner_id=runner_id, structured_results_path=structured_path, execution_failure_reason=execution_failure_reason, reproducibility_manifest_path=manifest_path),
+            evidence=InvestigationEvidence(asserts_failure=False, git_diff_path=artifact_dir / "git.diff", pytest_output_path=artifact_dir / output_name, pytest_exit_code=pytest_exit_code, runner_id=runner_id, structured_results_path=structured_path, execution_failure_reason=execution_failure_reason, reproducibility_manifest_path=manifest_path, focused_test_selection_path=selection_path if selection is not None else None),
             terminal_log_path=artifact_dir / "terminal.log",
             codex_exit_code=codex_exit_code,
             codex_latency_ms=round((monotonic() - started) * 1000),

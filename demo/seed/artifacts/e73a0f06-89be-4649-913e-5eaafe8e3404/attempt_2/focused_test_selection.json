@@ -1,0 +1,12 @@
+{
+  "diagnostics": [],
+  "precision": "EXACT",
+  "reason": "Changed diff lines map to executable pytest test nodes.",
+  "runner_id": "pytest",
+  "source_paths": [
+    "tests/test_requests.py"
+  ],
+  "targets": [
+    "tests/test_requests.py::TestRequests::test_invalid_ssl_certificate_files"
+  ]
+}

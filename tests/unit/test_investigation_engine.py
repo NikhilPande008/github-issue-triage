@@ -96,7 +96,8 @@ def test_engine_stops_at_three_attempts_and_persists_adaptation(tmp_path) -> Non
     assert "Previous attempt made no repository changes" in runner.prompts[1]
     assert session.scalar(select(Investigation.status)) == "COMPLETED_NO_GAP"
     artifacts = list(session.scalars(select(Artifact)))
-    assert len(artifacts) == 10
+    assert len(artifacts) == 13
+    assert sum(item.kind == "proof_integrity_report" for item in artifacts) == 3
     assert any(artifact.kind == "extraction_json" for artifact in artifacts)
     calls = list(session.scalars(select(LLMCall)))
     assert len(calls) == 3

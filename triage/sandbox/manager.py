@@ -146,6 +146,21 @@ class SandboxManager:
             )
         return sandbox.test_container
 
+    def create_agent_container(self, sandbox: Sandbox) -> DockerSandboxContainer:
+        """Restore the required agent role only while an investigation attempt starts.
+
+        This is deliberately separate from test-container creation: confirmation
+        executions never call this method and therefore cannot regain the Codex
+        credential mount.
+        """
+        if sandbox.agent_container is None:
+            sandbox.agent_container = DockerSandboxContainer.start(
+                self.docker_client, sandbox.prepared_image, sandbox.workspace.repository_path,
+                self.auth_path, self.overall_timeout_seconds, ContainerRole.AGENT,
+                self.agent_network_policy,
+            )
+        return sandbox.agent_container
+
     def close_agent_container(self, sandbox: Sandbox) -> None:
         if sandbox.agent_container is not None:
             sandbox.agent_container.remove()
@@ -178,6 +193,12 @@ class SandboxManager:
                 "setup": {"network_policy": "allowed", "auth_mount": False},
                 "agent": {"network_policy": self.agent_network_policy, "auth_mount": True},
                 "test": {"network_policy": self.network_policy, "auth_mount": False},
+            },
+            "confirmation_boundary": {
+                "container_role": "test",
+                "network_policy": self.network_policy,
+                "auth_mount": False,
+                "codex_invocation": False,
             },
             "confirmation_runs": self.confirmation_runs,
             "timeouts": {"dependency_seconds": self.dependency_timeout_seconds, "overall_seconds": self.overall_timeout_seconds},

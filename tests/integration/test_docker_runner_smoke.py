@@ -110,7 +110,9 @@ def test_agent_edits_are_followed_by_test_and_confirmation_containers_only(tmp_p
         runner.run_confirmation(tmp_path, "prompt", tmp_path / "artifacts" / "split" / "attempt_2")
     assert events[:4] == ["agent:codex", "agent:status", "agent:closed", "test:pytest"]
     assert events.count("agent:codex") == 1
-    assert events.count("test:pytest") == 2
+    # Legacy in-memory fixture has no persisted exact selection, so the
+    # confirmation fails closed before rerunning; it never reopens the agent.
+    assert events.count("test:pytest") == 1
 
 
 def test_focused_pytest_falls_back_to_the_full_suite_without_changed_tests() -> None:

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from triage.domain.enums import AssessmentConfidence, AssessmentJudgment, ReviewerCohort
 from triage.persistence.models import ReviewAssessment, ReviewAssessmentAudit, ReviewPacket
 from triage.review_packets import canonical_json
+from triage.semantic_review import review_outcome
 
 ASSESSMENT_SCHEMA_VERSION = "1.0"
 MAX_RATIONALE_CHARS = 4_000
@@ -82,6 +83,10 @@ class ReviewAssessmentService:
             raise ValueError("Superseded assessment must belong to the same reviewer and packet")
         tags = sorted(set(reason_tags or []))
         if len(tags) > 5 or any(tag not in REASON_TAGS for tag in tags): raise ValueError("Invalid assessment reason tags")
+        outcome = review_outcome(extraction_aligned, test_aligned, failure_supports_signal, public_comment_appropriate)
+        clean_rationale = (rationale or "").strip()[:MAX_RATIONALE_CHARS]
+        if outcome in {"UNCLEAR", "MISALIGNED"} and not clean_rationale:
+            raise ValueError("A rationale is required for an unclear or misaligned review")
         payload = {
             "packet_id": packet.id, "packet_hash": packet.integrity_hash, "packet_version": packet.version,
             "reviewer_external_id": reviewer.external_id, "reviewer_cohort": reviewer.cohort.value,
@@ -89,7 +94,7 @@ class ReviewAssessmentService:
             "extraction_aligned": extraction_aligned.value, "test_aligned": test_aligned.value,
             "failure_supports_signal": failure_supports_signal.value,
             "public_comment_appropriate": public_comment_appropriate.value, "confidence": confidence.value,
-            "rationale": (rationale or "")[:MAX_RATIONALE_CHARS], "supersedes_assessment_id": supersedes_assessment_id,
+            "derived_review_outcome": outcome, "rationale": clean_rationale, "supersedes_assessment_id": supersedes_assessment_id,
             "reason_tags": tags,
         }
         assessment = ReviewAssessment(
@@ -99,7 +104,7 @@ class ReviewAssessmentService:
             schema_version=ASSESSMENT_SCHEMA_VERSION, extraction_aligned=extraction_aligned,
             test_aligned=test_aligned, failure_supports_signal=failure_supports_signal,
             public_comment_appropriate=public_comment_appropriate, confidence=confidence,
-            rationale=payload["rationale"] or None, supersedes_assessment_id=supersedes_assessment_id,
+            rationale=clean_rationale or None, supersedes_assessment_id=supersedes_assessment_id,
             reason_tags_json=json.dumps(tags),
             created_at=datetime.now(timezone.utc),
         )

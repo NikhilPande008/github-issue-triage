@@ -35,14 +35,14 @@ export function buildMaintainerReply(missingInfo: string[]): string {
   return `Thanks for the report. To investigate this, please provide:\n${items.map((item) => `- ${item}`).join("\n")}`;
 }
 
-export function MaintainerReply({ classification, artifacts }: { classification: string | null; artifacts: EvidenceArtifact[] }) {
+export function MaintainerReply({ classification, artifacts, embedded = false }: { classification: string | null; artifacts: EvidenceArtifact[]; embedded?: boolean }) {
   if (classification !== "NEEDS_INFO") return null;
   const reply = buildMaintainerReply(missingInfoFromArtifacts(artifacts));
-  return <section className="card maintainer-reply-card">
+  return <section className={embedded ? "maintainer-reply-card" : "card maintainer-reply-card"}>
     <div className="section-heading">
       <div>
-        <h2>Maintainer-ready reply</h2>
-        <p className="preview-note">Preview — not posted to GitHub.</p>
+        <h3>Copyable reply preview</h3>
+        <p className="preview-note">Preview only — not posted to GitHub.</p>
       </div>
       <CopyButton value={reply} label="Copy maintainer-ready reply" />
     </div>

@@ -1,5 +1,5 @@
 diff --git a/tests/test_requests.py b/tests/test_requests.py
-index 8bcb81d..4cfadf5 100644
+index 8bcb81d..5f1f0c0 100644
 --- a/tests/test_requests.py
 +++ b/tests/test_requests.py
 @@ -2,6 +2,7 @@
@@ -10,19 +10,15 @@ index 8bcb81d..4cfadf5 100644
  import io
  import json
  import os
-@@ -977,12 +978,10 @@ class TestRequests:
+@@ -977,8 +978,10 @@ class TestRequests:
  
      def test_invalid_ssl_certificate_files(self, httpbin_secure):
          INVALID_PATH = "/garbage"
 -        with pytest.raises(IOError) as e:
 +        with pytest.raises(FileNotFoundError) as e:
              requests.get(httpbin_secure(), cert=INVALID_PATH)
--        assert (
--            str(e.value)
--            == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"
--        )
 +        assert e.value.errno == errno.ENOENT
 +        assert e.value.filename == INVALID_PATH
- 
-         with pytest.raises(IOError) as e:
-             requests.get(httpbin_secure(), cert=(".", INVALID_PATH))
+         assert (
+             str(e.value)
+             == f"Could not find the TLS certificate file, invalid path: {INVALID_PATH}"

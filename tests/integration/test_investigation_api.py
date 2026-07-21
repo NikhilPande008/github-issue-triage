@@ -66,6 +66,9 @@ def test_read_only_investigation_endpoints(tmp_path) -> None:
             artifacts_by_kind = {item["kind"]: item for item in artifacts.json()["items"]}
             assert artifacts_by_kind["pytest_output"]["content"].startswith("FAILED")
             assert artifacts_by_kind["git_diff"]["available"] is False
+            explainer = await client.get(f"/investigations/{investigation_id}/validation-explainer")
+            assert explainer.status_code == 200
+            assert explainer.json()["checks"][1]["status"] == "UNAVAILABLE"
             assert (await client.get("/investigations/missing")).status_code == 404
 
     try:
@@ -97,9 +100,11 @@ def test_review_packet_endpoints_are_read_only_and_honest_when_absent(tmp_path) 
             assert absent.status_code == 200 and absent.json()["status"] == "NOT_ISSUED"
             listed = await client.get(f"/investigations/{issued_id}/review-packets")
             assert listed.json()["status"] == "AVAILABLE"
-            assert listed.json()["items"][0]["integrity_hash"] == packet_hash(snapshot)
-            detail = await client.get(f"/review-packets/{packet_id}")
-            assert detail.json()["snapshot"] == snapshot
+            assert "integrity_hash" not in listed.json()["items"][0]
+            assert (await client.get(f"/review-packets/{packet_id}")).status_code == 404
+            public = await client.get(f"/investigations/{issued_id}/semantic-review")
+            assert public.json()["packet_status"] == "AVAILABLE"
+            assert "reviewer_external_id" not in public.text and "rationale" not in public.text
             assert (await client.post(f"/review-packets/{packet_id}")).status_code == 405
     try:
         asyncio.run(request())
@@ -122,21 +127,29 @@ def test_pilot_assessment_api_requires_verified_identity_and_preserves_verdict(t
         with factory() as session:
             yield session
     app.dependency_overrides[get_session] = override_session
-    body = {"extraction_aligned": "YES", "test_aligned": "NO", "failure_supports_signal": "UNCERTAIN", "public_comment_appropriate": "NOT_ENOUGH_CONTEXT", "confidence": "MEDIUM"}
+    body = {"extraction_aligned": "YES", "test_aligned": "NO", "failure_supports_signal": "UNCERTAIN", "public_comment_appropriate": "NOT_ENOUGH_CONTEXT", "confidence": "MEDIUM", "rationale": "The generated test does not represent the bounded claim."}
     async def request() -> None:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
             assert (await client.post(f"/review-packets/{packet_id}/assessments", json=body)).status_code == 404
             monkeypatch.setenv("PILOT_REVIEW_ENABLED", "true")
-            monkeypatch.setenv("PILOT_REVIEWER_REGISTRY", json.dumps({"reviewer-a": {"cohort": "MAINTAINER", "token": "correct"}}))
+            monkeypatch.setenv("PILOT_REVIEWER_REGISTRY", json.dumps({"reviewer-a": {"cohort": "MAINTAINER", "token": "correct", "repositories": ["example/repo"]}}))
             assert (await client.post(f"/review-packets/{packet_id}/assessments", json=body, headers={"X-Pilot-Reviewer": "reviewer-a", "X-Pilot-Review-Token": "wrong"})).status_code == 403
             created = await client.post(f"/review-packets/{packet_id}/assessments", json=body, headers={"X-Pilot-Reviewer": "reviewer-a", "X-Pilot-Review-Token": "correct"})
             assert created.status_code == 201
             assert created.json()["packet_version"] == 1
-            assert (await client.get(f"/review-packets/{packet_id}/assessments")).json()["items"][0]["packet_hash"]
-            assert len((await client.get(f"/investigations/{investigation_id}/review-assessments")).json()["items"]) == 1
-            packet_detail = await client.get(f"/review-packets/{packet_id}")
+            assert (await client.get(f"/review-packets/{packet_id}/assessments")).status_code == 403
+            assert (await client.get(f"/investigations/{investigation_id}/review-assessments")).status_code == 403
+            login = await client.post("/pilot-review/login", json={"reviewer_id": "reviewer-a", "token": "correct"})
+            assert login.status_code == 200
+            pilot_headers = {"X-Pilot-Reviewer": "reviewer-a", "X-Pilot-Review-Token": "correct"}
+            scoped = await client.get(f"/pilot-review/packets/{packet_id}", headers=pilot_headers)
+            assert scoped.status_code == 200 and scoped.json()["packet"]["repository"] == "example/repo"
+            monkeypatch.setenv("PILOT_REVIEWER_REGISTRY", json.dumps({"reviewer-a": {"cohort": "MAINTAINER", "token": "correct", "repositories": ["other/repo"]}}))
+            assert (await client.get(f"/pilot-review/packets/{packet_id}", headers=pilot_headers)).status_code == 404
+            monkeypatch.setenv("PILOT_REVIEWER_REGISTRY", json.dumps({"reviewer-a": {"cohort": "MAINTAINER", "token": "correct", "repositories": ["example/repo"]}}))
+            packet_detail = await client.get(f"/review-packets/{packet_id}", headers=pilot_headers)
             assert packet_detail.json()["current_consensus"]["state"] == "PENDING_REVIEW"
-            assert len((await client.get(f"/review-packets/{packet_id}/consensus-history")).json()["items"]) == 1
+            assert len((await client.get(f"/review-packets/{packet_id}/consensus-history", headers=pilot_headers)).json()["items"]) == 1
     try:
         asyncio.run(request())
     finally:

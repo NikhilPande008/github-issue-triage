@@ -36,6 +36,7 @@ class JobSource(StrEnum):
     WEBHOOK = "WEBHOOK"
     BATCH = "BATCH"
     MANUAL = "MANUAL"
+    LIVE_DEMO = "LIVE_DEMO"
 
 
 class CommentStatus(StrEnum):

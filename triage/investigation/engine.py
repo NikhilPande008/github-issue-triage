@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Protocol
 
@@ -11,8 +12,18 @@ from triage.investigation.runner import attempt_artifact_dir
 from triage.persistence.models import Artifact, Hypothesis, Investigation, LLMCall
 from triage.sandbox.manager import EnvironmentSetupFailure
 from triage.validation.models import ValidationEvidence, ValidationResult
+from triage.validation.proof_integrity import analyze as analyze_proof_integrity, write_report
 
 MAX_ATTEMPTS = 3
+
+
+def _selection(path: Path | None) -> dict | None:
+    if path is None: return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        return value if isinstance(value, dict) else None
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 class InvestigationRunner(Protocol):
@@ -99,6 +110,9 @@ class InvestigationEngine:
                 )
                 raise
             self._record_attempt_artifacts(investigation.id, execution)
+            proof_report = analyze_proof_integrity(execution.evidence.git_diff_path, execution.evidence.runner_id, extraction)
+            proof_path = write_report(proof_report, artifact_dir / "proof_integrity.json")
+            self.artifacts.create(Artifact(investigation_id=investigation.id, kind="proof_integrity_report", path=str(proof_path)))
             if investigation.test_runner != execution.evidence.runner_id:
                 self.investigations.update(investigation, test_runner=execution.evidence.runner_id)
             self._record_codex_call(investigation.id, attempt_number, execution)
@@ -113,8 +127,11 @@ class InvestigationEngine:
                     pytest_exit_code=execution.evidence.pytest_exit_code,
                     runner_id=execution.evidence.runner_id,
                     structured_results_path=execution.evidence.structured_results_path,
+                    focused_test_selection=_selection(execution.evidence.focused_test_selection_path),
+                    focused_test_selection_required=True,
                     execution_failure_reason=execution.evidence.execution_failure_reason,
                     reliability_status=execution.evidence.reliability_status,
+                    proof_integrity_report=proof_report,
                 )
             )
             self.investigations.update(
@@ -132,6 +149,7 @@ class InvestigationEngine:
                 self.investigations.update(investigation, status=InvestigationStatus.COMPLETED)
                 return InvestigationResult(investigation.id, run_id, True, attempts, validation)
             revision_reason = revision_reason_from_attempt(execution) + " Validation: " + validation.reason
+            if proof_report["result"] == "REJECTED_PROOF_PATTERN": revision_reason += " Proof integrity: " + validation.reason
             previous_evidence = execution.terminal_log_path.read_text(encoding="utf-8")
 
         # Exhausting focused attempts is a completed evidence review, not an
@@ -163,6 +181,8 @@ class InvestigationEngine:
                     pytest_exit_code=execution.evidence.pytest_exit_code,
                     runner_id=execution.evidence.runner_id,
                     structured_results_path=execution.evidence.structured_results_path,
+                    focused_test_selection=_selection(execution.evidence.focused_test_selection_path),
+                    focused_test_selection_required=True,
                     execution_failure_reason=execution.evidence.execution_failure_reason,
                     reliability_status="CONFIRMATION",
                 )
@@ -185,6 +205,8 @@ class InvestigationEngine:
             self.artifacts.create(Artifact(investigation_id=investigation_id, kind="structured_test_results_junit", path=str(execution.evidence.structured_results_path)))
         if execution.evidence.reproducibility_manifest_path is not None:
             self.artifacts.create(Artifact(investigation_id=investigation_id, kind="reproducibility_manifest", path=str(execution.evidence.reproducibility_manifest_path)))
+        if execution.evidence.focused_test_selection_path is not None:
+            self.artifacts.create(Artifact(investigation_id=investigation_id, kind="focused_test_selection", path=str(execution.evidence.focused_test_selection_path)))
         if execution.evidence.git_diff_path:
             self.artifacts.create(Artifact(investigation_id=investigation_id, kind="git_diff", path=str(execution.evidence.git_diff_path)))
 

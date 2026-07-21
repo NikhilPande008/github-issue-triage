@@ -9,6 +9,7 @@ from triage.persistence.database import Base, create_session_factory
 from triage.persistence.models import Investigation, ReviewAssessment, ReviewAssessmentAudit, ReviewPacket
 from triage.review_assessments import ASSESSMENT_SCHEMA_VERSION, AssessmentPermissionError, PilotReviewer, ReviewAssessmentService, verify_pilot_reviewer
 from triage.review_packets import canonical_json, packet_hash
+from triage.semantic_review import review_outcome
 
 
 def _packet(session):
@@ -21,6 +22,7 @@ def _packet(session):
 
 
 def _create(service, packet_id, reviewer, **values):
+    values.setdefault("rationale", "Review rationale.")
     return service.create(packet_id, reviewer, extraction_aligned=AssessmentJudgment.YES, test_aligned=AssessmentJudgment.NO, failure_supports_signal=AssessmentJudgment.UNCERTAIN, public_comment_appropriate=AssessmentJudgment.NOT_ENOUGH_CONTEXT, confidence=AssessmentConfidence.HIGH, **values)
 
 
@@ -54,3 +56,17 @@ def test_configured_pilot_identity_is_not_an_arbitrary_name() -> None:
         verify_pilot_reviewer(registry, "unregistered", "pilot-secret")
     with pytest.raises(AssessmentPermissionError):
         verify_pilot_reviewer(registry, "maintainer-a", "wrong")
+
+
+def test_derived_outcome_is_deterministic_and_non_aligned_reviews_require_rationale(tmp_path) -> None:
+    factory = create_session_factory(f"sqlite:///{tmp_path / 'outcome.db'}"); Base.metadata.create_all(factory.kw["bind"])
+    with factory() as session:
+        _, packet = _packet(session)
+        service = ReviewAssessmentService(session)
+        reviewer = PilotReviewer("maintainer-a", ReviewerCohort.MAINTAINER)
+        with pytest.raises(ValueError, match="rationale is required"):
+            service.create(packet.id, reviewer, extraction_aligned=AssessmentJudgment.YES, test_aligned=AssessmentJudgment.NO, failure_supports_signal=AssessmentJudgment.YES, public_comment_appropriate=AssessmentJudgment.YES, confidence=AssessmentConfidence.LOW)
+        item = service.create(packet.id, reviewer, extraction_aligned=AssessmentJudgment.YES, test_aligned=AssessmentJudgment.NO, failure_supports_signal=AssessmentJudgment.YES, public_comment_appropriate=AssessmentJudgment.YES, confidence=AssessmentConfidence.HIGH, rationale="The changed assertion tests a different behavior.")
+        assert review_outcome(item.extraction_aligned, item.test_aligned, item.failure_supports_signal, item.public_comment_appropriate) == "MISALIGNED"
+        assert review_outcome(AssessmentJudgment.YES, AssessmentJudgment.UNCERTAIN, AssessmentJudgment.YES, AssessmentJudgment.YES) == "UNCLEAR"
+        assert review_outcome(*(AssessmentJudgment.YES,) * 4) == "ALIGNED"

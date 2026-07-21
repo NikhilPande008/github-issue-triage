@@ -23,7 +23,7 @@ def _packet(session):
 
 def _add(session, packet, reviewer_id, cohort, answers=None, supersedes=None):
     answers = answers or (AssessmentJudgment.YES,) * 4
-    return ReviewAssessmentService(session).create(packet.id, PilotReviewer(reviewer_id, cohort), extraction_aligned=answers[0], test_aligned=answers[1], failure_supports_signal=answers[2], public_comment_appropriate=answers[3], confidence=AssessmentConfidence.HIGH, supersedes_assessment_id=supersedes)
+    return ReviewAssessmentService(session).create(packet.id, PilotReviewer(reviewer_id, cohort), extraction_aligned=answers[0], test_aligned=answers[1], failure_supports_signal=answers[2], public_comment_appropriate=answers[3], confidence=AssessmentConfidence.HIGH, rationale="Recorded reviewer rationale.", supersedes_assessment_id=supersedes)
 
 
 def _ready(session, packet, answers=None):

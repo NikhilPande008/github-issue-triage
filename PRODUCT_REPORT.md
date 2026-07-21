@@ -19,7 +19,8 @@ issue is a regression, a bug, a security vulnerability, or the behavior the
 project should ultimately choose.
 
 Every outcome is inspectable: structured extraction, hypotheses, changed test,
-JUnit XML, terminal log, diff, validation reason, reproducibility manifest,
+JUnit XML, terminal log, diff, exact focused-test selection, proof-integrity
+report, validation reason, reproducibility manifest,
 classification, and attributable operational metrics are persisted. The public
 maintainer interface is deliberately read-only. GitHub comments, when enabled
 for a controlled pilot, require multiple independent policy and human-approval
@@ -100,6 +101,19 @@ Syntax errors, import/collection failures, test discovery failures, all-pass or
 all-skip output, no changed executable test, mixed failure/error reports, and
 flaky confirmation results are all rejected as confirmation evidence.
 
+The public **Why this failure counts** artifact makes these persisted gates
+inspectable on each detail page and Evidence Brief. It links only to retained
+diff, JUnit, manifest, or detail evidence. Historical investigations retain
+their original provenance and show unavailable/not-applicable modern JUnit or
+confirmation checks rather than reconstructed green results.
+
+New attempts also receive a deterministic proof-integrity diff analysis before
+JUnit validation can authorize confirmation. Literal false assertions,
+unconditional failure helpers, production/configuration edits, and fixture or
+snapshot changes are rejected as manufactured proof patterns. Missing stable
+API anchors and ambiguous mock-injected failures are review flags for human
+semantic review, not semantic decisions by the system.
+
 ### 4.2 Classification boundary
 
 `BEHAVIOR_GAP_CONFIRMED` comes directly from the deterministic validation path;
@@ -128,8 +142,8 @@ operational failure; it cannot silently become a negative product verdict.
 | --- | --- | --- |
 | `BEHAVIOR_GAP_CONFIRMED` | Clean, focused changed test fails against current code and survives confirmation | Confirmed regression, defect, intent, priority, or security impact |
 | `NEEDS_INFO` | Available evidence does not support a focused reproduction; extraction identifies missing detail | Issue is invalid or rejected |
-| `WONT_REPRO` | The bounded investigation did not produce evidence supporting the claimed behavior gap | Mathematical proof the report can never be reproduced |
-| `NOT_A_BUG` | Evidence-only classification identifies an intentional/non-defect framing | A maintainer's final policy decision |
+| `WONT_REPRO` | **No behavior gap established** in the bounded investigation | Mathematical proof the report can never be reproduced |
+| `NOT_A_BUG` | **Possible non-defect framing** that requires human review | A maintainer's final policy decision |
 | Operational failure | Setup, budget, runner, timeout, or infrastructure prevented a valid investigation | Any issue disposition |
 | `FLAKY_OR_INCONCLUSIVE` | Initial evidence did not reproduce cleanly in confirmation | A behavior-gap confirmation |
 
@@ -209,7 +223,11 @@ The detail view provides:
 - line-level diff coloring, failed-line/summary emphasis, JSON formatting,
   per-artifact copy buttons, size/timestamp display, loading and unavailable
   states;
-- a copyable, preview-only `NEEDS_INFO` maintainer response; and
+- outcome-specific, persisted-evidence **Maintainer next action** guidance:
+  confirmation asks for evidence/intent review, `NEEDS_INFO` has a copyable
+  preview-only response, no-gap and non-defect outcomes remain explicitly
+  non-final, and failures/incomplete work remain operationally inconclusive;
+- no public GitHub write, retry, or run controls; and
 - read-only related-investigation suggestions.
 
 ### Pilot reviewer experience
@@ -220,6 +238,16 @@ only repository-scoped work, has no direct “post to GitHub” action, and supp
 append-only semantic assessments and posting approvals tied to exact immutable
 evidence and comment previews. An authenticated weekly-report view shows only
 aggregate, repository-scoped pilot inputs and caveats.
+
+The public evidence detail now also shows a compact semantic-fidelity card with
+the bounded behavior claim, generated-test hypothesis, assertion-relevant diff
+lines, retained JUnit failure when available, and aggregate cohort coverage.
+Reviewer identities and rationale remain pilot-only. Reviewers inspect the same
+evidence side by side and submit append-only four-question assessments; the UI
+derives `ALIGNED`, `UNCLEAR`, or `MISALIGNED` without allowing confidence to
+override categorical judgments. A clean failing test can still be misaligned
+with issue intent, and semantic review never changes deterministic validation
+or classification.
 
 ## 8. Safety, privacy, and GitHub trust boundary
 
@@ -314,13 +342,34 @@ precision, customer-value, or automated-posting claim.
 
 ## 11. Current limitations and risks
 
+The optional controlled live demo is disabled by default and is limited to
+operator-configured repository and issue allowlists. It uses the existing
+durable queue and bounded resources, exposes only bounded progress metadata,
+and never posts to GitHub. The offline evidence snapshot remains the default
+judge experience; enabling a real run requires explicit operator approval.
+
+The public comparison screen (`/?compare=1`) explains the design distinction:
+Issue Triage gives maintainers bounded executable evidence to review rather
+than asking them to trust a label. It does not make claims about competitors,
+accuracy, or the meaning of an issue beyond retained evidence.
+
+The retrospective evaluation framework (`/?evaluation=1`) contains a small
+versioned, source-backed curation of existing seeded investigations and fails
+closed when data is invalid. Its current public history is intentionally
+ambiguous or insufficient where no resolution is established; no accuracy rates
+or benchmark claims are inferred from existing investigations.
+
 1. **Semantic truth remains human-reviewed.** Mechanical evidence is not a
    substitute for a maintainer's understanding of product intent.
-2. **Live agent connectivity remains a trust boundary.** The separate agent
-   container has provider egress and the Codex credential mount; focused tests
-   and confirmations have neither and are network-isolated by default. This
-   reduces test-execution exposure but does not remove agent-runtime risk for
-   public or untrusted code.
+2. **Live agent connectivity remains a trust boundary.** Focused test and
+   confirmation execution have no Codex credential mount and are
+   network-isolated by default. The agent phase still requires provider
+   connectivity. This reduces test-execution exposure but does not claim
+   complete protection from all agent-runtime supply-chain or credential risks.
+3. **Focused scope is deliberately narrow.** A modern confirmation requires a
+   deterministically identified changed executable test target and a matching
+   structured test failure. Unmappable helper, fixture, import, or file-level
+   changes remain inconclusive rather than being broadened into confirmation.
 3. **Live validation is deliberately scoped.** The cross-repository batch was
    selected from Python/JavaScript repositories compatible with the implemented
    pytest and Vitest adapters. Rust/Cargo and other runner ecosystems were out

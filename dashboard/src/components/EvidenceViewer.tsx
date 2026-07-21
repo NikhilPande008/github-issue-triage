@@ -3,7 +3,7 @@ import type { EvidenceArtifact } from "../services/api";
 import { CopyButton } from "./CopyButton";
 import { formatBytes, formatDate } from "./format";
 
-const labels: Record<string, string> = { git_diff: "Git Diff", pytest_output: "Pytest Output", vitest_output: "Vitest Output", terminal_log: "Terminal Log", extraction_json: "Extraction JSON", structured_test_results_junit: "Structured test results (JUnit XML)", reproducibility_manifest: "Reproducibility manifest" };
+const labels: Record<string, string> = { git_diff: "Git Diff", pytest_output: "Pytest Output", vitest_output: "Vitest Output", terminal_log: "Terminal Log", extraction_json: "Extraction JSON", structured_test_results_junit: "Structured test results (JUnit XML)", reproducibility_manifest: "Reproducibility manifest", proof_integrity_report: "Proof-integrity report", focused_test_selection: "Focused-test selection" };
 
 function labelForArtifact(artifact: EvidenceArtifact): string {
   const attempt = artifact.path.match(/attempt_(\d+)/)?.[1];
@@ -42,11 +42,22 @@ function ArtifactContent({ artifact }: { artifact: EvidenceArtifact }) {
   return content;
 }
 
+function FocusedSelectionSummary({ artifact }: { artifact: EvidenceArtifact }) {
+  if (artifact.kind !== "focused_test_selection" || !artifact.available || !artifact.content) return null;
+  try {
+    const selection = JSON.parse(artifact.content) as { precision?: string; targets?: unknown };
+    const targets = Array.isArray(selection.targets) ? selection.targets.filter((target): target is string => typeof target === "string") : [];
+    return <p className="metadata"><b>Selection precision:</b> {selection.precision ?? "UNAVAILABLE"}{targets.length ? <> · <b>Selected target{targets.length === 1 ? "" : "s"}:</b> {targets.join(", ")}</> : null}</p>;
+  } catch {
+    return <p className="metadata">Focused-test selection artifact is not valid JSON.</p>;
+  }
+}
+
 export function EvidenceViewer({ artifacts, loading = false }: { artifacts: EvidenceArtifact[]; loading?: boolean }) {
   const ordered = useMemo(() => [...artifacts].sort((a, b) => labelForArtifact(a).localeCompare(labelForArtifact(b))), [artifacts]);
   const [selected, setSelected] = useState(ordered[0]?.id);
   const artifact = ordered.find((item) => item.id === selected) ?? ordered[0];
   if (loading) return <section className="card"><h2>Evidence</h2><p className="metadata" role="status">Loading persisted artifacts…</p></section>;
   if (!artifact) return <section className="card"><h2>Evidence</h2><p>No artifacts were persisted for this investigation.</p></section>;
-  return <section className="card"><div className="section-heading"><h2>Evidence</h2>{artifact.available && <CopyButton value={artifact.content ?? ""} label={`Copy ${labelForArtifact(artifact)}`} />}</div><div className="tabs" role="tablist" aria-label="Evidence artifacts">{ordered.map((item) => <button className={item.id === artifact.id ? "selected" : ""} key={item.id} onClick={() => setSelected(item.id)} role="tab" aria-selected={item.id === artifact.id}>{labelForArtifact(item)}</button>)}</div>{artifact.available ? <><p className="metadata">{formatBytes(artifact.size_bytes)} · {artifact.modified_at ? formatDate(artifact.modified_at) : "timestamp unavailable"}</p><pre className={`evidence-code evidence-${artifact.kind}`}><code><ArtifactContent artifact={artifact} /></code></pre></> : <div className="artifact-unavailable"><strong>Artifact unavailable</strong><p>{artifact.error ?? "This persisted artifact could not be read."}</p></div>}</section>;
+  return <section className="card" id="evidence"><div className="section-heading"><h2>Evidence</h2>{artifact.available && <CopyButton value={artifact.content ?? ""} label={`Copy ${labelForArtifact(artifact)}`} />}</div><div className="tabs" role="tablist" aria-label="Evidence artifacts">{ordered.map((item) => <button className={item.id === artifact.id ? "selected" : ""} key={item.id} onClick={() => setSelected(item.id)} role="tab" aria-selected={item.id === artifact.id}>{labelForArtifact(item)}</button>)}</div>{artifact.available ? <><p className="metadata">{formatBytes(artifact.size_bytes)} · {artifact.modified_at ? formatDate(artifact.modified_at) : "timestamp unavailable"}</p><FocusedSelectionSummary artifact={artifact} /><pre className={`evidence-code evidence-${artifact.kind}`}><code><ArtifactContent artifact={artifact} /></code></pre></> : <div className="artifact-unavailable"><strong>Artifact unavailable</strong><p>{artifact.error ?? "This persisted artifact could not be read."}</p></div>}</section>;
 }

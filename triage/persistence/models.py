@@ -339,6 +339,8 @@ class WebhookJob(Base):
     posting_approval_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     budget_status: Mapped[BudgetStatus] = mapped_column(Enum(BudgetStatus, native_enum=False), nullable=False, default=BudgetStatus.AVAILABLE)
     budget_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    progress_stage: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    progress_detail: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

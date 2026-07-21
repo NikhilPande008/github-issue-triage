@@ -48,11 +48,14 @@ class DockerSandboxContainer:
         self.role = role
 
     @classmethod
-    def start(cls, docker_client, image, repository_path: Path, auth_path: Path, overall_timeout_seconds: int, role: ContainerRole, network_policy: str = "allowed") -> "DockerSandboxContainer":
+    def start(cls, docker_client, image, repository_path: Path, auth_path: Path, overall_timeout_seconds: int, role: ContainerRole = ContainerRole.AGENT, network_policy: str = "allowed") -> "DockerSandboxContainer":
         volumes = {str(repository_path): {"bind": "/workspace/repo", "mode": "rw"}}
         if role is ContainerRole.AGENT and auth_path.is_file():
             volumes[str(auth_path)] = {"bind": "/root/.codex/auth.json", "mode": "ro"}
-        kwargs = {}
+        # Docker does not inherit the host environment by default, but pass an
+        # explicit empty environment so the role boundary is visible in
+        # inspection and cannot accidentally grow through a wrapper default.
+        kwargs = {"environment": {}}
         if network_policy == "isolated":
             kwargs["network_mode"] = "none"
         container = docker_client.containers.run(

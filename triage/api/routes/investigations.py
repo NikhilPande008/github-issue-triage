@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
@@ -18,6 +19,8 @@ from triage.review_assessments import AssessmentPermissionError, ReviewAssessmen
 from triage.review_consensus import ReviewConsensusService
 from triage.review_telemetry import ReviewTelemetryService
 from triage.pilot_reports import PilotReportService, weekly_window
+from triage.semantic_review import consensus_label, packet_semantic_evidence, review_outcome
+from triage.validation.explainer import explain as explain_validation
 
 router = APIRouter(prefix="/investigations", tags=["investigations"])
 review_packets_router = APIRouter(prefix="/review-packets", tags=["review-packets"])
@@ -274,6 +277,13 @@ def _get_investigation(session: Session, investigation_id: str) -> Investigation
     return investigation
 
 
+def _require_packet_scope(session: Session, packet: ReviewPacket, reviewer) -> Investigation:
+    investigation = _get_investigation(session, packet.investigation_id)
+    if investigation.repository.lower() not in reviewer.repositories:
+        raise HTTPException(status_code=404, detail="Review packet not found")
+    return investigation
+
+
 def _review_packet_payload(packet: ReviewPacket, *, include_snapshot: bool = True) -> dict[str, object]:
     payload: dict[str, object] = {
         "id": packet.id,
@@ -288,6 +298,10 @@ def _review_packet_payload(packet: ReviewPacket, *, include_snapshot: bool = Tru
     return payload
 
 
+def _public_review_packet_payload(packet: ReviewPacket) -> dict[str, object]:
+    return {"id": packet.id, "investigation_id": packet.investigation_id, "version": packet.version, "schema_version": packet.schema_version, "created_at": _timestamp(packet.created_at)}
+
+
 def _assessment_payload(assessment: ReviewAssessment) -> dict[str, object]:
     return {
         "id": assessment.id, "review_packet_id": assessment.review_packet_id,
@@ -297,6 +311,7 @@ def _assessment_payload(assessment: ReviewAssessment) -> dict[str, object]:
         "extraction_aligned": assessment.extraction_aligned.value, "test_aligned": assessment.test_aligned.value,
         "failure_supports_signal": assessment.failure_supports_signal.value,
         "public_comment_appropriate": assessment.public_comment_appropriate.value,
+        "derived_review_outcome": review_outcome(assessment.extraction_aligned, assessment.test_aligned, assessment.failure_supports_signal, assessment.public_comment_appropriate),
         "confidence": assessment.confidence.value, "rationale": assessment.rationale,
         "reason_tags": json.loads(assessment.reason_tags_json),
         "supersedes_assessment_id": assessment.supersedes_assessment_id, "created_at": _timestamp(assessment.created_at),
@@ -315,9 +330,9 @@ def _current_consensus_payload(session: Session, packet: ReviewPacket) -> dict[s
     try:
         current = ReviewConsensusService(session).current(packet.id)
         latest = session.scalar(select(ReviewConsensusSnapshot).where(ReviewConsensusSnapshot.review_packet_id == packet.id).order_by(ReviewConsensusSnapshot.computed_at.desc(), ReviewConsensusSnapshot.id.desc()))
-        return {**current, "latest_snapshot_hash": latest.snapshot_hash if latest else None, "latest_snapshot_at": _timestamp(latest.computed_at) if latest else None}
+        return {**current, "display_state": consensus_label(str(current.get("state"))), "latest_snapshot_hash": latest.snapshot_hash if latest else None, "latest_snapshot_at": _timestamp(latest.computed_at) if latest else None}
     except Exception:
-        return {"packet_id": packet.id, "packet_hash": packet.integrity_hash, "packet_version": packet.version, "state": "UNAVAILABLE", "coverage": {"MAINTAINER": 0, "INDEPENDENT_ENGINEER": 0}, "algorithm_version": "1.0", "disagreement": [], "unavailable_reason": "Consensus calculation unavailable.", "latest_snapshot_hash": None, "latest_snapshot_at": None}
+        return {"packet_id": packet.id, "packet_hash": packet.integrity_hash, "packet_version": packet.version, "state": "UNAVAILABLE", "display_state": "Review evidence unavailable", "coverage": {"MAINTAINER": 0, "INDEPENDENT_ENGINEER": 0}, "algorithm_version": "1.0", "disagreement": [], "unavailable_reason": "Consensus calculation unavailable.", "latest_snapshot_hash": None, "latest_snapshot_at": None}
 
 
 def _webhook_job_payload(job: WebhookJob) -> dict[str, object]:
@@ -410,14 +425,48 @@ def list_review_packets(investigation_id: str, session: Session = Depends(get_se
         status, reason = "UNAVAILABLE", investigation.review_packet_reason
     else:
         status, reason = "NOT_ISSUED", "No immutable review packet has been issued for this investigation."
-    return {"status": status, "reason": reason, "items": [_review_packet_payload(packet) for packet in packets]}
+    return {"status": status, "reason": reason, "items": [_public_review_packet_payload(packet) for packet in packets]}
 
 
 @router.get("/{investigation_id}/review-assessments")
-def list_investigation_assessments(investigation_id: str, session: Session = Depends(get_session)) -> dict[str, object]:
-    _get_investigation(session, investigation_id)
+def list_investigation_assessments(investigation_id: str, request: Request, x_pilot_reviewer: str | None = Header(default=None), x_pilot_review_token: str | None = Header(default=None), session: Session = Depends(get_session)) -> dict[str, object]:
+    investigation = _get_investigation(session, investigation_id)
+    settings = Settings()
+    if not settings.pilot_review_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+    reviewer = _pilot_reviewer(request, settings, x_pilot_reviewer, x_pilot_review_token)
+    if investigation.repository.lower() not in reviewer.repositories:
+        raise HTTPException(status_code=404, detail="Investigation not found")
     assessments = list(session.scalars(select(ReviewAssessment).where(ReviewAssessment.investigation_id == investigation_id).order_by(ReviewAssessment.created_at, ReviewAssessment.id)))
     return {"items": [_assessment_payload(item) for item in assessments]}
+
+
+@router.get("/{investigation_id}/semantic-review")
+def semantic_review_summary(investigation_id: str, session: Session = Depends(get_session)) -> dict[str, object]:
+    """Public, read-only aggregate review provenance with no reviewer data."""
+    investigation = _get_investigation(session, investigation_id)
+    packet = session.scalar(select(ReviewPacket).where(ReviewPacket.investigation_id == investigation.id).order_by(ReviewPacket.version.desc()))
+    if packet is None:
+        status = "UNAVAILABLE" if investigation.review_packet_status == "UNAVAILABLE" else "NOT_ISSUED"
+        return {"packet_status": status, "reason": investigation.review_packet_reason if status == "UNAVAILABLE" else "No immutable review packet has been issued for this investigation.", "review": None}
+    consensus = _current_consensus_payload(session, packet)
+    snapshot = json.loads(packet.snapshot_json)
+    evidence = packet_semantic_evidence(snapshot)
+    hypothesis = session.scalar(select(Hypothesis).where(Hypothesis.investigation_id == investigation.id).order_by(Hypothesis.attempt_number.desc(), Hypothesis.id.desc()))
+    generated = dict(evidence["generated_test"])
+    generated["hypothesis"] = hypothesis.statement if hypothesis else None
+    evidence["generated_test"] = generated
+    return {
+        "packet_status": "AVAILABLE", "reason": None,
+        "review": {"packet_version": packet.version, "evidence": evidence, "state": consensus["state"], "display_state": consensus["display_state"], "coverage": consensus["coverage"]},
+    }
+
+
+@router.get("/{investigation_id}/validation-explainer")
+def validation_explainer(investigation_id: str, session: Session = Depends(get_session)) -> dict[str, object]:
+    investigation = _get_investigation(session, investigation_id)
+    artifacts = list(session.scalars(select(Artifact).where(Artifact.investigation_id == investigation.id).order_by(Artifact.created_at, Artifact.id)))
+    return explain_validation(investigation, artifacts)
 
 
 @router.get("/{investigation_id}/posting-eligibility")
@@ -451,25 +500,42 @@ def create_posting_approval(investigation_id: str, payload: PostingApprovalCreat
 
 
 @review_packets_router.get("/{packet_id}")
-def get_review_packet(packet_id: str, session: Session = Depends(get_session)) -> dict[str, object]:
+def get_review_packet(packet_id: str, request: Request, x_pilot_reviewer: str | None = Header(default=None), x_pilot_review_token: str | None = Header(default=None), session: Session = Depends(get_session)) -> dict[str, object]:
     packet = session.get(ReviewPacket, packet_id)
     if packet is None:
         raise HTTPException(status_code=404, detail="Review packet not found")
+    settings = Settings()
+    if not settings.pilot_review_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+    reviewer = _pilot_reviewer(request, settings, x_pilot_reviewer, x_pilot_review_token)
+    _require_packet_scope(session, packet, reviewer)
     return {**_review_packet_payload(packet), "current_consensus": _current_consensus_payload(session, packet)}
 
 
 @review_packets_router.get("/{packet_id}/assessments")
-def list_packet_assessments(packet_id: str, session: Session = Depends(get_session)) -> dict[str, object]:
-    if session.get(ReviewPacket, packet_id) is None:
+def list_packet_assessments(packet_id: str, request: Request, x_pilot_reviewer: str | None = Header(default=None), x_pilot_review_token: str | None = Header(default=None), session: Session = Depends(get_session)) -> dict[str, object]:
+    packet = session.get(ReviewPacket, packet_id)
+    if packet is None:
         raise HTTPException(status_code=404, detail="Review packet not found")
+    settings = Settings()
+    if not settings.pilot_review_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+    reviewer = _pilot_reviewer(request, settings, x_pilot_reviewer, x_pilot_review_token)
+    _require_packet_scope(session, packet, reviewer)
     assessments = list(session.scalars(select(ReviewAssessment).where(ReviewAssessment.review_packet_id == packet_id).order_by(ReviewAssessment.created_at, ReviewAssessment.id)))
     return {"items": [_assessment_payload(item) for item in assessments]}
 
 
 @review_packets_router.get("/{packet_id}/consensus-history")
-def list_consensus_history(packet_id: str, session: Session = Depends(get_session)) -> dict[str, object]:
-    if session.get(ReviewPacket, packet_id) is None:
+def list_consensus_history(packet_id: str, request: Request, x_pilot_reviewer: str | None = Header(default=None), x_pilot_review_token: str | None = Header(default=None), session: Session = Depends(get_session)) -> dict[str, object]:
+    packet = session.get(ReviewPacket, packet_id)
+    if packet is None:
         raise HTTPException(status_code=404, detail="Review packet not found")
+    settings = Settings()
+    if not settings.pilot_review_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+    reviewer = _pilot_reviewer(request, settings, x_pilot_reviewer, x_pilot_review_token)
+    _require_packet_scope(session, packet, reviewer)
     snapshots = list(session.scalars(select(ReviewConsensusSnapshot).where(ReviewConsensusSnapshot.review_packet_id == packet_id).order_by(ReviewConsensusSnapshot.computed_at, ReviewConsensusSnapshot.id)))
     return {"items": [_consensus_snapshot_payload(item) for item in snapshots]}
 
@@ -484,12 +550,34 @@ def create_packet_assessment(
     if not settings.pilot_review_enabled:
         raise HTTPException(status_code=404, detail="Not found")
     reviewer = _pilot_reviewer(request, settings, x_pilot_reviewer, x_pilot_review_token)
+    packet = session.get(ReviewPacket, packet_id)
+    if packet is None:
+        raise HTTPException(status_code=404, detail="Review packet not found")
+    _require_packet_scope(session, packet, reviewer)
     try:
         assessment = ReviewAssessmentService(session).create(packet_id, reviewer, **payload.model_dump())
     except ValueError as error:
         # Never disclose registry or token configuration; ordinary input errors are safe.
         raise HTTPException(status_code=409 if "active assessment" in str(error) else 422, detail=str(error)) from None
     return _assessment_payload(assessment)
+
+
+@pilot_router.get("/packets/{packet_id}")
+def pilot_packet_detail(packet_id: str, request: Request, x_pilot_reviewer: str | None = Header(default=None), x_pilot_review_token: str | None = Header(default=None), session: Session = Depends(get_session)) -> dict[str, object]:
+    """Authenticated, repository-scoped reviewer evidence view."""
+    settings = Settings()
+    if not settings.pilot_review_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+    reviewer = _pilot_reviewer(request, settings, x_pilot_reviewer, x_pilot_review_token)
+    packet = session.get(ReviewPacket, packet_id)
+    if packet is None:
+        raise HTTPException(status_code=404, detail="Review packet not found")
+    investigation = _require_packet_scope(session, packet, reviewer)
+    consensus = _current_consensus_payload(session, packet)
+    evidence = packet_semantic_evidence(json.loads(packet.snapshot_json))
+    hypothesis = session.scalar(select(Hypothesis).where(Hypothesis.investigation_id == investigation.id).order_by(Hypothesis.attempt_number.desc(), Hypothesis.id.desc()))
+    generated = dict(evidence["generated_test"]); generated["hypothesis"] = hypothesis.statement if hypothesis else None; evidence["generated_test"] = generated
+    return {"packet": {"id": packet.id, "version": packet.version, "investigation_id": investigation.id, "repository": investigation.repository, "issue_number": investigation.issue_number, "issue_title": investigation.issue_title, "evidence": evidence, "state": consensus["state"], "display_state": consensus["display_state"], "coverage": consensus["coverage"]}}
 
 
 
@@ -505,6 +593,15 @@ def get_timeline(investigation_id: str, session: Session = Depends(get_session))
         )
     )
     artifacts = list(session.scalars(select(Artifact).where(Artifact.investigation_id == investigation.id)))
+    proof_by_attempt: dict[int, str] = {}
+    for artifact in artifacts:
+        if artifact.kind != "proof_integrity_report": continue
+        try:
+            part = next(part for part in artifact.path.split("/") if part.startswith("attempt_"))
+            report = json.loads(Path(artifact.path).read_text(encoding="utf-8"))
+            proof_by_attempt[int(part.removeprefix("attempt_"))] = str(report.get("result", "UNAVAILABLE"))
+        except (OSError, StopIteration, ValueError, json.JSONDecodeError):
+            continue
     artifact_attempts = {
         int(part.removeprefix("attempt_"))
         for artifact in artifacts
@@ -518,7 +615,7 @@ def get_timeline(investigation_id: str, session: Session = Depends(get_session))
                 "hypothesis": hypothesis.statement,
                 "revision_reason": hypothesis.revision_reason,
                 "action": "Codex investigation and pytest execution",
-                "result": "Evidence captured" if hypothesis.attempt_number in artifact_attempts else "Evidence unavailable",
+                "result": "Rejected proof pattern" if proof_by_attempt.get(hypothesis.attempt_number) == "REJECTED_PROOF_PATTERN" else "Proof review flagged" if proof_by_attempt.get(hypothesis.attempt_number) == "REVIEW_FLAGGED" else "Evidence captured" if hypothesis.attempt_number in artifact_attempts else "Evidence unavailable",
                 "duration_ms": None,
             }
             for hypothesis in hypotheses

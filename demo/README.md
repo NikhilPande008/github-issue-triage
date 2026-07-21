@@ -1,9 +1,11 @@
 # Offline judge demo
 
 This committed, read-only snapshot contains five selectively exported persisted
-investigations and 58 referenced artifacts. It includes:
+investigations and 68 referenced artifacts. It includes:
 
-- `psf/requests` #7564 — `BEHAVIOR_GAP_CONFIRMED` flagship case.
+- `psf/requests` #7564 — modern `BEHAVIOR_GAP_CONFIRMED` flagship case,
+  with exact pytest-target selection, structured JUnit evidence,
+  proof-integrity evidence, and persisted confirmation provenance.
 - `openai/openai-agents-python` #3563 — cross-repository
   `BEHAVIOR_GAP_CONFIRMED` case.
 - `openai/openai-guardrails-python` #70 — cross-repository
@@ -38,6 +40,9 @@ Open <http://localhost:5173/?brief=1> for the Evidence Brief,
 `BEHAVIOR_GAP_CONFIRMED` means deterministic structured validation found a
 clean focused failing test in the inspected revision. It does not decide
 whether a report is a bug, regression, intended behavior, or valid issue.
+The refreshed Requests example demonstrates that reported behavior differs from
+the generated focused test expectation; it does not determine intended
+behavior, regression status, or maintainer priority.
 Non-confirming outcomes are evidence-bounded and likewise do not invalidate an
 issue. The snapshot remains read-only.
 

@@ -11,6 +11,9 @@ class ValidationEvidence:
     structured_results_path: Path | None = None
     execution_failure_reason: str | None = None
     reliability_status: str = "NOT_CONFIRMED"
+    proof_integrity_report: dict | None = None
+    focused_test_selection: dict | None = None
+    focused_test_selection_required: bool = False
 
     @property
     def test_output_path(self) -> Path:

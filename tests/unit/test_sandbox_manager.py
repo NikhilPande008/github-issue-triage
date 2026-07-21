@@ -4,7 +4,7 @@ import pytest
 
 import triage.sandbox.manager as manager_module
 from triage.sandbox.container import ContainerCommandResult, ContainerRole, DockerSandboxContainer
-from triage.sandbox.manager import EnvironmentSetupFailure, Sandbox, SandboxManager, resolve_setup_command
+from triage.sandbox.manager import EnvironmentSetupFailure, Sandbox, SandboxManager, SetupCommand, resolve_setup_command
 from triage.sandbox.workspace import SandboxWorkspace
 
 
@@ -119,5 +119,41 @@ def test_container_roles_mount_auth_only_for_agent_and_isolate_tests(tmp_path) -
     assert str(auth) not in setup["volumes"]
     assert str(auth) in agent["volumes"]
     assert str(auth) not in test["volumes"]
+    assert setup["environment"] == agent["environment"] == test["environment"] == {}
     assert "network_mode" not in setup and "network_mode" not in agent
     assert test["network_mode"] == "none"
+
+
+def test_manifest_records_all_role_and_confirmation_boundaries(tmp_path) -> None:
+    class Runner: id = "pytest"
+    class Agent:
+        def run(self, command, timeout):
+            if command == "git rev-parse HEAD": return ContainerCommandResult(0, "abc123\n")
+            return ContainerCommandResult(0, "recorded")
+    manager = SandboxManager(tmp_path, "image", 10, 20, Path("missing"), docker_client=object())
+    manifest = manager._manifest_base(
+        tmp_path, "owner/repo", type("Image", (), {"id": "image", "attrs": {}})(), Runner(),
+        SetupCommand("python -m pip install -e .", "explicit"), Agent(),
+    )
+    assert manifest["phase_boundaries"] == {
+        "setup": {"network_policy": "allowed", "auth_mount": False},
+        "agent": {"network_policy": "allowed", "auth_mount": True},
+        "test": {"network_policy": "isolated", "auth_mount": False},
+    }
+    assert manifest["confirmation_boundary"] == {
+        "container_role": "test", "network_policy": "isolated", "auth_mount": False, "codex_invocation": False,
+    }
+
+
+def test_agent_container_can_be_restored_without_affecting_test_role(monkeypatch, tmp_path) -> None:
+    workspace = SandboxWorkspace(tmp_path / "workspace", tmp_path / "workspace" / "repository")
+    workspace.repository_path.mkdir(parents=True)
+    calls = []
+    class Started:
+        id = "agent-restored"
+    monkeypatch.setattr(manager_module.DockerSandboxContainer, "start", lambda *args: calls.append(args[5:]) or Started())
+    manager = SandboxManager(tmp_path, "image", 10, 20, Path("missing"), docker_client=object())
+    sandbox = Sandbox(workspace, None, None, "image", type("Image", (), {"id": "prepared"})(), "run", 0)
+    restored = manager.create_agent_container(sandbox)
+    assert restored is sandbox.agent_container
+    assert calls == [(ContainerRole.AGENT, "allowed")]

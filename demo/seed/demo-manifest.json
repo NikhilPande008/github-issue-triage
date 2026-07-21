@@ -1,16 +1,16 @@
 {
   "schema_version": "1",
-  "exported_at": "2026-07-21T14:22:27Z",
+  "exported_at": "2026-07-21T20:35:12Z",
   "investigations": [
     {
-      "id": "0a379f2f-ee0d-4a60-a7a3-a5682d4e415f",
+      "id": "cdcbeed9-4c1e-498f-98bd-d550a2da635d",
       "repository": "psf/requests",
       "issue_number": 7564,
       "title": "raise FileNotFoundError for missing TLS material",
       "classification": "BEHAVIOR_GAP_CONFIRMED",
       "assertsFailure": true,
       "purpose": "flagship_confirmed",
-      "artifact_count": 4
+      "artifact_count": 14
     },
     {
       "id": "39f93579-1372-46c6-9c46-b53ce8d9e568",

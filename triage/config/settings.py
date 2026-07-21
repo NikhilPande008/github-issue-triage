@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     confirmation_runs: int = Field(default=2, validation_alias=AliasChoices("TRIAGE_CONFIRMATION_RUNS", "CONFIRMATION_RUNS"))
     test_network_policy: Literal["isolated", "allowed"] = Field(default="isolated", validation_alias=AliasChoices("TRIAGE_TEST_NETWORK_POLICY", "TEST_NETWORK_POLICY"))
     agent_network_policy: Literal["allowed"] = "allowed"
+    live_demo_enabled: bool = False
+    live_demo_repositories: str = ""
+    live_demo_allowed_issue_numbers: str = ""
+    live_demo_request_token: str | None = None
+    live_demo_max_concurrent_runs: int = 1
+    live_demo_max_issues_per_session: int = 1
     budget_openai_per_investigation_usd: Decimal | None = Decimal("1.00")
     budget_openai_repository_daily_usd: Decimal | None = Decimal("20.00")
     budget_openai_repository_monthly_usd: Decimal | None = Decimal("100.00")
@@ -73,3 +79,15 @@ class Settings(BaseSettings):
 
     def auto_post_allowlist(self) -> set[str]:
         return {item.strip().lower() for item in self.github_auto_post_repositories.split(",") if item.strip()}
+
+    def live_demo_repository_allowlist(self) -> set[str]:
+        return {item.strip().lower() for item in self.live_demo_repositories.split(",") if item.strip()}
+
+    def live_demo_issue_allowlist(self) -> set[int]:
+        values: set[int] = set()
+        for item in self.live_demo_allowed_issue_numbers.split(","):
+            try:
+                if item.strip(): values.add(int(item.strip()))
+            except ValueError:
+                continue
+        return values

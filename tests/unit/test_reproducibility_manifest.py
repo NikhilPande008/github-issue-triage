@@ -16,6 +16,7 @@ def test_manifest_contains_command_policy_and_integrity_hashes(tmp_path) -> None
         "focused_test_command": "python -m pytest -q --junitxml='/tmp/result.xml'",
         "network_policy": "isolated", "confirmation_runs": 2,
         "phase_boundaries": {"setup": {"network_policy": "allowed", "auth_mount": False}, "agent": {"network_policy": "allowed", "auth_mount": True}, "test": {"network_policy": "isolated", "auth_mount": False}},
+        "confirmation_boundary": {"container_role": "test", "network_policy": "isolated", "auth_mount": False, "codex_invocation": False},
         "dependency_snapshot": "pytest==8", "artifacts": {name: {"sha256": "hash"} for name in ("terminal.log", "pytest_output.txt", "git.diff")},
     }
     path = attempt / "reproducibility_manifest.json"
@@ -23,3 +24,10 @@ def test_manifest_contains_command_policy_and_integrity_hashes(tmp_path) -> None
     loaded = json.loads(path.read_text(encoding="utf-8"))
     assert {"repository", "repository_commit", "runner", "focused_test_command", "network_policy", "confirmation_runs", "dependency_snapshot", "artifacts"} <= loaded.keys()
     assert loaded["phase_boundaries"]["test"] == {"network_policy": "isolated", "auth_mount": False}
+    assert loaded["confirmation_boundary"]["codex_invocation"] is False
+
+
+def test_legacy_manifest_remains_readable_without_new_role_fields(tmp_path) -> None:
+    path = tmp_path / "legacy.json"
+    path.write_text(json.dumps({"repository": "owner/repo", "runner": "pytest"}), encoding="utf-8")
+    assert json.loads(path.read_text(encoding="utf-8"))["repository"] == "owner/repo"

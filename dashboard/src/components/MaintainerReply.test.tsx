@@ -9,14 +9,14 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 it("appears only for NEEDS_INFO and turns persisted missing info into copyable text", () => {
   const { rerender } = render(<MaintainerReply classification="NEEDS_INFO" artifacts={[artifact('{"missing_info":[" Python version ", "python   version", "- minimal script", ""]}')]} />);
-  expect(screen.getByText("Maintainer-ready reply")).toBeInTheDocument();
+  expect(screen.getByText("Copyable reply preview")).toBeInTheDocument();
   expect(screen.getByText(/- Python version/)).toBeInTheDocument();
   expect(screen.getByText(/- minimal script/)).toBeInTheDocument();
   expect(screen.getAllByText(/Python version/i)).toHaveLength(1);
-  expect(screen.getByText("Preview — not posted to GitHub.")).toBeInTheDocument();
+  expect(screen.getByText("Preview only — not posted to GitHub.")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /post|submit|publish/i })).not.toBeInTheDocument();
   rerender(<MaintainerReply classification="BEHAVIOR_GAP_CONFIRMED" artifacts={[artifact('{"missing_info":["Python version"]}')]} />);
-  expect(screen.queryByText("Maintainer-ready reply")).not.toBeInTheDocument();
+  expect(screen.queryByText("Copyable reply preview")).not.toBeInTheDocument();
 });
 
 it("uses the conservative fallback when persisted missing info is absent or unusable", () => {

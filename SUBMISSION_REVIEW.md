@@ -52,9 +52,50 @@ Open http://localhost:5173 and select **psf/requests #7564**.
 1. Open the triage queue and select `psf/requests #7564`.
 2. Read the persisted issue extraction.
 3. Inspect the focused test change in the Git diff.
-4. Inspect the pytest output and structured JUnit XML.
-5. Confirm the deterministic validation reason and `BEHAVIOR_GAP_CONFIRMED` outcome.
-6. Open the timeline and reproducibility manifest to see how the evidence was preserved.
+4. Inspect the pytest output, exact focused-test selection, and structured JUnit XML.
+5. Read the **Semantic fidelity review** card: bounded claim, generated-test
+   claim, assertion-relevant diff evidence, retained JUnit failure, and
+   aggregate review state.
+6. Read **Why this failure counts** to inspect the persisted deterministic
+   validation gates and their evidence links.
+7. Read **Maintainer next action**. It is advisory only: the confirmed case
+   asks for evidence and repository-intent review rather than a bug fix or
+   automated issue decision.
+8. Confirm the deterministic validation reason and `BEHAVIOR_GAP_CONFIRMED` outcome.
+9. Open the timeline, proof-integrity report, and reproducibility manifests to see how the modern confirmation evidence was preserved.
+
+### Sandbox boundary
+
+For live work, setup installs dependencies with network access but no Codex
+credential; the agent alone has provider connectivity and the credential mount;
+focused test and confirmation execution are no-auth and network-isolated by
+default. This is an exposure reduction, not a claim that all agent-runtime
+supply-chain or credential risks are eliminated.
+
+Modern structured confirmation also requires an AST-derived exact changed
+pytest node and a matching JUnit testcase. A broad file run is diagnostic-only
+when exact targeting cannot be established.
+
+### Optional live demo
+
+`/?live=1` is disabled by default. When explicitly operator-enabled, it can
+enqueue only configured repository/issue allowlists through the durable queue;
+it never posts to GitHub. The offline Evidence Brief and Evidence Results pages
+remain the normal review path. Do not enable a real run without separate
+operator approval and preflight verification.
+
+### Why evidence?
+
+Open `/?compare=1` for a concise comparison between typical AI triage and the
+Issue Triage evidence workflow, then follow its dynamic links to persisted
+confirmed and no-gap evidence where available.
+
+### Retrospective evaluation
+
+`/?evaluation=1` shows a small, source-backed curation of existing seeded
+investigations. Its deliberately ambiguous and insufficient-evidence entries
+remain unresolved; add new cases only with separately reviewed public sources
+and real corresponding investigations.
 
 ### What the flagship example demonstrates
 
@@ -81,6 +122,12 @@ The issue requests `FileNotFoundError` for missing TLS material. The focused cha
 - GitHub write actions are not exposed in the public dashboard.
 - Setup failures, timeouts, malformed output, flaky confirmations, and insufficient issue details receive conservative/inconclusive outcomes rather than a behavior-gap confirmation.
 - Evidence artifacts are persisted for review instead of replaced by a prose-only conclusion.
+- Human semantic review assesses whether the generated test represents the
+  bounded behavior claim. It is aggregate-only on public pages and never
+  changes deterministic validation or classification.
+- A deterministic proof-integrity check rejects obvious manufactured failures
+  (such as `assert False`) before they can become confirmations; ambiguous
+  patterns remain visible review flags.
 
 ## Reviewer questions
 
