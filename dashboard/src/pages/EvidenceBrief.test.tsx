@@ -11,6 +11,7 @@ it("loads the newest confirmed investigation and its persisted evidence", async 
   await waitFor(() => expect(screen.getByRole("heading", { name: "TLS behavior" })).toBeInTheDocument());
   expect(screen.getByText("tests/test_tls.py")).toBeInTheDocument();
   expect(screen.getByText("JUnit XML")).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Select confirmed evidence case" })).toHaveValue("newer");
   expect(screen.getByRole("link", { name: "Open complete evidence trail" })).toHaveAttribute("href", "?id=newer");
 });
 

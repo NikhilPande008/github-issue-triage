@@ -23,6 +23,7 @@ function detailHref(id: string) { return `?id=${encodeURIComponent(id)}`; }
 
 export function EvidenceBrief() {
   const [selected, setSelected] = useState<Investigation>();
+  const [confirmed, setConfirmed] = useState<Investigation[]>([]);
   const [artifacts, setArtifacts] = useState<EvidenceArtifact[]>([]);
   const [validationExplainer, setValidationExplainer] = useState<ValidationExplainerData>();
   const [semanticReview, setSemanticReview] = useState<SemanticReview>();
@@ -31,9 +32,12 @@ export function EvidenceBrief() {
   useEffect(() => {
     setLoading(true); setError(undefined);
     api.investigations(1, "BEHAVIOR_GAP_CONFIRMED").then(({ items }) => {
+      setConfirmed(items);
       const newest = [...items].sort((a, b) => (b.completed_at ?? b.updated_at ?? "").localeCompare(a.completed_at ?? a.updated_at ?? ""))[0];
-      setSelected(newest);
-      return newest ? Promise.all([api.artifacts(newest.id).then(({ items: evidence }) => setArtifacts(evidence)), api.validationExplainer(newest.id).then(setValidationExplainer), api.semanticReview(newest.id).then(setSemanticReview).catch(() => undefined)]) : undefined;
+      const requestedId = new URLSearchParams(window.location.search).get("id");
+      const chosen = items.find((item) => item.id === requestedId) ?? newest;
+      setSelected(chosen);
+      return chosen ? Promise.all([api.artifacts(chosen.id).then(({ items: evidence }) => setArtifacts(evidence)), api.validationExplainer(chosen.id).then(setValidationExplainer), api.semanticReview(chosen.id).then(setSemanticReview).catch(() => undefined)]) : undefined;
     }).catch((err: Error) => setError(err.message)).finally(() => setLoading(false));
   }, []);
   const evidence = useMemo(() => ({ diff: artifact(artifacts, "git_diff"), junit: artifact(artifacts, "structured_test_results_junit") }), [artifacts]);
@@ -41,11 +45,13 @@ export function EvidenceBrief() {
   if (error) return <section className="empty-state"><h1>Evidence Brief unavailable</h1><p>Recorded investigations could not be loaded: {error}</p><a className="button-link" href="/">View triage queue</a></section>;
   if (!selected) return <section className="empty-state"><p className="eyebrow">Evidence Brief</p><h1>No confirmed investigation is available</h1><p>A brief is shown only when recorded investigation data has a Behavior gap confirmed outcome.</p><a className="button-link" href="/">View triage queue</a></section>;
   const issueUrl = `https://github.com/${selected.repository}/issues/${selected.issue_number}`;
+  const selectCase = (id: string) => { window.location.assign(`?brief=1&id=${encodeURIComponent(id)}`); };
   const path = diffPath(evidence.diff?.content);
   const unavailable = (item: EvidenceArtifact | undefined, label: string) => <p className="artifact-unavailable"><strong>{label} unavailable.</strong> {item?.error ?? "No persisted artifact is available for this investigation."}</p>;
   return <section className="evidence-brief">
     <a className="back-link" href="/">← Back to triage queue</a>
     <div className="brief-hero"><div><p className="eyebrow">Submission-ready evidence brief</p><h1>{selected.issue_title ?? `${selected.repository} #${selected.issue_number}`}</h1><p className="brief-issue"><a href={issueUrl} target="_blank" rel="noreferrer noopener">{selected.repository} #{selected.issue_number} ↗</a></p><div className="id-line"><code>{selected.id.slice(0, 8)}</code><CopyButton value={selected.id} label="Copy investigation ID" /></div></div><StatusBadge value="BEHAVIOR_GAP_CONFIRMED" /></div>
+    {confirmed.length > 1 && <label className="brief-case-picker">Evidence case<select aria-label="Select confirmed evidence case" value={selected.id} onChange={(event) => selectCase(event.target.value)}>{confirmed.map((item) => <option key={item.id} value={item.id}>{item.repository} #{item.issue_number} — {item.issue_title ?? "Untitled issue"}</option>)}</select></label>}
     <p className="brief-caveat">{boundedCaveat}</p>
     <ValidationExplainer data={validationExplainer} investigationId={selected.id} />
     <NextActions summary={selected} artifacts={artifacts} semanticReview={semanticReview} compact />
