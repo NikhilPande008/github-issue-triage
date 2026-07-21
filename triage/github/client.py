@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -7,6 +8,45 @@ from urllib.request import Request, urlopen
 
 class GitHubClientError(RuntimeError):
     pass
+
+
+class GitHubRateLimitError(GitHubClientError):
+    """GitHub explicitly reported that the current API quota is exhausted."""
+
+
+def format_rate_limit_reset(value: str | None, now: datetime | None = None) -> str | None:
+    """Return a safe, human-friendly reset hint for a GitHub epoch header."""
+    try:
+        reset = datetime.fromtimestamp(int(value or ""), tz=timezone.utc)
+    except (TypeError, ValueError, OSError, OverflowError):
+        return None
+    now = now or datetime.now(timezone.utc)
+    seconds = max(0, round((reset - now).total_seconds()))
+    if seconds < 60:
+        wait = f"{seconds}s"
+    else:
+        minutes, remainder = divmod(seconds, 60)
+        wait = f"{minutes}m" if remainder == 0 else f"{minutes}m {remainder}s"
+    return f"Retry in {wait} (at {reset.strftime('%Y-%m-%d %H:%M UTC')})."
+
+
+def _is_rate_limited(status: int, headers: Any, detail: str) -> bool:
+    remaining = headers.get("X-RateLimit-Remaining") if headers is not None else None
+    if status == 429 or (status == 403 and str(remaining).strip() == "0"):
+        return True
+    message = detail.lower()
+    return "rate limit exceeded" in message or "secondary rate limit" in message
+
+
+def _rate_limit_message(token_configured: bool, headers: Any) -> str:
+    reset = headers.get("X-RateLimit-Reset") if headers is not None else None
+    action = (
+        "The configured GITHUB_TOKEN quota is exhausted."
+        if token_configured
+        else "Set GITHUB_TOKEN to increase GitHub API rate limits."
+    )
+    reset_hint = format_rate_limit_reset(reset)
+    return "GitHub API rate limit exhausted. " + action + (f" {reset_hint}" if reset_hint else "")
 
 
 class GitHubClient:
@@ -33,13 +73,18 @@ class GitHubClient:
         selected: list[dict[str, Any]] = []
         page = start_page
         while len(selected) < limit:
-            query = urlencode({"state": "open", "sort": "created", "direction": "desc", "per_page": 100, "page": page})
-            issues = self._get(f"/repos/{self.repository}/issues?{query}")
+            issues = self.fetch_open_issues_page(page)
             selected.extend(issue for issue in issues if "pull_request" not in issue)
             if len(issues) < 100:
                 break
             page += 1
         return selected[:limit]
+
+    def fetch_open_issues_page(self, page: int) -> list[dict[str, Any]]:
+        if page < 1:
+            raise ValueError("page must be at least 1")
+        query = urlencode({"state": "open", "sort": "created", "direction": "desc", "per_page": 100, "page": page})
+        return self._get(f"/repos/{self.repository}/issues?{query}")
 
     def _get(self, path: str) -> Any:
         headers = {
@@ -54,11 +99,9 @@ class GitHubClient:
                 return json.load(response)
         except HTTPError as error:
             detail = error.read().decode("utf-8", errors="replace")
-            if error.code == 403:
-                raise GitHubClientError(
-                    "GitHub API rate limit or access limit reached (HTTP 403). "
-                    "Set GITHUB_TOKEN to continue with authenticated API access."
-                ) from error
+            headers = error.headers
+            if _is_rate_limited(error.code, headers, detail):
+                raise GitHubRateLimitError(_rate_limit_message(bool(self.token), headers)) from error
             raise GitHubClientError(f"GitHub API returned HTTP {error.code}: {detail}") from error
         except URLError as error:
             raise GitHubClientError(f"GitHub API request failed: {error.reason}") from error

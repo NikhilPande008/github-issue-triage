@@ -1,7 +1,10 @@
 from pathlib import Path
 
+import pytest
+
 from triage.sandbox.container import CodexExecutionResult, ContainerCommandResult
 from triage.sandbox.container import SandboxTimeout
+from triage.sandbox.manager import EnvironmentSetupFailure, SetupCommand
 from triage.sandbox.runner import DockerInvestigationRunner, _focused_pytest_command
 
 
@@ -86,3 +89,22 @@ def test_focused_pytest_falls_back_to_the_full_suite_without_changed_tests() -> 
 
 def test_focused_pytest_accepts_a_root_level_pytest_file() -> None:
     assert _focused_pytest_command(" M test_regression.py\n") == "python -m pytest -q 'test_regression.py'"
+
+
+def test_docker_runner_records_requirements_txt_setup_failure_for_non_requests_repository(tmp_path) -> None:
+    class FailingManager(FakeManager):
+        def create(self, run_id, repository):
+            assert repository == "encode/httpx"
+            raise EnvironmentSetupFailure(
+                "Environment setup failed: requirements.txt installation exited 1",
+                SetupCommand("python -m pip install -r requirements.txt", "requirements.txt"),
+                "No matching distribution found",
+            )
+
+    runner = DockerInvestigationRunner(FailingManager(), "encode/httpx", 30)
+    with pytest.raises(EnvironmentSetupFailure) as error:
+        runner.run_attempt(tmp_path, "prompt", tmp_path / "artifacts" / "run-3" / "attempt_1")
+    terminal = error.value.execution.terminal_log_path.read_text(encoding="utf-8")
+    assert "ENVIRONMENT SETUP FAILURE" in terminal
+    assert "Selected command: python -m pip install -r requirements.txt" in terminal
+    assert "No matching distribution found" in terminal

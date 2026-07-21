@@ -14,7 +14,9 @@ def test_tracked_cost_uses_only_linked_priced_openai_calls(tmp_path) -> None:
         session.flush()
         session.add_all([
             LLMCall(investigation_id=first.id, provider="openai", model="gpt-5.6-luna", pricing_version="2026-07-20", purpose="issue_extraction", input_tokens=1, cached_input_tokens=0, output_tokens=1, cost_usd="0.004184", latency_ms=1),
+            # Both legacy synthetic zero and new unavailable Codex values are excluded.
             LLMCall(investigation_id=first.id, provider="codex", model="codex", purpose="investigation", input_tokens=0, cached_input_tokens=0, output_tokens=0, cost_usd=0, latency_ms=1),
+            LLMCall(investigation_id=first.id, provider="codex", model="codex", purpose="investigation", input_tokens=0, cached_input_tokens=0, output_tokens=0, cost_usd=None, latency_ms=1),
             LLMCall(investigation_id=second.id, provider="openai", model="unknown", pricing_version=None, purpose="issue_extraction", input_tokens=1, cached_input_tokens=0, output_tokens=1, cost_usd=None, latency_ms=1),
         ])
         session.commit()

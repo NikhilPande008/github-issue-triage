@@ -12,6 +12,8 @@ it("renders persisted investigations as real detail links", () => {
   expect(screen.getByText("A real issue title")).toBeInTheDocument();
   expect(screen.getAllByText("—")).toHaveLength(1);
   expect(screen.getByText("1.3s")).toBeInTheDocument();
+  expect(screen.getByLabelText("About assertsFailure")).toBeInTheDocument();
+  expect(screen.getByText(/Set only when the deterministic pytest-evidence validator/)).toBeInTheDocument();
 });
 
 it("marks unlinked historical metrics unavailable without inventing a zero cost", () => {

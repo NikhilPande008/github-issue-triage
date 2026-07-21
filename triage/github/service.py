@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from triage.github.mapper import map_issue
-from triage.github.models import GitHubIssue
+from triage.github.models import GitHubIssue, GitHubIssuePage
 
 
 class IssueSource(Protocol):
@@ -30,3 +30,14 @@ class GitHubIssueService:
             map_issue(self.client.repository, issue, self.client.fetch_comments(issue["number"]))
             for issue in issues
         ]
+
+    def fetch_open_issue_page(self, page: int) -> GitHubIssuePage:
+        issues = self.client.fetch_open_issues_page(page)
+        return GitHubIssuePage(
+            issues=[
+                map_issue(self.client.repository, issue, self.client.fetch_comments(issue["number"]))
+                for issue in issues
+                if "pull_request" not in issue
+            ],
+            is_last_page=len(issues) < 100,
+        )

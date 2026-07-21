@@ -3,14 +3,15 @@ from time import perf_counter
 from typing import Callable, Protocol
 
 from triage.domain.enums import Classification
-from triage.github.models import GitHubIssue
+from triage.github.models import GitHubIssue, GitHubIssuePage
 
 MAX_BATCH_SIZE = 30
 DEFAULT_BATCH_SIZE = 20
+DEFAULT_MAX_SCAN_PAGES = 10
 
 
 class IssueSelector(Protocol):
-    def fetch_latest_open_issues(self, limit: int, start_page: int = 1) -> list[GitHubIssue]: ...
+    def fetch_open_issue_page(self, page: int) -> GitHubIssuePage: ...
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,11 @@ class BatchItem:
 @dataclass(frozen=True)
 class BatchSummary:
     items: list[BatchItem]
+    requested_count: int
+    selected_count: int
+    skipped_count: int
+    pages_scanned: int
+    selection_end: str
 
     def counts(self) -> dict[str, int]:
         result = {item.value: 0 for item in Classification if item is not Classification.DUPLICATE}
@@ -49,19 +55,44 @@ class BatchTriageService:
         self.process = process
         self.processed_numbers = processed_numbers
 
-    def run(self, repository: str, count: int = DEFAULT_BATCH_SIZE, start_page: int = 1, force: bool = False, progress: Callable[[str], None] | None = None) -> BatchSummary:
+    def run(
+        self,
+        repository: str,
+        count: int = DEFAULT_BATCH_SIZE,
+        start_page: int = 1,
+        force: bool = False,
+        progress: Callable[[str], None] | None = None,
+        max_scan_pages: int = DEFAULT_MAX_SCAN_PAGES,
+    ) -> BatchSummary:
         if not 1 <= count <= MAX_BATCH_SIZE:
             raise ValueError(f"count must be between 1 and {MAX_BATCH_SIZE}")
+        if max_scan_pages < 1:
+            raise ValueError("max_scan_pages must be at least 1")
         processed = set() if force else self.processed_numbers(repository)
-        candidate_count = count if force else min(100, count + len(processed))
         items: list[BatchItem] = []
-        processed_now = 0
-        for issue in self.selector.fetch_latest_open_issues(candidate_count, start_page):
-            if issue.issue_number in processed:
-                item = BatchItem(issue, None, None, None, None, skipped=True)
-                items.append(item)
-                if progress: progress(f"#{issue.issue_number} SKIPPED (already processed)")
-                continue
+        candidates: list[GitHubIssue] = []
+        pages_scanned = 0
+        selection_end = "scan-page limit reached"
+        for page in range(start_page, start_page + max_scan_pages):
+            issue_page = self.selector.fetch_open_issue_page(page)
+            pages_scanned += 1
+            for issue in issue_page.issues:
+                if issue.issue_number in processed:
+                    items.append(BatchItem(issue, None, None, None, None, skipped=True))
+                    if progress:
+                        progress(f"#{issue.issue_number} SKIPPED (already processed)")
+                    continue
+                candidates.append(issue)
+                if len(candidates) == count:
+                    selection_end = "requested count satisfied"
+                    break
+            if len(candidates) == count:
+                break
+            if issue_page.is_last_page:
+                selection_end = "queue exhausted"
+                break
+
+        for issue in candidates:
             if progress: progress(f"#{issue.issue_number} START {issue.title[:72]}")
             started = perf_counter()
             try:
@@ -69,9 +100,13 @@ class BatchTriageService:
             except Exception as error:  # Continue the queue; the terminal retains the failure detail.
                 item = BatchItem(issue, None, None, perf_counter() - started, None, error=str(error))
             items.append(item)
-            processed_now += 1
             verdict = item.classification.value if item.classification else ("FAILED" if item.error else "UNKNOWN")
             if progress: progress(f"#{issue.issue_number} {verdict} ({(item.duration_seconds or 0):.1f}s)")
-            if processed_now == count:
-                break
-        return BatchSummary(items)
+        return BatchSummary(
+            items=items,
+            requested_count=count,
+            selected_count=len(candidates),
+            skipped_count=sum(item.skipped for item in items),
+            pages_scanned=pages_scanned,
+            selection_end=selection_end,
+        )

@@ -4,7 +4,7 @@ from time import monotonic
 from triage.domain.models import InvestigationEvidence
 from triage.investigation.models import AttemptExecution
 from triage.sandbox.container import CodexExecutionResult, CodexSandboxUnavailable, SandboxTimeout
-from triage.sandbox.manager import SandboxManager
+from triage.sandbox.manager import EnvironmentSetupFailure, SandboxManager
 
 
 class DockerInvestigationRunner:
@@ -24,9 +24,21 @@ class DockerInvestigationRunner:
 
     def run_attempt(self, repository_path: Path, prompt: str, artifact_dir: Path) -> AttemptExecution:
         run_id = artifact_dir.parent.name
-        if self.sandbox is None:
-            self.sandbox = self.manager.create(run_id, self.repository)
         started = monotonic()
+        if self.sandbox is None:
+            try:
+                self.sandbox = self.manager.create(run_id, self.repository)
+            except EnvironmentSetupFailure as error:
+                setup = error.setup
+                terminal = "ENVIRONMENT SETUP FAILURE\n" + str(error) + "\n"
+                if setup is not None:
+                    terminal += f"Selected command: {setup.command}\nSelection reason: {setup.reason}\n"
+                if error.output:
+                    terminal += f"Setup output:\n{error.output}"
+                error.execution = self._collect(
+                    artifact_dir, terminal, "python -m pytest -q", "", "", 1, 1, started
+                )
+                raise
         codex_output = ""
         pytest_output = ""
         diff_output = ""
@@ -66,6 +78,8 @@ class DockerInvestigationRunner:
             source = f"{container_dir}/{name}"
             destination = artifact_dir / name
             try:
+                if self.sandbox is None:
+                    raise RuntimeError("sandbox unavailable")
                 self.sandbox.container.write_artifact(source, content)
                 self.sandbox.container.copy_artifact(source, destination)
             except Exception:

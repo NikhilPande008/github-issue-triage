@@ -44,6 +44,15 @@ code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospac
 .badge-reproduced, .badge-true, .badge-completed { background: #c6f6d5; color: #22543d; }
 .badge-needs-info, .badge-wont-repro { background: #feebc8; color: #7b341e; }
 .badge-not-a-bug, .badge-false, .badge-failed { background: #fed7d7; color: #822727; }
+.header-with-help, .validation-line, .asserts-badge { display: inline-flex; align-items: center; gap: .35rem; }
+.asserts-badge > span:first-child { color: #486581; font-size: .72rem; font-weight: 800; }
+.validation-help { display: inline-block; position: relative; }
+.validation-help summary { cursor: help; color: #486581; list-style: none; font-size: .9rem; }
+.validation-help summary::-webkit-details-marker { display: none; }
+.validation-help summary:focus-visible { outline: 3px solid #2f80ed; outline-offset: 2px; border-radius: 2px; }
+.validation-help-copy { position: absolute; z-index: 2; right: 0; top: 1.35rem; width: min(20rem, 75vw); padding: .55rem .65rem; border: 1px solid #9fb3c8; border-radius: 4px; background: #fff; color: #243b53; box-shadow: 0 2px 8px rgba(16, 42, 67, .16); font-size: .78rem; font-weight: 400; line-height: 1.4; text-transform: none; letter-spacing: normal; white-space: normal; }
+.validation-reason { margin: .45rem 0 0; color: #243b53; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .detail-heading { margin: .75rem 0 1.1rem; }
 .detail-heading h1 a { text-decoration: none; }
 .detail-heading h1 a:hover { text-decoration: underline; }

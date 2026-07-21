@@ -31,7 +31,7 @@ def test_read_only_investigation_endpoints(tmp_path) -> None:
             Artifact(investigation_id=investigation.id, kind="git_diff", path=str(tmp_path / "deleted.diff")),
             LLMCall(investigation_id=investigation.id, provider="openai", model="gpt-5.6-luna", pricing_version="2026-07-20", purpose="issue_extraction", input_tokens=100, cached_input_tokens=25, output_tokens=10, cost_usd="0.001000", latency_ms=40),
             LLMCall(investigation_id=investigation.id, provider="openai", model="gpt-5.6-luna", pricing_version="2026-07-20", purpose="evidence_classification", input_tokens=50, cached_input_tokens=0, output_tokens=5, cost_usd="0.002000", latency_ms=60),
-            LLMCall(investigation_id=investigation.id, provider="codex", model="codex", purpose="investigation", input_tokens=0, cached_input_tokens=0, output_tokens=0, cost_usd=0, latency_ms=999),
+            LLMCall(investigation_id=investigation.id, provider="codex", model="codex", purpose="investigation", input_tokens=0, cached_input_tokens=0, output_tokens=0, cost_usd=None, latency_ms=999),
         ])
         session.commit()
         investigation_id = investigation.id
@@ -105,6 +105,7 @@ def test_metrics_do_not_leak_and_legacy_or_unknown_costs_are_unavailable(tmp_pat
             assert second_summary["latency_ms"] == 300
             legacy_summary = (await client.get(f"/investigations/{legacy_id}/summary")).json()
             assert legacy_summary["tracked_llm_api_cost_usd"] is None
+            assert legacy_summary["cost_usd"] is None
             assert legacy_summary["latency_ms"] is None
             assert "No tracked LLM API calls" in legacy_summary["tracked_llm_api_explanation"]
 

@@ -5,11 +5,43 @@ from time import monotonic
 
 import docker
 
-from triage.sandbox.container import DockerSandboxContainer
+from triage.sandbox.container import ContainerCommandResult, DockerSandboxContainer, SandboxTimeout
 from triage.sandbox.images import ensure_image
 from triage.sandbox.workspace import SandboxWorkspace
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class SetupCommand:
+    command: str
+    reason: str
+
+
+class EnvironmentSetupFailure(RuntimeError):
+    """A repository could not be prepared, before any issue evidence was run."""
+
+    def __init__(self, message: str, setup: SetupCommand | None = None, output: str = ""):
+        super().__init__(message)
+        self.setup = setup
+        self.output = output
+        self.execution = None
+
+
+def resolve_setup_command(repository_path: Path, configured_command: str | None) -> SetupCommand:
+    """Choose one setup strategy.  Installation failures must never trigger fallback."""
+    if configured_command:
+        return SetupCommand(configured_command, "explicit SANDBOX_SETUP_COMMAND")
+    if (repository_path / "requirements-dev.txt").is_file():
+        return SetupCommand("python -m pip install -r requirements-dev.txt", "requirements-dev.txt")
+    if (repository_path / "requirements.txt").is_file():
+        return SetupCommand("python -m pip install -r requirements.txt", "requirements.txt")
+    for name in ("pyproject.toml", "setup.py", "setup.cfg"):
+        if (repository_path / name).is_file():
+            return SetupCommand("python -m pip install -e .", f"Python packaging metadata ({name})")
+    raise EnvironmentSetupFailure(
+        "Environment setup unavailable: no requirements-dev.txt, requirements.txt, or Python package metadata found"
+    )
 
 
 @dataclass
@@ -43,7 +75,7 @@ class Sandbox:
 
 
 class SandboxManager:
-    def __init__(self, workspace_root: Path, image_name: str, dependency_timeout_seconds: int, overall_timeout_seconds: int, auth_path: Path, docker_client=None, setup_command: str = "python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt"):
+    def __init__(self, workspace_root: Path, image_name: str, dependency_timeout_seconds: int, overall_timeout_seconds: int, auth_path: Path, docker_client=None, setup_command: str | None = None):
         self.workspace_root = workspace_root
         self.image_name = image_name
         self.dependency_timeout_seconds = dependency_timeout_seconds
@@ -56,6 +88,7 @@ class SandboxManager:
         workspace = SandboxWorkspace.create(self.workspace_root, run_id, repository)
         container = None
         try:
+            setup = resolve_setup_command(workspace.repository_path, self.setup_command)
             image = ensure_image(self.docker_client, self.image_name)
             container = DockerSandboxContainer.start(
                 self.docker_client, image, workspace.repository_path, self.auth_path, self.overall_timeout_seconds
@@ -65,7 +98,20 @@ class SandboxManager:
                 "sandbox created",
                 extra={"run_id": run_id, "container_id": container.id, "image_id": image.id, "workspace_path": str(workspace.root)},
             )
-            container.run(self.setup_command, self.dependency_timeout_seconds)
+            try:
+                result = container.run(setup.command, self.dependency_timeout_seconds)
+            except SandboxTimeout as error:
+                raise EnvironmentSetupFailure(
+                    f"Environment setup failed: {setup.reason} installation timed out",
+                    setup,
+                    str(error),
+                ) from error
+            if isinstance(result, ContainerCommandResult) and result.exit_code != 0:
+                raise EnvironmentSetupFailure(
+                    f"Environment setup failed: {setup.reason} installation exited {result.exit_code}",
+                    setup,
+                    result.output,
+                )
             return sandbox
         except Exception:
             if container is not None:

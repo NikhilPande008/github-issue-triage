@@ -9,6 +9,7 @@ from triage.investigation.models import AttemptExecution, AttemptRecord, Investi
 from triage.investigation.prompts import render_codex_prompt
 from triage.investigation.runner import attempt_artifact_dir
 from triage.persistence.models import Artifact, Hypothesis, Investigation, LLMCall
+from triage.sandbox.manager import EnvironmentSetupFailure
 from triage.validation.models import ValidationEvidence, ValidationResult
 
 MAX_ATTEMPTS = 3
@@ -81,7 +82,18 @@ class InvestigationEngine:
             )
             prompt = render_codex_prompt(extraction, attempt_number, revision_reason, previous_evidence)
             artifact_dir = attempt_artifact_dir(self.artifacts_root, run_id, attempt_number)
-            execution = self.runner.run_attempt(repository_path, prompt, artifact_dir)
+            try:
+                execution = self.runner.run_attempt(repository_path, prompt, artifact_dir)
+            except EnvironmentSetupFailure as error:
+                if error.execution is not None:
+                    self._record_attempt_artifacts(investigation.id, error.execution)
+                self.investigations.update(
+                    investigation,
+                    status=InvestigationStatus.FAILED,
+                    asserts_failure=False,
+                    validation_reason=str(error),
+                )
+                raise
             self._record_attempt_artifacts(investigation.id, execution)
             self._record_codex_call(investigation.id, attempt_number, execution)
             validation = self.validator.validate(
@@ -126,11 +138,14 @@ class InvestigationEngine:
                 attempt_number=attempt_number,
                 provider="codex",
                 model="codex",
+                pricing_version=None,
                 purpose="investigation",
                 input_tokens=0,
                 cached_input_tokens=0,
                 output_tokens=0,
-                cost_usd=0,
+                # Codex does not provide billing data to this application.
+                # Unknown cost must remain unavailable, never synthetic zero.
+                cost_usd=None,
                 latency_ms=execution.codex_latency_ms,
             )
         )

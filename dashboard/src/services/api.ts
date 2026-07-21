@@ -14,7 +14,7 @@ export interface Investigation {
   updated_at: string | null;
   completed_at: string | null;
   duration_seconds: number | null;
-  cost_usd: number;
+  cost_usd: number | null;
   tracked_llm_api_cost_usd: number | null;
   tracked_llm_api_latency_ms: number | null;
   tracked_llm_api_input_tokens: number | null;
@@ -52,7 +52,7 @@ export interface InvestigationSummary extends Investigation {
   output_tokens: number | null;
   total_tokens: number | null;
   cache_hit_percent: number | null;
-  cost_usd: number;
+  cost_usd: number | null;
   latency_ms: number | null;
 }
 

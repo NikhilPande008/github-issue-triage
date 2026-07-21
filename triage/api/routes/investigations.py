@@ -63,8 +63,9 @@ def _tracked_llm_metrics(calls: list[LLMCall]) -> dict[str, object]:
 
 
 def _investigation_payload(
-    investigation: Investigation, attempt_count: int, cost_usd: Decimal | int = 0, tracked_metrics: dict[str, object] | None = None
+    investigation: Investigation, attempt_count: int, tracked_metrics: dict[str, object] | None = None
 ) -> dict[str, object]:
+    tracked_metrics = tracked_metrics or _tracked_llm_metrics([])
     return {
         "id": investigation.id,
         "repository": investigation.repository,
@@ -79,8 +80,10 @@ def _investigation_payload(
         "updated_at": _timestamp(investigation.updated_at),
         "completed_at": _timestamp(investigation.classification_completed_at),
         "duration_seconds": _duration_seconds(investigation),
-        "cost_usd": float(Decimal(cost_usd)),
-        **(tracked_metrics or _tracked_llm_metrics([])),
+        # Legacy generic cost is kept for compatibility, but now has the same
+        # honest OpenAI-only availability semantics as the tracked metric.
+        "cost_usd": tracked_metrics["tracked_llm_api_cost_usd"],
+        **tracked_metrics,
     }
 
 
@@ -113,13 +116,6 @@ def list_investigations(
             select(Hypothesis.investigation_id, func.count(Hypothesis.id)).group_by(Hypothesis.investigation_id)
         ).all()
     )
-    costs = dict(
-        session.execute(
-            select(LLMCall.investigation_id, func.coalesce(func.sum(LLMCall.cost_usd), 0))
-            .where(LLMCall.investigation_id.is_not(None))
-            .group_by(LLMCall.investigation_id)
-        ).all()
-    )
     calls_by_investigation: dict[str, list[LLMCall]] = {}
     if investigations:
         for call in session.scalars(select(LLMCall).where(LLMCall.investigation_id.in_([item.id for item in investigations]))):
@@ -127,7 +123,7 @@ def list_investigations(
                 calls_by_investigation.setdefault(call.investigation_id, []).append(call)
     return {
         "items": [
-            _investigation_payload(item, counts.get(item.id, 0), costs.get(item.id, 0), _tracked_llm_metrics(calls_by_investigation.get(item.id, [])))
+            _investigation_payload(item, counts.get(item.id, 0), _tracked_llm_metrics(calls_by_investigation.get(item.id, [])))
             for item in investigations
         ],
         "page": page,

@@ -21,3 +21,10 @@ class GitHubIssue(BaseModel):
     created_at: datetime
     updated_at: datetime
     url: str
+
+
+class GitHubIssuePage(BaseModel):
+    """One GitHub issues API page after pull requests have been excluded."""
+
+    issues: list[GitHubIssue]
+    is_last_page: bool

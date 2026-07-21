@@ -7,19 +7,19 @@ from datetime import datetime, timezone
 from triage.classification.client import MODEL as CLASSIFICATION_MODEL, OpenAIClassificationClient
 from triage.classification.models import ClassificationEvidence
 from triage.classification.service import ClassificationService
-from triage.batch import BatchItem, BatchTriageService, DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE
+from triage.batch import BatchItem, BatchTriageService, DEFAULT_BATCH_SIZE, DEFAULT_MAX_SCAN_PAGES, MAX_BATCH_SIZE
 from triage.config.settings import Settings
 from triage.domain.enums import InvestigationStatus
 from triage.extraction.client import OpenAIExtractionClient
 from triage.extraction.service import ExtractionService
-from triage.github.client import GitHubClient
+from triage.github.client import GitHubClient, GitHubRateLimitError
 from triage.github.service import GitHubIssueService
 from triage.investigation.engine import InvestigationEngine
 from triage.investigation.runner import LocalInvestigationRunner
 from triage.persistence.database import create_session_factory
 from triage.persistence.models import Investigation
 from triage.persistence.repositories import ArtifactRepository, HypothesisRepository, InvestigationRepository, LLMCallRepository
-from triage.sandbox.manager import SandboxManager
+from triage.sandbox.manager import EnvironmentSetupFailure, SandboxManager
 from triage.sandbox.runner import DockerInvestigationRunner
 from triage.validation.validator import EvidenceValidator
 
@@ -37,6 +37,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     batch.add_argument("--repository", default=None, help="Repository to triage (defaults to DEMO_REPOSITORY)")
     batch.add_argument("--count", type=int, default=DEFAULT_BATCH_SIZE, help=f"Issues to select (1-{MAX_BATCH_SIZE})")
     batch.add_argument("--start-page", type=int, default=1, help="GitHub open-issues page to start from")
+    batch.add_argument(
+        "--max-scan-pages", type=int, default=DEFAULT_MAX_SCAN_PAGES,
+        help=f"Maximum GitHub issue pages to scan while finding new issues (default: {DEFAULT_MAX_SCAN_PAGES})",
+    )
     batch.add_argument("--force", action="store_true", help="Reprocess issues that already have a completed/failed investigation")
     args = parser.parse_args(argv)
 
@@ -126,9 +130,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             processed,
             lambda issue: _process_batch_issue(settings, issue),
         )
-        summary = batch_service.run(
-            settings.demo_repository, args.count, args.start_page, args.force, progress=lambda message: print(message)
-        )
+        try:
+            summary = batch_service.run(
+                settings.demo_repository,
+                args.count,
+                args.start_page,
+                args.force,
+                progress=lambda message: print(message),
+                max_scan_pages=args.max_scan_pages,
+            )
+        except GitHubRateLimitError as error:
+            print(f"Unable to select batch candidates: {error}")
+            return 2
         _print_batch_summary(summary)
         return 0
     return 1
@@ -184,6 +197,9 @@ def _process_batch_issue(settings: Settings, issue) -> BatchItem:
                 classification_model=("deterministic-validator" if result.validation.asserts_failure else CLASSIFICATION_MODEL),
                 classification_completed_at=datetime.now(timezone.utc),
             )
+        except EnvironmentSetupFailure as error:
+            investigations.update(investigation, status=InvestigationStatus.FAILED, asserts_failure=False, validation_reason=str(error))
+            return BatchItem(issue, investigation.id, None, (datetime.now(timezone.utc) - started).total_seconds(), None, error=str(error))
         except Exception:
             investigations.update(investigation, status=InvestigationStatus.FAILED)
             raise
@@ -214,3 +230,15 @@ def _print_batch_summary(summary) -> None:
         cost = "—" if item.cost_usd is None else f"${item.cost_usd:.6f}"
         print(f"#{item.issue.issue_number:<5} {title:<60} {investigation_id[:8]:<14} {verdict:<20} {duration:<9} {cost}")
     print("Counts: " + ", ".join(f"{key}={value}" for key, value in summary.counts().items()))
+    print(
+        f"Selection: requested {summary.requested_count} new issues; selected {summary.selected_count}; "
+        f"skipped {summary.skipped_count} already processed; scanned {summary.pages_scanned} pages; {summary.selection_end}."
+    )
+    if summary.selected_count < summary.requested_count:
+        message = (
+            f"Requested {summary.requested_count} new issues; found {summary.selected_count} eligible unprocessed issues "
+            f"after scanning {summary.pages_scanned} pages ({summary.selection_end})."
+        )
+        if summary.selection_end == "scan-page limit reached":
+            message += " Try --start-page, a smaller count, or GITHUB_TOKEN."
+        print(message)

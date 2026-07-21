@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 from sqlalchemy import select
 
 from triage.domain.models import InvestigationEvidence, IssueExtraction
@@ -7,6 +8,7 @@ from triage.github.models import GitHubIssue
 from triage.investigation.engine import InvestigationEngine, revision_reason_from_attempt
 from triage.investigation.models import AttemptExecution
 from triage.investigation.runner import attempt_artifact_dir
+from triage.sandbox.manager import EnvironmentSetupFailure, SetupCommand
 from triage.validation.models import ValidationResult
 from triage.persistence.database import Base, create_session_factory
 from triage.persistence.models import Artifact, Hypothesis, Investigation, LLMCall
@@ -96,7 +98,9 @@ def test_engine_stops_at_three_attempts_and_persists_adaptation(tmp_path) -> Non
     artifacts = list(session.scalars(select(Artifact)))
     assert len(artifacts) == 10
     assert any(artifact.kind == "extraction_json" for artifact in artifacts)
-    assert len(list(session.scalars(select(LLMCall)))) == 3
+    calls = list(session.scalars(select(LLMCall)))
+    assert len(calls) == 3
+    assert all(call.provider == "codex" and call.pricing_version is None and call.cost_usd is None for call in calls)
     session.close()
 
 
@@ -147,3 +151,49 @@ def test_artifact_paths_and_revision_reason(tmp_path) -> None:
         1,
     )
     assert "did not produce a failing pytest result" in revision_reason_from_attempt(execution)
+
+
+def test_engine_persists_setup_failure_as_operational_evidence_without_validation(tmp_path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+
+    class SetupFailingRunner:
+        def run_attempt(self, repository_path, prompt, artifact_dir):
+            artifact_dir.mkdir(parents=True)
+            terminal = artifact_dir / "terminal.log"
+            pytest_output = artifact_dir / "pytest_output.txt"
+            diff = artifact_dir / "git.diff"
+            terminal.write_text("ENVIRONMENT SETUP FAILURE", encoding="utf-8")
+            pytest_output.write_text("", encoding="utf-8")
+            diff.write_text("", encoding="utf-8")
+            error = EnvironmentSetupFailure(
+                "Environment setup failed: requirements.txt installation exited 1",
+                SetupCommand("python -m pip install -r requirements.txt", "requirements.txt"),
+            )
+            error.execution = AttemptExecution(
+                InvestigationEvidence(
+                    asserts_failure=False,
+                    git_diff_path=diff,
+                    pytest_output_path=pytest_output,
+                    pytest_exit_code=1,
+                ),
+                terminal,
+                1,
+                0,
+            )
+            raise error
+
+    class NeverValidate:
+        def validate(self, evidence):
+            raise AssertionError("setup failure must not be classified or validated")
+
+    engine, session = engine_with(tmp_path, SetupFailingRunner(), NeverValidate())
+    with pytest.raises(EnvironmentSetupFailure):
+        engine.investigate(issue(), extraction(), repository)
+    investigation = session.scalar(select(Investigation))
+    assert investigation.status == "FAILED"
+    assert investigation.classification is None
+    assert investigation.asserts_failure is False
+    assert "Environment setup failed" in investigation.validation_reason
+    assert {artifact.kind for artifact in session.scalars(select(Artifact))} >= {"extraction_json", "terminal_log", "pytest_output", "git_diff"}
+    session.close()
