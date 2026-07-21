@@ -90,6 +90,17 @@ It did not decide the verdict. A deterministic validator requires a changed,
 executable pytest test plus an attributable assertion failure before the system
 may emit `BEHAVIOR_GAP_CONFIRMED`; otherwise the evidence is classified conservatively.
 
+## How Codex and GPT-5.6 were used
+
+- **GPT-5.6 Luna** produces a typed extraction of the issue report and, only
+  after deterministic validation, assigns bounded non-confirming classifications
+  such as `NEEDS_INFO` or `WONT_REPRO`. Its outputs are schema-validated and do
+  not authorize a behavior-gap confirmation.
+- **Codex** works in the isolated agent workspace to propose the smallest
+  focused test change. Its edit is checked by deterministic diff, exact-target,
+  structured-JUnit, proof-integrity, and confirmation gates before evidence can
+  be shown as `BEHAVIOR_GAP_CONFIRMED`.
+
 ## How it works
 
 ```text
