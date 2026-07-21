@@ -55,12 +55,12 @@ def test_validator_success_always_wins_without_model_call(tmp_path) -> None:
     calls = FakeCallStore()
     successful = ClassificationEvidence(True, "Validated assertion failure.", 1, tmp_path / "missing.txt", None)
 
-    assert ClassificationService(client, calls).classify(successful) is Classification.REPRODUCED
+    assert ClassificationService(client, calls).classify(successful) is Classification.BEHAVIOR_GAP_CONFIRMED
     assert client.calls == []
     assert calls.items == []
 
 
-@pytest.mark.parametrize("invalid", ["UNKNOWN", "DUPLICATE", "REPRODUCED"])
+@pytest.mark.parametrize("invalid", ["UNKNOWN", "DUPLICATE", "BEHAVIOR_GAP_CONFIRMED"])
 def test_invalid_or_unsupported_model_output_is_retried_then_rejected(tmp_path, invalid) -> None:
     client = FakeClient([f'{{"classification": "{invalid}"}}', f'{{"classification": "{invalid}"}}'])
     calls = FakeCallStore()

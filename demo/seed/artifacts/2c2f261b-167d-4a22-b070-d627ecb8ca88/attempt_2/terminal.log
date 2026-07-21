@@ -1,0 +1,68 @@
+CONFIRMATION EXECUTION (no Codex)
+$ python -m pytest -q --junitxml='/tmp/triage-2c2f261b-167d-4a22-b070-d627ecb8ca88-attempt_2-junit.xml' 'tests/unit/test_agents.py'
+.....F......................................                             [100%]
+=================================== FAILURES ===================================
+____ test_create_default_tool_context_preserves_litellm_proxy_configuration ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xffff792cac30>
+
+    def test_create_default_tool_context_preserves_litellm_proxy_configuration(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Tool guardrail client should receive LiteLLM proxy settings."""
+        openai_mod = types.ModuleType("openai")
+    
+        class StubAsyncOpenAI:
+            def __init__(self, **kwargs: Any) -> None:
+                self.kwargs = kwargs
+    
+        openai_mod.AsyncOpenAI = StubAsyncOpenAI
+        monkeypatch.setitem(sys.modules, "openai", openai_mod)
+    
+>       context = agents._create_default_tool_context(
+            api_key="litellm-proxy-key",
+            base_url="http://litellm-proxy.example/v1",
+        )
+E       TypeError: _create_default_tool_context() got an unexpected keyword argument 'api_key'
+
+tests/unit/test_agents.py:262: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_agents.py::test_create_default_tool_context_preserves_litellm_proxy_configuration
+1 failed, 43 passed in 0.46s
+[exit 1]
+$ git diff --no-ext-diff
+diff --git a/tests/unit/test_agents.py b/tests/unit/test_agents.py
+index 54cf56b..0846af1 100644
+--- a/tests/unit/test_agents.py
++++ b/tests/unit/test_agents.py
+@@ -246,6 +246,30 @@ def test_create_default_tool_context_provides_async_client(monkeypatch: pytest.M
+     assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+ 
+ 
++def test_create_default_tool_context_preserves_litellm_proxy_configuration(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Tool guardrail client should receive LiteLLM proxy settings."""
++    openai_mod = types.ModuleType("openai")
++
++    class StubAsyncOpenAI:
++        def __init__(self, **kwargs: Any) -> None:
++            self.kwargs = kwargs
++
++    openai_mod.AsyncOpenAI = StubAsyncOpenAI
++    monkeypatch.setitem(sys.modules, "openai", openai_mod)
++
++    context = agents._create_default_tool_context(
++        api_key="litellm-proxy-key",
++        base_url="http://litellm-proxy.example/v1",
++    )
++
++    assert context.guardrail_llm.kwargs == {  # type: ignore[attr-defined]  # noqa: S101
++        "api_key": "litellm-proxy-key",
++        "base_url": "http://litellm-proxy.example/v1",
++    }
++
++
+ def test_attach_guardrail_to_tools_initializes_lists() -> None:
+     """Attaching guardrails should create input/output lists when missing."""
+     tool = SimpleNamespace()

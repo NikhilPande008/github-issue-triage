@@ -50,7 +50,7 @@ def test_batch_scans_later_pages_to_find_requested_new_issues_after_many_process
 def test_batch_stops_pagination_as_soon_as_requested_candidates_are_found() -> None:
     selector = Selector([page([3, 2, 1]), page([0], is_last_page=True)])
     summary = BatchTriageService(
-        selector, lambda repository: set(), lambda item: BatchItem(item, "run", Classification.REPRODUCED, 1, None)
+        selector, lambda repository: set(), lambda item: BatchItem(item, "run", Classification.BEHAVIOR_GAP_CONFIRMED, 1, None)
     ).run("psf/requests", count=2)
 
     assert selector.calls == [1]

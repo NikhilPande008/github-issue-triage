@@ -1,0 +1,16 @@
+{
+  "summary": "Add official support for Superserve sandboxes as a sandbox backend for OpenAI Agents.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "Superserve is officially supported as a sandbox backend.",
+  "actual_behavior": null,
+  "environment": {},
+  "affected_area": "Superserve sandbox backend integration",
+  "repro_code": null,
+  "missing_info": [
+    "Reproduction steps",
+    "Environment details",
+    "Reproduction code",
+    "Observed actual behavior"
+  ],
+  "confidence": 0.98
+}

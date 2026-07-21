@@ -7,6 +7,18 @@ class ValidationEvidence:
     git_diff_path: Path
     pytest_output_path: Path
     pytest_exit_code: int
+    runner_id: str = "pytest"
+    structured_results_path: Path | None = None
+    execution_failure_reason: str | None = None
+    reliability_status: str = "NOT_CONFIRMED"
+
+    @property
+    def test_output_path(self) -> Path:
+        return self.pytest_output_path
+
+    @property
+    def test_exit_code(self) -> int:
+        return self.pytest_exit_code
 
 
 @dataclass(frozen=True)

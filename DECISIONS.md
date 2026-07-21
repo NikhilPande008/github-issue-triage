@@ -114,7 +114,7 @@ Status: Accepted
 
 Date: 2026-07-17
 
-Decision: Require evidence validation before an investigation can be marked as successfully reproduced.
+Decision: Require evidence validation before an investigation can be marked as behavior-gap confirmed.
 
 Context: Codex and pytest exit codes can produce failures unrelated to the reported issue, including syntax, import, collection, timeout, and pre-existing-test failures.
 
@@ -122,9 +122,9 @@ Alternatives Considered: Letting Codex declare success; treating any nonzero pyt
 
 Why This Was Chosen: A dedicated validator can require both an executable test change and an assertion failure originating in that changed test.
 
-Tradeoffs: Valid reproduction depends on the supported pytest terminal-output format and can reject ambiguous output.
+Tradeoffs: Valid behavior-gap confirmation depends on the supported pytest terminal-output format and can reject ambiguous output.
 
-Consequences: `triage.validation` is the sole source of `assertsFailure`; the investigation engine persists its result and cannot self-declare a successful reproduction. Classification must consume this result after validation.
+Consequences: `triage.validation` is the sole source of `assertsFailure`; the investigation engine persists its result and cannot self-declare a behavior gap. Classification must consume this result after validation.
 
 ## ADR-008
 
@@ -132,17 +132,17 @@ Status: Accepted
 
 Date: 2026-07-17
 
-Decision: Restrict investigation classification to a typed execution-evidence contract and make validator-approved reproduction deterministic.
+Decision: Restrict investigation classification to a typed execution-evidence contract and make validator-approved behavior-gap confirmation deterministic.
 
-Context: Issue prose, extraction content, hypotheses, Codex reasoning, and terminal narration can bias a model to infer conclusions not supported by execution evidence. The `assertsFailure` validator already has the authority to determine whether a reproduction occurred.
+Context: Issue prose, extraction content, hypotheses, Codex reasoning, and terminal narration can bias a model to infer conclusions not supported by execution evidence. The `assertsFailure` validator can determine only whether a focused test demonstrates the reported behavior is absent; it cannot establish regression provenance or product intent.
 
-Alternatives Considered: Passing the full investigation context to the classifier; allowing the classifier to choose any outcome including reproduction; using prompt instructions as the only boundary.
+Alternatives Considered: Passing the full investigation context to the classifier; allowing the classifier to choose any outcome including behavior-gap confirmation; using prompt instructions as the only boundary.
 
-Why This Was Chosen: A narrow dataclass input and a classifier method that accepts only that dataclass prevent issue context from entering the classification boundary. Returning `REPRODUCED` directly for validator-approved evidence prevents an LLM from overriding the deterministic guardrail.
+Why This Was Chosen: A narrow dataclass input and a classifier method that accepts only that dataclass prevent issue context from entering the classification boundary. Returning `BEHAVIOR_GAP_CONFIRMED` directly for validator-approved evidence prevents an LLM from overriding the deterministic guardrail.
 
 Tradeoffs: The classifier has less context and classification LLM records are standalone because the classification method does not accept an investigation identifier.
 
-Consequences: Classification uses only validator result, pytest exit code/output, and git diff. False validator outcomes may be classified as `NEEDS_INFO`, `WONT_REPRO`, or `NOT_A_BUG`; `REPRODUCED` is deterministic.
+Consequences: Classification uses only validator result, pytest exit code/output, and git diff. False validator outcomes may be classified as `NEEDS_INFO`, `WONT_REPRO`, or `NOT_A_BUG`; `BEHAVIOR_GAP_CONFIRMED` is deterministic.
 
 ## ADR-009
 

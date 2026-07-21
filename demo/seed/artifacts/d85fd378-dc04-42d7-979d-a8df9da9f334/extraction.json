@@ -1,0 +1,17 @@
+{
+  "summary": "Add custom `ResponseFormat` support in the `CallModelInputFilter` callback.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The `call_model_input_filter` callback of `RunConfig` should support a `response_format: ResponseFormat | None` field so the response format can be modified before calling the model.",
+  "actual_behavior": "The `call_model_input_filter` callback does not have the requested `response_format: ResponseFormat | None` field.",
+  "environment": {},
+  "affected_area": "`call_model_input_filter` of `RunConfig`",
+  "repro_code": null,
+  "missing_info": [
+    "A concrete reproduction procedure",
+    "SDK version",
+    "Model or provider",
+    "Callback configuration and input",
+    "Observed error or behavior when attempting to modify the response format"
+  ],
+  "confidence": 0.96
+}

@@ -86,14 +86,24 @@ class GitHubClient:
         query = urlencode({"state": "open", "sort": "created", "direction": "desc", "per_page": 100, "page": page})
         return self._get(f"/repos/{self.repository}/issues?{query}")
 
+    def create_issue_comment(self, issue_number: int, body: str) -> dict[str, Any]:
+        """The only write endpoint; callers must apply approval gates first."""
+        return self._request("POST", f"/repos/{self.repository}/issues/{issue_number}/comments", {"body": body})
+
     def _get(self, path: str) -> Any:
+        return self._request("GET", path)
+
+    def _request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> Any:
         headers = {
             "Accept": "application/vnd.github+json",
             "User-Agent": "github-issue-triage",
         }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        request = Request(f"{self.api_base_url}{path}", headers=headers)
+        data = json.dumps(payload).encode("utf-8") if payload is not None else None
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+        request = Request(f"{self.api_base_url}{path}", headers=headers, data=data, method=method)
         try:
             with urlopen(request, timeout=20) as response:  # noqa: S310 -- fixed GitHub API base URL
                 return json.load(response)

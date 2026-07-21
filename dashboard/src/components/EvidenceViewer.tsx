@@ -3,7 +3,7 @@ import type { EvidenceArtifact } from "../services/api";
 import { CopyButton } from "./CopyButton";
 import { formatBytes, formatDate } from "./format";
 
-const labels: Record<string, string> = { git_diff: "Git Diff", pytest_output: "Pytest Output", terminal_log: "Terminal Log", extraction_json: "Extraction JSON" };
+const labels: Record<string, string> = { git_diff: "Git Diff", pytest_output: "Pytest Output", vitest_output: "Vitest Output", terminal_log: "Terminal Log", extraction_json: "Extraction JSON", structured_test_results_junit: "Structured test results (JUnit XML)", reproducibility_manifest: "Reproducibility manifest" };
 
 function labelForArtifact(artifact: EvidenceArtifact): string {
   const attempt = artifact.path.match(/attempt_(\d+)/)?.[1];

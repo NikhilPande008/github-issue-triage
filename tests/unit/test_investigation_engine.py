@@ -94,7 +94,7 @@ def test_engine_stops_at_three_attempts_and_persists_adaptation(tmp_path) -> Non
     assert hypotheses[0].revision_reason is None
     assert hypotheses[1].revision_reason is not None
     assert "Previous attempt made no repository changes" in runner.prompts[1]
-    assert session.scalar(select(Investigation.status)) == "FAILED"
+    assert session.scalar(select(Investigation.status)) == "COMPLETED_NO_GAP"
     artifacts = list(session.scalars(select(Artifact)))
     assert len(artifacts) == 10
     assert any(artifact.kind == "extraction_json" for artifact in artifacts)
@@ -115,6 +115,31 @@ def test_engine_stops_after_first_failing_pytest_result(tmp_path) -> None:
     assert result.completed is True
     assert len(result.attempts) == 1
     assert session.scalar(select(Investigation.status)) == "COMPLETED"
+    session.close()
+
+
+def test_confirmation_runs_require_every_execution_to_agree(tmp_path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    runner = FakeRunner([1, 1])
+    engine, session = engine_with(tmp_path, runner, FakeValidator([True, True]))
+    engine.confirmation_runs = 2
+    result = engine.investigate(issue(), extraction(), repository)
+    assert result.completed is True
+    assert len(result.attempts) == 2
+    session.close()
+
+
+def test_confirmation_disagreement_is_unstable_not_confirmed(tmp_path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    runner = FakeRunner([1, 0])
+    engine, session = engine_with(tmp_path, runner, FakeValidator([True, False]))
+    engine.confirmation_runs = 2
+    result = engine.investigate(issue(), extraction(), repository)
+    assert result.completed is False
+    assert "FLAKY_OR_INCONCLUSIVE" in result.validation.reason
+    assert session.scalar(select(Investigation.asserts_failure)) is False
     session.close()
 
 

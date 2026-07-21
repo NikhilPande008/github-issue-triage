@@ -1,0 +1,45 @@
+{
+  "artifacts": {
+    "git.diff": {
+      "path": "artifacts/3151183b-ee14-4bf7-b56c-d479f2990ab2/attempt_2/git.diff",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "junit.xml": {
+      "path": "artifacts/3151183b-ee14-4bf7-b56c-d479f2990ab2/attempt_2/junit.xml",
+      "sha256": "2feb9f9546d41f2a637d3b4f58b365290f4bd6f25f4c2ace2d5f4ad7f29be88c"
+    },
+    "pytest_output.txt": {
+      "path": "artifacts/3151183b-ee14-4bf7-b56c-d479f2990ab2/attempt_2/pytest_output.txt",
+      "sha256": "5300b9f1b3bf9e4ab4f8a905db75fa1cdb08b7a9f3d70d8501115077a6cebdc0"
+    },
+    "terminal.log": {
+      "path": "artifacts/3151183b-ee14-4bf7-b56c-d479f2990ab2/attempt_2/terminal.log",
+      "sha256": "de692ab81e20617da2f67450ca705ede9dda58af6f4814de758c12aee7454036"
+    }
+  },
+  "confirmation_runs": 2,
+  "dependency_snapshot": "annotated-types==0.7.0\nanyio==4.14.2\nasttokens==3.0.2\nattrs==26.1.0\ncertifi==2026.6.17\ncffi==2.1.0\ncharset-normalizer==3.4.9\nclick==8.4.2\ncryptography==49.0.0\ndistro==1.9.0\nexecnet==2.1.2\nexecuting==2.2.1\ngriffelib==2.1.0\nh11==0.16.0\nhttpcore==1.0.9\nhttpx==0.28.1\nhttpx-sse==0.4.3\nidna==3.18\niniconfig==2.3.0\ninline-snapshot==0.35.2\njiter==0.16.0\njsonschema==4.26.0\njsonschema-specifications==2025.9.1\nmarkdown-it-py==4.2.0\nmcp==1.28.1\nmdurl==0.1.2\nopenai==2.46.0\n-e git+https://github.com/openai/openai-agents-python.git@95185352c8b829405a96c3886960f030163bdf07#egg=openai_agents\npackaging==26.2\npluggy==1.6.0\npycparser==3.0\npydantic==2.13.4\npydantic-settings==2.14.2\npydantic_core==2.46.4\nPygments==2.20.0\nPyJWT==2.13.0\npytest==9.1.1\npytest-asyncio==1.4.0\npytest-mock==3.15.1\npytest-xdist==3.8.0\npython-dotenv==1.2.2\npython-multipart==0.0.32\nreferencing==0.37.0\nrequests==2.34.2\nrich==15.0.0\nrpds-py==2026.6.3\nsniffio==1.3.1\nsse-starlette==3.4.6\nstarlette==1.3.1\ntqdm==4.69.0\ntyping-inspection==0.4.2\ntyping_extensions==4.16.0\nurllib3==2.7.0\nuvicorn==0.51.0\nwebsockets==16.1.1\n\n-- node --\n{}\n",
+  "execution_failure_reason": null,
+  "focused_test_command": "python -m pytest -q --junitxml='/tmp/triage-3151183b-ee14-4bf7-b56c-d479f2990ab2-attempt_2-junit.xml' 'tests/models/test_oci_provider.py'",
+  "investigation_agent_provider": "codex",
+  "lockfile_sha256": null,
+  "network_policy": "allowed",
+  "operating_system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "recorded_at": "2026-07-21T13:18:29.133553+00:00",
+  "repository": "openai/openai-agents-python",
+  "repository_commit": "95185352c8b829405a96c3886960f030163bdf07",
+  "runner": "pytest",
+  "runner_exit_code": 1,
+  "runtime": "Python 3.12.13\nv22.23.1\n10.9.8",
+  "sandbox_image_digests": [
+    "github-issue-triage@sha256:4e895739ae5ee53da3bed17da87b498e42be48567c3b154cb8473e1499377cd9"
+  ],
+  "sandbox_image_id": "sha256:4e895739ae5ee53da3bed17da87b498e42be48567c3b154cb8473e1499377cd9",
+  "setup_command": "python -m pip install -e . pytest pytest-asyncio pytest-mock pytest-xdist inline-snapshot",
+  "setup_reason": "explicit SANDBOX_SETUP_COMMAND",
+  "structured_results_path": "artifacts/3151183b-ee14-4bf7-b56c-d479f2990ab2/attempt_2/junit.xml",
+  "timeouts": {
+    "dependency_seconds": 600,
+    "overall_seconds": 900
+  }
+}

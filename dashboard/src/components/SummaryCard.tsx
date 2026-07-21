@@ -15,6 +15,8 @@ export function SummaryCard({ summary }: { summary: InvestigationSummary }) {
     ["Total tokens", summary.total_tokens === null ? unavailable("Total tokens", summary.tracked_llm_api_explanation) : summary.total_tokens],
     ["Cache hit", summary.cache_hit_percent === null ? unavailable("Cache hit", "Cache usage was not recorded for this investigation.") : `${summary.cache_hit_percent}%`],
     ["Tracked LLM API latency", summary.latency_ms === null ? unavailable("Tracked LLM API latency", summary.tracked_llm_api_explanation) : `${(summary.latency_ms / 1000).toFixed(1)}s`],
+    ["Budget status", summary.budget_status ?? "Legacy / unavailable"],
+    ["Unpriced Codex execution", summary.codex_invocation_count === undefined ? "Unavailable" : `${summary.codex_invocation_count} invocation(s), ${(summary.codex_wall_seconds ?? 0).toFixed(1)}s${summary.codex_wall_cap_seconds ? ` / ${summary.codex_wall_cap_seconds}s cap` : ""}`],
   ];
   return <section className="card"><h2>Metrics</h2><dl className="summary-grid">{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><p className="metadata">{summary.tracked_llm_api_explanation}</p></section>;
 }

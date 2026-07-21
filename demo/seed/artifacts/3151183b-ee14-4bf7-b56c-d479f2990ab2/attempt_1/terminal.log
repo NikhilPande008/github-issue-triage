@@ -1,0 +1,811 @@
+$ codex exec --sandbox workspace-write --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84d1-1fba-79d3-83d1-976cc745bf6b
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+I’ll first verify whether the repository already has an OCI provider surface or tests that establish the requested behavior. My working hypothesis is that this is a missing feature request rather than a reproducible regression, so I’ll add only a focused failing test if the existing extension patterns make the absent API precise.
+exec
+/bin/bash -lc "rg -n -i \"oracle|oci|generative ai\" src tests pyproject.toml docs | head -200 && printf '\\n-- model extensions --\\n' && find src/agents/extensions/models -maxdepth 3 -type f | sort | head -200 && printf '\\n-- status --\\n' && git status --short" in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+The workspace command runner is currently blocked before execution by the container’s user-namespace restriction, so I can’t yet inspect or run pytest. I’ll retry with the non-login shell setting; if that remains blocked, the environment prevents evidence-based investigation.
+exec
+/bin/bash -c pwd in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+Investigation blocked by the workspace command runner: every command fails before execution with:
+
+`bwrap: No permissions to create a new namespace`
+
+So I could not inspect the OCI extension surface, add a focused test, or run pytest. No files were changed.
+tokens used
+8,830
+Investigation blocked by the workspace command runner: every command fails before execution with:
+
+`bwrap: No permissions to create a new namespace`
+
+So I could not inspect the OCI extension surface, add a focused test, or run pytest. No files were changed.
+[exit 0; elapsed 20474ms; preferred]
+$ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84d1-6dd7-7cd2-816f-546c396424e9
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+codex
+Hypothesis: the reported gap is a missing optional OCI provider rather than a regression with a reproducible failing path. I’ll inspect the existing extension/provider surface and add only a narrowly scoped import/API expectation if it can demonstrate that absence.
+exec
+/bin/bash -lc "sed -n '1,240p' /workspace/repo/.agents/skills/implementation-strategy/SKILL.md && printf '\\n--- files ---\\n' && rg --files src/agents/extensions tests | rg -i 'model|provider|bedrock|azure|litellm|openai' | head -160 && printf '\\n--- OCI refs ---\\n' && rg -n -i '\\boci\\b|oracle cloud|oracle' src tests pyproject.toml" in /workspace/repo
+ exited 1 in 0ms:
+---
+name: implementation-strategy
+description: Decide how to implement runtime and API changes in openai-agents-python before editing code. Use when a task changes exported APIs, runtime behavior, serialized state, tests, or docs and you need to choose the compatibility boundary, whether shims or migrations are warranted, and when unreleased interfaces can be rewritten directly.
+---
+
+# Implementation Strategy
+
+## Overview
+
+Use this skill before editing code when the task changes runtime behavior or anything that might look like a compatibility concern. The goal is to keep implementations simple while protecting real released contracts.
+
+## Quick start
+
+1. Identify the surface you are changing: released public API, unreleased branch-local API, internal helper, persisted schema, wire protocol, CLI/config/env surface, or docs/examples only.
+2. Determine the latest release boundary from `origin` first, and only fall back to local tags when remote tags are unavailable:
+   ```bash
+   BASE_TAG="$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin 'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1)"
+   echo "$BASE_TAG"
+   ```
+3. Judge breaking-change risk against that latest release tag, not against unreleased branch churn or post-tag changes already on `main`. If the command fell back to local tags, treat the result as potentially stale and say so.
+4. Prefer the simplest implementation that satisfies the current task. Update callers, tests, docs, and examples directly instead of preserving superseded unreleased interfaces.
+5. Add a compatibility layer only when there is a concrete released consumer, an otherwise supported durable external state boundary that requires it, or when the user explicitly asks for a migration path.
+
+## Compatibility boundary rules
+
+- Released public API or documented external behavior: preserve compatibility or provide an explicit migration path.
+- Persisted schema, serialized state, wire protocol, CLI flags, environment variables, and externally consumed config: treat as compatibility-sensitive when they are part of the latest release or when the repo explicitly intends to preserve them across commits, processes, or machines.
+- Python-specific durable surfaces such as `RunState`, session persistence, exported dataclass constructor order, and documented model/provider configuration should be treated as compatibility-sensitive when they were part of the latest release tag or are explicitly supported as a shared durability boundary.
+- Interface changes introduced only on the current branch: not a compatibility target. Rewrite them directly.
+- Interface changes present on `main` but added after the latest release tag: not a semver breaking change by themselves. Rewrite them directly unless they already define a released or explicitly supported durable external state boundary.
+- Internal helpers, private types, same-branch tests, fixtures, and examples: update them directly instead of adding adapters.
+- Unreleased persisted schema versions on `main` may be renumbered or squashed before release when intermediate snapshots are intentionally unsupported. When you do that, update the support set and tests together so the boundary is explicit.
+
+## Default implementation stance
+
+- Prefer deletion or replacement over aliases, overloads, shims, feature flags, and dual-write logic when the old shape is unreleased.
+- Do not preserve a confusing abstraction just because it exists in the current branch diff.
+- If review feedback claims a change is breaking, verify it against the latest release tag and actual external impact before accepting the feedback.
+- If a change truly crosses the latest released contract boundary, call that out explicitly in the ExecPlan, release notes context, and user-facing summary.
+
+## SDK-specific decision rules
+
+- When unsupported OpenAI API or provider-adapter behavior already has a released default path, avoid turning it into a default hard error unless the latest release boundary justifies that break. Prefer an opt-in strict mode such as `strict_feature_validation=True`, while keeping the default path compatible through warning, ignoring unsupported data, or a clearly non-empty placeholder.
+- For OpenAI API feature gaps, evaluate streaming and non-streaming paths together. Custom tool calls, multi-choice Chat Completions chunks, non-text tool outputs, and similar provider payload differences must not be strict in one path and permissive or malformed in the other.
+- When a change creates new public SDK behavior, do not expose it only through hard-coded module globals. Prefer an explicit public configuration object or parameter, preserve the existing default behavior when compatibility-sensitive, and make opt-in SDK defaults explicit.
+- Append new optional fields or constructor parameters to public dataclasses and constructors. Do not insert them before existing public fields unless you also provide a compatibility layer and regression coverage for the old positional call shape.
+- Treat threshold and quota values as part of the API design when they affect runtime behavior. Distinguish OpenAI platform quota-derived values from defensive SDK defaults; if the value is not anchored in a documented platform limit, avoid making it an unconditional default-on behavior.
+- Define `None` semantics deliberately for public configuration. For example, use separate meanings for "feature disabled or no SDK limit", "use SDK default limits", and "disable only this specific limit" rather than relying on implicit truthiness checks.
+
+## When to stop and confirm
+
+- The change would alter behavior shipped in the latest release tag.
+- The change would modify durable external data, protocol formats, or serialized state.
+- The user explicitly asked for backward compatibility, deprecation, or migration support.
+
+## Output expectations
+
+When this skill materially affects the implementation approach, state the decision briefly in your reasoning or handoff, for example:
+
+- `Compatibility boundary: latest release tag v0.x.y; branch-local interface rewrite, no shim needed.`
+- `Compatibility boundary: released RunState schema; preserve compatibility and add migration coverage.`
+
+--- files ---
+tests/fake_model.py
+tests/test_process_model_response.py
+tests/test_tracing_provider_safe_debug.py
+tests/test_call_model_input_filter.py
+tests/memory/test_openai_conversations_session.py
+tests/memory/test_openai_responses_compaction_session.py
+tests/test_call_model_input_filter_unit.py
+tests/voice/test_openai_model_provider.py
+tests/voice/test_openai_tts.py
+tests/voice/fake_models.py
+tests/voice/test_openai_stt.py
+tests/model_settings/test_serialization.py
+tests/realtime/test_openai_realtime_sip_model.py
+tests/realtime/test_model_events.py
+tests/realtime/test_openai_realtime_conversions.py
+tests/realtime/test_realtime_model_settings.py
+tests/realtime/test_openai_realtime.py
+tests/sandbox/integration_tests/test_model.py
+src/agents/extensions/models/any_llm_provider.py
+src/agents/extensions/models/litellm_provider.py
+src/agents/extensions/models/any_llm_model.py
+src/agents/extensions/models/__init__.py
+src/agents/extensions/models/litellm_model.py
+src/agents/extensions/experimental/hosted_multi_agent/model.py
+tests/models/test_openai_responses_converter.py
+tests/models/__init__.py
+tests/models/test_default_models.py
+tests/models/test_openai_retry_helpers.py
+tests/models/test_model_retry.py
+tests/models/test_deepseek_reasoning_content.py
+tests/models/test_openai_client_utils.py
+tests/models/test_kwargs_functionality.py
+tests/models/test_openai_chatcompletions_converter.py
+tests/models/test_reasoning_content_replay_hook.py
+tests/models/test_litellm_content_filter.py
+tests/models/test_model_payload_iterators.py
+tests/models/test_responses_websocket_session.py
+tests/models/test_litellm_extra_body.py
+tests/models/test_anthropic_thinking_blocks.py
+tests/models/test_remove_openai_responses_api_incompatible_fields.py
+tests/models/test_litellm_logging_patch.py
+tests/models/test_map.py
+tests/models/test_openai_chatcompletions_stream.py
+tests/models/test_gemini_thought_signatures.py
+tests/models/test_litellm_chatcompletions_stream.py
+tests/models/test_any_llm_model.py
+tests/models/test_extended_thinking_message_order.py
+tests/models/test_openai_chatcompletions.py
+tests/models/test_litellm_user_agent.py
+tests/models/test_agent_registration.py
+tests/models/test_gemini_thought_signatures_stream.py
+tests/models/test_openai_responses.py
+tests/models/test_trace_config.py
+tests/models/test_reasoning_content.py
+tests/extensions/experimental/hosted_multi_agent/test_model.py
+
+--- OCI refs ---
+
+codex
+I’m using the implementation-strategy guidance because this would introduce a public provider surface. The inspection confirms there are no OCI references at all; I’ll establish the release boundary and mirror the repository’s extension import-test style before creating a single failing characterization test.
+exec
+/bin/bash -lc 'BASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin '"'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1); printf 'base=%s\\n' \""'$BASE_TAG"; sed -n '"'1,240p' src/agents/extensions/models/__init__.py; printf '\\n--- pyproject extension dependencies ---\\n'; rg -n -C 3 'litellm|anthropic|extensions' pyproject.toml; printf '\\n--- extension test inventory ---\\n'; rg --files tests/extensions tests/models | sort | head -120; printf '\\n--- existing import expectations ---\\n'; rg -n 'from agents\\.extensions\\.models|extensions\\.models import|LiteLLMProvider|AnyLLMProvider' tests src/agents/extensions -g '*.py'" in /workspace/repo
+ succeeded in 4051ms:
+base=v0.18.3
+
+--- pyproject extension dependencies ---
+10-    "openai>=2.45.0,<3",
+11-    "pydantic>=2.12.2, <3",
+12-    "griffelib>=2, <3",
+13:    "typing-extensions>=4.12.2, <5",
+14-    "requests>=2.0, <3",
+15-    "websockets>=15.0, <17",
+16-    "mcp>=1.19.0, <2; python_version >= '3.10'",
+--
+36-[project.optional-dependencies]
+37-voice = ["numpy>=2.2.0, <3; python_version>='3.10'", "websockets>=15.0, <17"]
+38-viz = ["graphviz>=0.17"]
+39:litellm = ["litellm>=1.83.0"]
+40-any-llm = ["any-llm-sdk>=1.11.0, <2; python_version >= '3.11'"]
+41-realtime = ["websockets>=15.0, <17"]
+42-sqlalchemy = ["SQLAlchemy>=2.0", "asyncpg>=0.29.0"]
+
+--- extension test inventory ---
+tests/extensions/experiemental/codex/test_codex_exec_thread.py
+tests/extensions/experiemental/codex/test_codex_tool.py
+tests/extensions/experiemental/codex/test_payloads.py
+tests/extensions/experimental/hosted_multi_agent/test_live.py
+tests/extensions/experimental/hosted_multi_agent/test_model.py
+tests/extensions/memory/test_advanced_sqlite_session.py
+tests/extensions/memory/test_async_sqlite_session.py
+tests/extensions/memory/test_dapr_redis_integration.py
+tests/extensions/memory/test_dapr_session.py
+tests/extensions/memory/test_encrypt_session.py
+tests/extensions/memory/test_memory_imports.py
+tests/extensions/memory/test_mongodb_session.py
+tests/extensions/memory/test_redis_session.py
+tests/extensions/memory/test_sqlalchemy_session.py
+tests/extensions/sandbox/test_blaxel.py
+tests/extensions/sandbox/test_blaxel_mounts.py
+tests/extensions/sandbox/test_cloudflare.py
+tests/extensions/sandbox/test_daytona.py
+tests/extensions/sandbox/test_e2b.py
+tests/extensions/sandbox/test_modal.py
+tests/extensions/sandbox/test_runloop.py
+tests/extensions/sandbox/test_runloop_capabilities_example.py
+tests/extensions/sandbox/test_runloop_mounts.py
+tests/extensions/sandbox/test_vercel.py
+tests/extensions/test_tool_output_trimmer.py
+tests/models/__init__.py
+tests/models/test_agent_registration.py
+tests/models/test_anthropic_thinking_blocks.py
+tests/models/test_any_llm_model.py
+tests/models/test_deepseek_reasoning_content.py
+tests/models/test_default_models.py
+tests/models/test_extended_thinking_message_order.py
+tests/models/test_gemini_thought_signatures.py
+tests/models/test_gemini_thought_signatures_stream.py
+tests/models/test_kwargs_functionality.py
+tests/models/test_litellm_chatcompletions_stream.py
+tests/models/test_litellm_content_filter.py
+tests/models/test_litellm_extra_body.py
+tests/models/test_litellm_logging_patch.py
+tests/models/test_litellm_user_agent.py
+tests/models/test_map.py
+tests/models/test_model_payload_iterators.py
+tests/models/test_model_retry.py
+tests/models/test_openai_chatcompletions.py
+tests/models/test_openai_chatcompletions_converter.py
+tests/models/test_openai_chatcompletions_stream.py
+tests/models/test_openai_client_utils.py
+tests/models/test_openai_responses.py
+tests/models/test_openai_responses_converter.py
+tests/models/test_openai_retry_helpers.py
+tests/models/test_reasoning_content.py
+tests/models/test_reasoning_content_replay_hook.py
+tests/models/test_remove_openai_responses_api_incompatible_fields.py
+tests/models/test_responses_websocket_session.py
+tests/models/test_trace_config.py
+
+--- existing import expectations ---
+src/agents/extensions/models/any_llm_provider.py:10:class AnyLLMProvider(ModelProvider):
+tests/models/test_litellm_extra_body.py:7:from agents.extensions.models.litellm_model import LitellmModel
+tests/models/test_reasoning_content_replay_hook.py:13:from agents.extensions.models.litellm_model import LitellmModel
+tests/models/test_deepseek_reasoning_content.py:14:from agents.extensions.models.litellm_model import LitellmModel
+tests/models/test_anthropic_thinking_blocks.py:18:from agents.extensions.models.litellm_model import InternalChatCompletionMessage
+tests/models/test_litellm_content_filter.py:6:from agents.extensions.models.litellm_model import LitellmModel
+tests/models/test_gemini_thought_signatures.py:14:from agents.extensions.models.litellm_model import InternalChatCompletionMessage, InternalToolCall
+tests/models/test_kwargs_functionality.py:12:from agents.extensions.models.litellm_model import LitellmModel
+tests/models/test_litellm_chatcompletions_stream.py:28:from agents.extensions.models.litellm_model import LitellmModel
+tests/models/test_litellm_chatcompletions_stream.py:29:from agents.extensions.models.litellm_provider import LitellmProvider
+tests/models/test_any_llm_model.py:46:class FakeAnyLLMProvider:
+tests/models/test_any_llm_model.py:76:    provider: FakeAnyLLMProvider,
+tests/models/test_any_llm_model.py:232:    provider = FakeAnyLLMProvider(supports_responses=False, chat_response=_chat_completion("Hello"))
+tests/models/test_any_llm_model.py:266:    provider = FakeAnyLLMProvider(supports_responses=False, chat_response=_chat_completion("Hello"))
+tests/models/test_any_llm_model.py:316:    provider = FakeAnyLLMProvider(supports_responses=False, chat_response=chat_response)
+tests/models/test_any_llm_model.py:341:    provider = FakeAnyLLMProvider(
+tests/models/test_any_llm_model.py:375:    provider = FakeAnyLLMProvider(supports_responses=True, responses_response=_response("Hello"))
+tests/models/test_any_llm_model.py:416:    provider = FakeAnyLLMProvider(
+tests/models/test_any_llm_model.py:449:    provider = FakeAnyLLMProvider(supports_responses=False, chat_response=_chat_completion("Hello"))
+tests/models/test_any_llm_model.py:472:    provider = FakeAnyLLMProvider(supports_responses=False, chat_response=_empty_chat_stream())
+tests/models/test_any_llm_model.py:520:    provider = FakeAnyLLMProvider(supports_responses=True, responses_response=response_stream())
+tests/models/test_any_llm_model.py:568:    provider = FakeAnyLLMProvider(supports_responses=True, responses_response=response_stream())
+tests/models/test_any_llm_model.py:606:    provider = FakeAnyLLMProvider(supports_responses=True, responses_response=response_stream())
+tests/models/test_any_llm_model.py:637:    provider = FakeAnyLLMProvider(supports_responses=True, responses_response=_response("Hello"))
+tests/models/test_any_llm_model.py:670:    provider = FakeAnyLLMProvider(supports_responses=True, responses_response=_response("Hello"))
+tests/models/test_any_llm_model.py:695:    from agents.extensions.models.any_llm_model import AnyLLMModel
+tests/models/test_any_llm_model.py:732:    from agents.extensions.models.any_llm_model import AnyLLMModel
+tests/models/test_any_llm_model.py:829:    from agents.extensions.models.any_llm_model import AnyLLMModel
+tests/models/test_any_llm_model.py:830:    from agents.extensions.models.any_llm_provider import AnyLLMProvider
+tests/models/test_any_llm_model.py:832:    provider = AnyLLMProvider(api="chat_completions")
+tests/models/test_any_llm_model.py:846:    from agents.extensions.models.any_llm_model import _extract_any_llm_reasoning_text
+tests/models/test_any_llm_model.py:861:    provider = FakeAnyLLMProvider(supports_responses=False)
+tests/models/test_map.py:13:from agents.extensions.models.litellm_model import LitellmModel
+tests/models/test_map.py:46:    class FakeAnyLLMProvider:
+tests/models/test_map.py:52:    fake_module.AnyLLMProvider = FakeAnyLLMProvider
+tests/models/test_extended_thinking_message_order.py:9:from agents.extensions.models.litellm_model import LitellmModel
+
+exec
+/bin/bash -lc "sed -n '1,260p' src/agents/extensions/models/litellm_provider.py; sed -n '1,220p' src/agents/extensions/models/any_llm_provider.py; sed -n '1,120p' src/agents/extensions/models/litellm_model.py; sed -n '1,180p' tests/models/test_litellm_chatcompletions_stream.py; git status --short" in /workspace/repo
+ succeeded in 111ms:
+codex
+Compatibility boundary: latest release tag `v0.18.3`; no OCI surface exists in the current checkout, so this is a new optional API rather than a compatibility fix. I’ll add one test asserting the proposed native provider’s canonical module import, without requiring credentials or network access.
+exec
+/bin/bash -lc "sed -n '1,260p' /workspace/repo/.agents/skills/code-change-verification/SKILL.md; sed -n '1,240p' /workspace/repo/.agents/skills/pr-draft-summary/SKILL.md" in /workspace/repo
+ succeeded in 0ms:
+---
+name: code-change-verification
+description: Run the mandatory verification stack when changes affect runtime code, tests, or build/test behavior in the OpenAI Agents Python repository.
+---
+
+# Code Change Verification
+
+## Overview
+
+Ensure work is only marked complete after formatting, linting, type checking, and tests pass. Use this skill when changes affect runtime code, tests, or build/test configuration. You can skip it for docs-only or repository metadata unless a user asks for the full stack.
+
+## Quick start
+
+1. Keep this skill at `./.agents/skills/code-change-verification` so it loads automatically for the repository.
+2. macOS/Linux: `bash .agents/skills/code-change-verification/scripts/run.sh`.
+3. Windows: `powershell -ExecutionPolicy Bypass -File .agents/skills/code-change-verification/scripts/run.ps1`.
+4. The scripts run `make format` first, then run `make lint`, `make typecheck`, and `make tests` in parallel with fail-fast semantics.
+5. While the parallel steps are still running, the scripts emit periodic heartbeat updates so you can tell that work is still in progress.
+6. If any command fails, fix the issue, rerun the script, and report the failing output.
+7. Confirm completion only when all commands succeed with no remaining issues.
+
+## Environment setup
+
+The verification scripts assume repository dependencies are already installed. Do not run `make sync` as part of every verification pass; use it for a fresh checkout, after dependency files change, or when dependency resolution fails before the checks start.
+
+On Linux, some Python packages with native extensions may require system packages such as `libffi-dev`, Python development headers, or build tools. If verification cannot start because one of these packages is missing, treat it as a local environment setup issue. Install the missing dependency when possible, or report the failing command and missing dependency in the PR test plan before rerunning verification in a prepared environment.
+
+## Manual workflow
+
+- For a fresh checkout, or if dependencies are not installed or have changed, run `make sync` first to install dev requirements via `uv`.
+- Run from the repository root with `make format` first, then `make lint`, `make typecheck`, and `make tests`.
+- Do not skip steps; stop and fix issues immediately when a command fails.
+- If you run the steps manually, you may parallelize `make lint`, `make typecheck`, and `make tests` after `make format` completes, but you must stop the remaining steps as soon as one fails.
+- Re-run the full stack after applying fixes so the commands execute in the required order.
+
+## Resources
+
+### scripts/run.sh
+
+- Executes `make format` first, then runs `make lint`, `make typecheck`, and `make tests` in parallel with fail-fast semantics from the repository root. It also emits periodic heartbeat updates while the parallel steps are still running. Prefer this entry point to preserve the required ordering while reducing total runtime.
+
+### scripts/run.ps1
+
+- Windows-friendly wrapper that runs the same sequence with `make format` first and the remaining steps in parallel with fail-fast semantics, plus periodic heartbeat updates while work is still running. Use from PowerShell with execution policy bypass if required by your environment.
+---
+name: pr-draft-summary
+description: Create the required PR-ready summary block, branch suggestion, title, and draft description for openai-agents-python. Use before the final response whenever the current task changed runtime code, tests, examples, build/test configuration, or docs with behavior impact, regardless of perceived change size and including local-only or uncommitted work. Skip only for trivial or conversation-only tasks, repo-meta/doc-only tasks without behavior impact, or when the user explicitly says not to include the PR draft block.
+---
+
+# PR Draft Summary
+
+## Purpose
+Produce the PR-ready summary required in this repository after eligible code work is complete: a concise summary plus a PR-ready title and draft description that begins with "This pull request <verb> ...". The block should be ready to paste into a PR for openai-agents-python.
+
+## When to Trigger
+- Before every final response, check whether the current task changed runtime code (`src/agents/`), tests (`tests/`), examples (`examples/`), build/test configuration, or docs with behavior impact.
+- If it did, run this skill after required verification and before sending the final response. Do not use perceived change size to decide whether to run it.
+- Run it for eligible local-only and uncommitted work even when the user did not ask to create a pull request. Producing this text does not authorize creating a branch, committing, pushing, or opening a pull request.
+- Skip only for trivial or conversation-only tasks, repo-meta/doc-only tasks without behavior impact, or when the user explicitly says not to include the PR draft block.
+
+## Inputs to Collect Automatically (do not ask the user)
+- Current branch: `git rev-parse --abbrev-ref HEAD`.
+- Working tree: `git status -sb`.
+- Untracked files: `git ls-files --others --exclude-standard` (use with `git status -sb` to ensure they are surfaced; `--stat` does not include them).
+- Changed files: `git diff --name-only` (unstaged) and `git diff --name-only --cached` (staged); sizes via `git diff --stat` and `git diff --stat --cached`.
+- Latest release tag (prefer remote-aware lookup): `LATEST_RELEASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin 'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1)`.
+- Base reference (use the branch's upstream, fallback to `origin/main`):
+  - `BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)`.
+  - `BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD || git merge-base "$BASE_REF" HEAD || echo "$BASE_REF")`.
+- Commits ahead of the base fork point: `git log --oneline --no-merges ${BASE_COMMIT}..HEAD`.
+- Category signals for this repo: runtime (`src/agents/`), tests (`tests/`), examples (`examples/`), docs (`docs/`, `mkdocs.yml`), build/test config (`pyproject.toml`, `uv.lock`, `Makefile`, `.github/`).
+
+## Workflow
+1) Run the commands above without asking the user; compute `BASE_REF`/`BASE_COMMIT` first so later commands reuse them.
+2) If there are no staged/unstaged/untracked changes and no commits ahead of `${BASE_COMMIT}`, reply briefly that no code changes were detected and skip emitting the PR block.
+3) Infer change type from the touched paths listed under "Category signals"; classify as feature, fix, refactor, or docs-with-impact, and flag backward-compatibility risk only when the diff changes released public APIs, external config, persisted data, serialized state, or wire protocols. Judge that risk against `LATEST_RELEASE_TAG`, not unreleased branch-only churn.
+4) Summarize changes in 1–3 short sentences using the key paths (top 5) and `git diff --stat` output; explicitly call out untracked files from `git status -sb`/`git ls-files --others --exclude-standard` because `--stat` does not include them. If the working tree is clean but there are commits ahead of `${BASE_COMMIT}`, summarize using those commit messages.
+5) Choose the lead verb for the description: feature → `adds`, bug fix → `fixes`, refactor/perf → `improves` or `updates`, docs-only → `updates`.
+6) Suggest a branch name. If already off main, keep it; otherwise propose `feat/<slug>`, `fix/<slug>`, or `docs/<slug>` based on the primary area (e.g., `docs/pr-draft-summary-guidance`).
+7) If the current branch matches `issue-<number>` (digits only), keep that branch suggestion. Optionally pull light issue context (for example via the GitHub API) when available, but do not block or retry if it is not. When an issue number is present, reference `https://github.com/openai/openai-agents-python/issues/<number>` and include an auto-closing line such as `This pull request resolves #<number>.`.
+8) Draft the PR title and description using the template below.
+9) Output only the block in "Output Format". Keep any surrounding status note minimal and in English.
+
+## Output Format
+When closing out a task, add this concise Markdown block (English only) after any brief status note unless the task falls under the documented skip cases or the user says they do not want it.
+
+```
+# Pull Request Draft
+
+## Branch name suggestion
+
+git checkout -b <kebab-case suggestion, e.g., feat/pr-draft-summary-skill>
+
+## Title
+
+<single-line imperative title, which can be a commit message; if a common prefix like chore: and feat: etc., having them is preferred>
+
+## Description
+
+<include what you changed plus a draft pull request title and description for your local changes; start the description with prose such as "This pull request resolves/updates/adds ..." using a verb that matches the change (you can use bullets later), explain the change background (for bugs, clearly describe the bug, symptoms, or repro; for features, what is needed and why), any behavior changes or considerations to be aware of, and you do not need to mention tests you ran.>
+```
+
+Keep it tight—no redundant prose around the block, and avoid repeating details between `Changes` and the description. Tests do not need to be listed unless specifically requested.
+
+apply patch
+patch: completed
+/workspace/repo/tests/models/test_oci_provider.py
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e03f519642699cbc84e476c07d2f2c0f6de47a27
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,5 @@
++def test_oci_provider_is_available() -> None:
++    """OCI should be available as a native optional model provider."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    assert OCIProvider
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e03f519642699cbc84e476c07d2f2c0f6de47a27
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,5 @@
++def test_oci_provider_is_available() -> None:
++    """OCI should be available as a native optional model provider."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    assert OCIProvider
+
+exec
+/bin/bash -lc 'uv run pytest -q tests/models/test_oci_provider.py' in /workspace/repo
+ exited 127 in 0ms:
+/bin/bash: line 1: uv: command not found
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e03f519642699cbc84e476c07d2f2c0f6de47a27
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,5 @@
++def test_oci_provider_is_available() -> None:
++    """OCI should be available as a native optional model provider."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    assert OCIProvider
+
+codex
+The intended focused command could not start because `uv` is not installed in this environment. I’ll use the repository’s available Python/pytest executable to run the same test; no production code has been changed.
+exec
+/bin/bash -lc "command -v python; python --version; command -v pytest || true; rg --files -g 'pytest' -g 'python' .venv .venv_310 2>/dev/null | head -20; git diff -- tests/models/test_oci_provider.py; git status --short" in /workspace/repo
+ succeeded in 0ms:
+/usr/local/bin/python
+Python 3.12.13
+/usr/local/bin/pytest
+?? tests/models/test_oci_provider.py
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e03f519642699cbc84e476c07d2f2c0f6de47a27
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,5 @@
++def test_oci_provider_is_available() -> None:
++    """OCI should be available as a native optional model provider."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    assert OCIProvider
+
+exec
+/bin/bash -lc 'pytest -q tests/models/test_oci_provider.py' in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e03f519642699cbc84e476c07d2f2c0f6de47a27
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,5 @@
++def test_oci_provider_is_available() -> None:
++    """OCI should be available as a native optional model provider."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    assert OCIProvider
+
+ exited 1 in 1240ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________________________ test_oci_provider_is_available ________________________
+
+    def test_oci_provider_is_available() -> None:
+        """OCI should be available as a native optional model provider."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_is_available - Mo...
+1 failed in 0.11s
+
+codex
+The focused test now demonstrates the reported gap: importing `OCIProvider` from the expected native extension module fails with `ModuleNotFoundError`. Per your stop condition, I’m not attempting an implementation or running the broader suite.
+exec
+/bin/bash -lc 'BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)
+BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD 2>/dev/null || git merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")
+printf '"'branch='; git rev-parse --abbrev-ref HEAD
+printf 'status\\n'; git status -sb
+printf 'untracked\\n'; git ls-files --others --exclude-standard
+printf 'unstaged\\n'; git diff --name-only
+printf 'staged\\n'; git diff --name-only --cached
+printf 'stat\\n'; git diff --stat
+printf 'base_ref=%s\\nbase_commit=%s\\n' \""'$BASE_REF" "$BASE_COMMIT"
+printf '"'ahead\\n'; git log --oneline --no-merges \""'${BASE_COMMIT}..HEAD"
+printf '"'test file\\n'; sed -n '1,80p' tests/models/test_oci_provider.py" in /workspace/repo
+ succeeded in 0ms:
+branch=main
+status
+## main...origin/main
+?? tests/models/test_oci_provider.py
+untracked
+tests/models/test_oci_provider.py
+unstaged
+staged
+stat
+base_ref=origin/main
+base_commit=95185352c8b829405a96c3886960f030163bdf07
+ahead
+test file
+def test_oci_provider_is_available() -> None:
+    """OCI should be available as a native optional model provider."""
+    from agents.extensions.models.oci_provider import OCIProvider
+
+    assert OCIProvider
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e03f519642699cbc84e476c07d2f2c0f6de47a27
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,5 @@
++def test_oci_provider_is_available() -> None:
++    """OCI should be available as a native optional model provider."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    assert OCIProvider
+
+codex
+Hypothesis confirmed: OCI support is absent, not misconfigured. Added a focused failing test at [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1).
+
+`pytest -q tests/models/test_oci_provider.py` fails as expected:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+I stopped there per your instruction. (`uv` is unavailable; system `pytest` was used.)
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: add OCI model provider extension coverage
+
+## Description
+
+This pull request adds a focused characterization test for the proposed native OCI model provider. The test demonstrates that the expected `agents.extensions.models.oci_provider.OCIProvider` surface does not yet exist, establishing the missing integration before implementation.
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e03f519642699cbc84e476c07d2f2c0f6de47a27
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,5 @@
++def test_oci_provider_is_available() -> None:
++    """OCI should be available as a native optional model provider."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    assert OCIProvider
+
+tokens used
+23,836
+Hypothesis confirmed: OCI support is absent, not misconfigured. Added a focused failing test at [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1).
+
+`pytest -q tests/models/test_oci_provider.py` fails as expected:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+I stopped there per your instruction. (`uv` is unavailable; system `pytest` was used.)
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: add OCI model provider extension coverage
+
+## Description
+
+This pull request adds a focused characterization test for the proposed native OCI model provider. The test demonstrates that the expected `agents.extensions.models.oci_provider.OCIProvider` surface does not yet exist, establishing the missing integration before implementation.
+[exit 0; elapsed 68111ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='/tmp/triage-3151183b-ee14-4bf7-b56c-d479f2990ab2-attempt_1-junit.xml' 'tests/models/test_oci_provider.py'
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________________________ test_oci_provider_is_available ________________________
+
+    def test_oci_provider_is_available() -> None:
+        """OCI should be available as a native optional model provider."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_is_available - Mo...
+1 failed in 0.11s
+[exit 1]
+$ git diff --no-ext-diff

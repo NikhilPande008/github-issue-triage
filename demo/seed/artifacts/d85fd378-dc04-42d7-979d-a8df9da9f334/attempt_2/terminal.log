@@ -1,0 +1,79 @@
+CONFIRMATION EXECUTION (no Codex)
+$ python -m pytest -q --junitxml='/tmp/triage-d85fd378-dc04-42d7-979d-a8df9da9f334-attempt_2-junit.xml' 'tests/test_call_model_input_filter.py'
+.F......                                                                 [100%]
+=================================== FAILURES ===================================
+___________ test_call_model_input_filter_can_access_response_format ____________
+
+    @pytest.mark.asyncio
+    async def test_call_model_input_filter_can_access_response_format() -> None:
+        model = FakeModel()
+        agent = Agent(name="test", model=model)
+        model.set_next_output([get_text_message("ok")])
+    
+        def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+            assert data.model_data.response_format is None
+            return data.model_data
+    
+>       await Runner.run(
+            agent,
+            input="start",
+            run_config=RunConfig(call_model_input_filter=filter_fn),
+        )
+
+tests/test_call_model_input_filter.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/agents/run.py:272: in run
+    return await runner.run(
+src/agents/run.py:1296: in run
+    turn_result = await model_task
+                  ^^^^^^^^^^^^^^^^
+src/agents/run_internal/run_loop.py:1843: in run_single_turn
+    new_response = await get_new_response(
+src/agents/run_internal/run_loop.py:1898: in get_new_response
+    filtered = await maybe_filter_model_input(
+src/agents/run_internal/turn_preparation.py:76: in maybe_filter_model_input
+    maybe_updated = run_config.call_model_input_filter(filter_payload)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data = CallModelData(model_data=ModelInputData(input=[{'content': 'start', 'role': 'user'}], instructions=None), agent=Agent(..._guardrails=[], output_type=None, hooks=None, tool_use_behavior='run_llm_again', reset_tool_choice=True), context=None)
+
+    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+>       assert data.model_data.response_format is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ModelInputData' object has no attribute 'response_format'
+
+tests/test_call_model_input_filter.py:49: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_call_model_input_filter.py::test_call_model_input_filter_can_access_response_format
+1 failed, 7 passed in 0.18s
+[exit 1]
+$ git diff --no-ext-diff
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3..9ed47063 100644
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -39,6 +39,23 @@ async def test_call_model_input_filter_sync_non_streamed() -> None:
+     assert model.last_turn_args["input"][-1]["content"] == "added-sync"
+ 
+ 
++@pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
+ @pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()

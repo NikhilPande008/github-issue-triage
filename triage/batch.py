@@ -23,6 +23,7 @@ class BatchItem:
     cost_usd: float | None
     skipped: bool = False
     error: str | None = None
+    job_status: str | None = None
 
 
 @dataclass(frozen=True)
@@ -36,10 +37,12 @@ class BatchSummary:
 
     def counts(self) -> dict[str, int]:
         result = {item.value: 0 for item in Classification if item is not Classification.DUPLICATE}
-        result.update({"SKIPPED": 0, "OPERATIONAL_FAILURE": 0})
+        result.update({"SKIPPED": 0, "OPERATIONAL_FAILURE": 0, "QUEUED": 0, "RUNNING": 0, "RETRIED": 0})
         for item in self.items:
             if item.skipped:
                 result["SKIPPED"] += 1
+            elif item.job_status:
+                result[item.job_status] = result.get(item.job_status, 0) + 1
             elif item.error:
                 result["OPERATIONAL_FAILURE"] += 1
             elif item.classification is not None:

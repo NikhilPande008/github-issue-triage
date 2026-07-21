@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class IssueExtraction(BaseModel):
-    """Validated, source-bound reproduction information from one issue."""
+    """Validated, source-bound executable behavior specification from one issue."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -24,3 +24,17 @@ class InvestigationEvidence(BaseModel):
     git_diff_path: Path | None
     pytest_output_path: Path
     pytest_exit_code: int
+    runner_id: str = "pytest"
+    structured_results_path: Path | None = None
+    execution_failure_reason: str | None = None
+    reproducibility_manifest_path: Path | None = None
+    reliability_status: str = "NOT_CONFIRMED"
+
+    @property
+    def test_output_path(self) -> Path:
+        """Runner-neutral alias; legacy pytest field remains API-compatible."""
+        return self.pytest_output_path
+
+    @property
+    def test_exit_code(self) -> int:
+        return self.pytest_exit_code

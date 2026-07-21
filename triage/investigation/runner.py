@@ -26,7 +26,8 @@ class LocalInvestigationRunner:
         started = perf_counter()
         codex = self._run(["codex", "exec", "--sandbox", "workspace-write", "--ephemeral", prompt], repository_path)
         codex_latency_ms = round((perf_counter() - started) * 1000)
-        pytest = self._run(["python", "-m", "pytest", "-q"], repository_path)
+        structured_path = artifact_dir / "junit.xml"
+        pytest = self._run(["python", "-m", "pytest", "-q", f"--junitxml={structured_path}"], repository_path)
         diff = self._run(["git", "diff", "--no-ext-diff"], repository_path)
 
         terminal_log_path = artifact_dir / "terminal.log"
@@ -43,6 +44,7 @@ class LocalInvestigationRunner:
                 git_diff_path=git_diff_path,
                 pytest_output_path=pytest_output_path,
                 pytest_exit_code=pytest.exit_code,
+                structured_results_path=structured_path if structured_path.is_file() else None,
             ),
             terminal_log_path=terminal_log_path,
             codex_exit_code=codex.exit_code,

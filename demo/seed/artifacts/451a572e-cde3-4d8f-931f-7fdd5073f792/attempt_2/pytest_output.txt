@@ -1,0 +1,14 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_superserve_is_available_as_an_optional_sandbox_backend __________
+
+    def test_superserve_is_available_as_an_optional_sandbox_backend() -> None:
+        pyproject = tomllib.loads((Path(__file__).parents[3] / "pyproject.toml").read_text())
+    
+>       assert "superserve" in pyproject["project"]["optional-dependencies"]
+E       assert 'superserve' in {'voice': ["numpy>=2.2.0, <3; python_version>='3.10'", 'websockets>=15.0, <17'], 'viz': ['graphviz>=0.17'], 'litellm': ['litellm>=1.83.0'], 'any-llm': ["any-llm-sdk>=1.11.0, <2; python_version >= '3.11'"], ...}
+
+tests/extensions/sandbox/test_superserve.py:11: AssertionError
+=========================== short test summary info ============================
+FAILED tests/extensions/sandbox/test_superserve.py::test_superserve_is_available_as_an_optional_sandbox_backend
+1 failed in 0.10s

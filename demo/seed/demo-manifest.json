@@ -1,0 +1,56 @@
+{
+  "schema_version": "1",
+  "exported_at": "2026-07-21T14:22:27Z",
+  "investigations": [
+    {
+      "id": "0a379f2f-ee0d-4a60-a7a3-a5682d4e415f",
+      "repository": "psf/requests",
+      "issue_number": 7564,
+      "title": "raise FileNotFoundError for missing TLS material",
+      "classification": "BEHAVIOR_GAP_CONFIRMED",
+      "assertsFailure": true,
+      "purpose": "flagship_confirmed",
+      "artifact_count": 4
+    },
+    {
+      "id": "39f93579-1372-46c6-9c46-b53ce8d9e568",
+      "repository": "openai/openai-agents-python",
+      "issue_number": 3563,
+      "title": "Add custom `ResponseFormat` support in CallModelInputFilter callback",
+      "classification": "BEHAVIOR_GAP_CONFIRMED",
+      "assertsFailure": true,
+      "purpose": "cross_repo_confirmed",
+      "artifact_count": 11
+    },
+    {
+      "id": "e8a71529-ca19-4cfb-ba21-99119c22ec5c",
+      "repository": "openai/openai-guardrails-python",
+      "issue_number": 70,
+      "title": "Allow LiteLLM Proxy to be used in Guardrails",
+      "classification": "BEHAVIOR_GAP_CONFIRMED",
+      "assertsFailure": true,
+      "purpose": "cross_repo_confirmed",
+      "artifact_count": 11
+    },
+    {
+      "id": "14bf1a25-e09d-4f03-941f-259a7c60e00a",
+      "repository": "openai/openai-agents-python",
+      "issue_number": 3611,
+      "title": "Native OCI Generative AI model provider (three transports: OpenAI-compatible, native SDK, Responses)",
+      "classification": "NEEDS_INFO",
+      "assertsFailure": false,
+      "purpose": "needs_info",
+      "artifact_count": 16
+    },
+    {
+      "id": "80978f8d-03ad-42bd-b088-5f6c4768db80",
+      "repository": "openai/openai-agents-python",
+      "issue_number": 3654,
+      "title": "Add support for Superserve sandboxes",
+      "classification": "WONT_REPRO",
+      "assertsFailure": false,
+      "purpose": "completed_no_gap",
+      "artifact_count": 16
+    }
+  ]
+}

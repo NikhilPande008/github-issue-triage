@@ -15,7 +15,7 @@ it("appears only for NEEDS_INFO and turns persisted missing info into copyable t
   expect(screen.getAllByText(/Python version/i)).toHaveLength(1);
   expect(screen.getByText("Preview — not posted to GitHub.")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /post|submit|publish/i })).not.toBeInTheDocument();
-  rerender(<MaintainerReply classification="REPRODUCED" artifacts={[artifact('{"missing_info":["Python version"]}')]} />);
+  rerender(<MaintainerReply classification="BEHAVIOR_GAP_CONFIRMED" artifacts={[artifact('{"missing_info":["Python version"]}')]} />);
   expect(screen.queryByText("Maintainer-ready reply")).not.toBeInTheDocument();
 });
 

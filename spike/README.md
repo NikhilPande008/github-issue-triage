@@ -18,4 +18,4 @@ Artifacts are overwritten per run:
 - `extraction.json`
 - `final_report.json`
 
-`REPRODUCED` means both a changed `tests/*.py` file and pytest output containing an `AssertionError` were observed. Every other outcome is `NOT REPRODUCED`.
+`Behavior gap confirmed` means both a changed `tests/*.py` file and pytest output containing an `AssertionError` were observed. It confirms the tested behavior is absent, not regression provenance or defect status. Every other outcome is `NOT_BEHAVIOR_GAP_CONFIRMED`.

@@ -17,7 +17,7 @@ depends_on = None
 def upgrade() -> None:
     investigation_status = sa.Enum("PENDING", "RUNNING", "COMPLETED", "FAILED", name="investigationstatus")
     classification = sa.Enum(
-        "REPRODUCED", "NEEDS_INFO", "WONT_REPRO", "NOT_A_BUG", "DUPLICATE", name="classification"
+        "BEHAVIOR_GAP_CONFIRMED", "NEEDS_INFO", "WONT_REPRO", "NOT_A_BUG", "DUPLICATE", name="classification"
     )
     op.create_table(
         "investigations",

@@ -10,16 +10,16 @@ it("renders API errors without crashing", async () => {
   await waitFor(() => expect(screen.getByText(/Database unavailable/)).toBeInTheDocument());
 });
 
-it("sorts reproduced queue items before other verdicts", () => {
+it("sorts confirmed behavior gaps before other verdicts", () => {
   const items = [
     { ...base, id: "negative", classification: "WONT_REPRO" as const },
-    { ...base, id: "reproduced", classification: "REPRODUCED" as const },
+    { ...base, id: "behavior-gap", classification: "BEHAVIOR_GAP_CONFIRMED" as const },
   ];
-  expect(sortQueue(items).map((item) => item.id)).toEqual(["reproduced", "negative"]);
+  expect(sortQueue(items).map((item) => item.id)).toEqual(["behavior-gap", "negative"]);
 });
 
 it("renders the triage queue as the default screen", async () => {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [{ ...base, id: "run-1", classification: "REPRODUCED" }], total: 1 }) }));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [{ ...base, id: "run-1", classification: "BEHAVIOR_GAP_CONFIRMED" }], total: 1 }) }));
   render(<Investigations />);
   expect(screen.getByRole("status")).toHaveTextContent("Loading triage queue");
   await waitFor(() => expect(screen.getByText("Title")).toBeInTheDocument());

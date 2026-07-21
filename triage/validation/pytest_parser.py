@@ -33,7 +33,7 @@ def parse_pytest_output(output: str, exit_code: int) -> PytestReport:
         # A pytest ``FAILED`` node is a completed test failure even when its
         # exception is not AssertionError (for example, pytest.raises finding
         # an unexpected OSError). The validator still requires this path to be
-        # a changed executable test before accepting reproduction evidence.
+        # a changed executable test before accepting behavior-gap evidence.
         assertion_paths.add(Path(match.group("nodeid").split("::", maxsplit=1)[0]))
     return PytestReport(completed=True, rejection_reason=None, assertion_failures=sorted(assertion_paths))
 

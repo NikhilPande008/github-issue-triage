@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 import triage.sandbox.manager as manager_module
-from triage.sandbox.container import ContainerCommandResult
+from triage.sandbox.container import ContainerCommandResult, ContainerRole, DockerSandboxContainer
 from triage.sandbox.manager import EnvironmentSetupFailure, Sandbox, SandboxManager, resolve_setup_command
 from triage.sandbox.workspace import SandboxWorkspace
 
@@ -22,7 +22,7 @@ def test_cleanup_removes_container_and_workspace(tmp_path) -> None:
     root = tmp_path / "workspace"
     root.mkdir()
     container = FakeContainer()
-    sandbox = Sandbox(SandboxWorkspace(root, root / "repository"), container, "image-1", "run-1", 0)
+    sandbox = Sandbox(SandboxWorkspace(root, root / "repository"), container, None, "image-1", object(), "run-1", 0)
 
     sandbox.cleanup()
 
@@ -66,13 +66,14 @@ def test_manager_uses_configured_setup_command(monkeypatch, tmp_path) -> None:
         id = "container-1"
         def run(self, command, timeout): commands.append(command)
         def remove(self): pass
+        def commit(self): return type("Image", (), {"id": "prepared-image"})()
 
     monkeypatch.setattr(manager_module.SandboxWorkspace, "create", lambda *args: workspace)
     monkeypatch.setattr(manager_module, "ensure_image", lambda client, name: type("Image", (), {"id": "image-1"})())
     monkeypatch.setattr(manager_module.DockerSandboxContainer, "start", lambda *args: FakeStartedContainer())
     manager = SandboxManager(tmp_path, "image", 10, 20, Path("missing"), docker_client=object(), setup_command="python -m pip install -e . pytest")
     manager.create("run-1", "encode/httpx")
-    assert commands == ["python -m pip install -e . pytest"]
+    assert commands[0] == "python -m pip install -e . pytest"
 
 
 @pytest.mark.parametrize(
@@ -101,3 +102,22 @@ def test_resolve_setup_command_prefers_explicit_configuration(tmp_path) -> None:
 def test_resolve_setup_command_rejects_repository_without_supported_manifest(tmp_path) -> None:
     with pytest.raises(EnvironmentSetupFailure, match="no requirements-dev.txt, requirements.txt, or Python package metadata found"):
         resolve_setup_command(tmp_path, None)
+
+
+def test_container_roles_mount_auth_only_for_agent_and_isolate_tests(tmp_path) -> None:
+    auth = tmp_path / "auth.json"; auth.write_text("probe-only", encoding="utf-8")
+    calls = []
+    class Containers:
+        def run(self, *args, **kwargs):
+            calls.append(kwargs)
+            return type("Container", (), {"id": f"container-{len(calls)}"})()
+    docker_client = type("Docker", (), {"containers": Containers()})()
+    image = type("Image", (), {"id": "image"})()
+    for role, policy in ((ContainerRole.SETUP, "allowed"), (ContainerRole.AGENT, "allowed"), (ContainerRole.TEST, "isolated")):
+        DockerSandboxContainer.start(docker_client, image, tmp_path, auth, 30, role, policy)
+    setup, agent, test = calls
+    assert str(auth) not in setup["volumes"]
+    assert str(auth) in agent["volumes"]
+    assert str(auth) not in test["volumes"]
+    assert "network_mode" not in setup and "network_mode" not in agent
+    assert test["network_mode"] == "none"

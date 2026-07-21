@@ -1,0 +1,29 @@
+.....F......................................                             [100%]
+=================================== FAILURES ===================================
+____ test_create_default_tool_context_preserves_litellm_proxy_configuration ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xffff64f9a600>
+
+    def test_create_default_tool_context_preserves_litellm_proxy_configuration(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Tool guardrail client should receive LiteLLM proxy settings."""
+        openai_mod = types.ModuleType("openai")
+    
+        class StubAsyncOpenAI:
+            def __init__(self, **kwargs: Any) -> None:
+                self.kwargs = kwargs
+    
+        openai_mod.AsyncOpenAI = StubAsyncOpenAI
+        monkeypatch.setitem(sys.modules, "openai", openai_mod)
+    
+>       context = agents._create_default_tool_context(
+            api_key="litellm-proxy-key",
+            base_url="http://litellm-proxy.example/v1",
+        )
+E       TypeError: _create_default_tool_context() got an unexpected keyword argument 'api_key'
+
+tests/unit/test_agents.py:262: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_agents.py::test_create_default_tool_context_preserves_litellm_proxy_configuration
+1 failed, 43 passed in 0.45s

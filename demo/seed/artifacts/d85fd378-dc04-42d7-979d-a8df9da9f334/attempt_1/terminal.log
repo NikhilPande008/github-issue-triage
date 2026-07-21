@@ -1,0 +1,1749 @@
+$ codex exec --sandbox workspace-write --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Add custom `ResponseFormat` support in the `CallModelInputFilter` callback.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The `call_model_input_filter` callback of `RunConfig` should support a `response_format: ResponseFormat | None` field so the response format can be modified before calling the model.",
+  "actual_behavior": "The `call_model_input_filter` callback does not have the requested `response_format: ResponseFormat | None` field.",
+  "environment": {},
+  "affected_area": "`call_model_input_filter` of `RunConfig`",
+  "repro_code": null,
+  "missing_info": [
+    "A concrete reproduction procedure",
+    "SDK version",
+    "Model or provider",
+    "Callback configuration and input",
+    "Observed error or behavior when attempting to modify the response format"
+  ],
+  "confidence": 0.96
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84d6-c0b0-7010-886a-b579de811e0e
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Add custom `ResponseFormat` support in the `CallModelInputFilter` callback.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The `call_model_input_filter` callback of `RunConfig` should support a `response_format: ResponseFormat | None` field so the response format can be modified before calling the model.",
+  "actual_behavior": "The `call_model_input_filter` callback does not have the requested `response_format: ResponseFormat | None` field.",
+  "environment": {},
+  "affected_area": "`call_model_input_filter` of `RunConfig`",
+  "repro_code": null,
+  "missing_info": [
+    "A concrete reproduction procedure",
+    "SDK version",
+    "Model or provider",
+    "Callback configuration and input",
+    "Observed error or behavior when attempting to modify the response format"
+  ],
+  "confidence": 0.96
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+I’ll trace the filter input type and its model-call path, then add the smallest regression test I can to establish whether `response_format` is absent. I’m using the repository’s implementation-strategy and OpenAI-knowledge guidance because this is a user-facing SDK callback at an OpenAI model boundary.
+exec
+/bin/bash -lc 'rg -n "call_model_input_filter|CallModelInputFilter|response_format" src/agents tests | head -240 && git status --short' in /workspace/repo
+exec
+/bin/bash -lc "sed -n '1,240p' /workspace/repo/.agents/skills/implementation-strategy/SKILL.md && sed -n '1,240p' /workspace/repo/.agents/skills/openai-knowledge/SKILL.md" in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+The environment is currently blocking even read-only repository commands before they start (its sandbox cannot create the required user namespace). I’ll retry with a non-login shell; if that is also blocked, I won’t fabricate a failing test or claim a finding.
+exec
+/bin/bash -c 'pwd && rg -n "call_model_input_filter|CallModelInputFilter|response_format" src/agents tests | head -240 && git status --short' in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+Investigation blocked: the execution sandbox cannot create its required user namespace, so even read-only repository commands fail before running. I could not inspect the callback type, add a focused test, or demonstrate the reported failure.
+
+No files were changed and no test result is claimed.
+tokens used
+6,636
+Investigation blocked: the execution sandbox cannot create its required user namespace, so even read-only repository commands fail before running. I could not inspect the callback type, add a focused test, or demonstrate the reported failure.
+
+No files were changed and no test result is claimed.
+[exit 0; elapsed 19715ms; preferred]
+$ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Add custom `ResponseFormat` support in the `CallModelInputFilter` callback.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The `call_model_input_filter` callback of `RunConfig` should support a `response_format: ResponseFormat | None` field so the response format can be modified before calling the model.",
+  "actual_behavior": "The `call_model_input_filter` callback does not have the requested `response_format: ResponseFormat | None` field.",
+  "environment": {},
+  "affected_area": "`call_model_input_filter` of `RunConfig`",
+  "repro_code": null,
+  "missing_info": [
+    "A concrete reproduction procedure",
+    "SDK version",
+    "Model or provider",
+    "Callback configuration and input",
+    "Observed error or behavior when attempting to modify the response format"
+  ],
+  "confidence": 0.96
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84d7-0c7d-7fa0-9eb1-747f99d0e43a
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Add custom `ResponseFormat` support in the `CallModelInputFilter` callback.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The `call_model_input_filter` callback of `RunConfig` should support a `response_format: ResponseFormat | None` field so the response format can be modified before calling the model.",
+  "actual_behavior": "The `call_model_input_filter` callback does not have the requested `response_format: ResponseFormat | None` field.",
+  "environment": {},
+  "affected_area": "`call_model_input_filter` of `RunConfig`",
+  "repro_code": null,
+  "missing_info": [
+    "A concrete reproduction procedure",
+    "SDK version",
+    "Model or provider",
+    "Callback configuration and input",
+    "Observed error or behavior when attempting to modify the response format"
+  ],
+  "confidence": 0.96
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+codex
+I’ll trace the callback’s current input type, then add the smallest focused regression test and run it to establish whether the requested field is missing.
+exec
+/bin/bash -lc "sed -n '1,240p' .agents/skills/code-change-verification/SKILL.md && rg -n \"call_model_input_filter|CallModelInputFilter\" src tests" in /workspace/repo
+ succeeded in 0ms:
+---
+name: code-change-verification
+description: Run the mandatory verification stack when changes affect runtime code, tests, or build/test behavior in the OpenAI Agents Python repository.
+---
+
+# Code Change Verification
+
+## Overview
+
+Ensure work is only marked complete after formatting, linting, type checking, and tests pass. Use this skill when changes affect runtime code, tests, or build/test configuration. You can skip it for docs-only or repository metadata unless a user asks for the full stack.
+
+## Quick start
+
+1. Keep this skill at `./.agents/skills/code-change-verification` so it loads automatically for the repository.
+2. macOS/Linux: `bash .agents/skills/code-change-verification/scripts/run.sh`.
+3. Windows: `powershell -ExecutionPolicy Bypass -File .agents/skills/code-change-verification/scripts/run.ps1`.
+4. The scripts run `make format` first, then run `make lint`, `make typecheck`, and `make tests` in parallel with fail-fast semantics.
+5. While the parallel steps are still running, the scripts emit periodic heartbeat updates so you can tell that work is still in progress.
+6. If any command fails, fix the issue, rerun the script, and report the failing output.
+7. Confirm completion only when all commands succeed with no remaining issues.
+
+## Environment setup
+
+The verification scripts assume repository dependencies are already installed. Do not run `make sync` as part of every verification pass; use it for a fresh checkout, after dependency files change, or when dependency resolution fails before the checks start.
+
+On Linux, some Python packages with native extensions may require system packages such as `libffi-dev`, Python development headers, or build tools. If verification cannot start because one of these packages is missing, treat it as a local environment setup issue. Install the missing dependency when possible, or report the failing command and missing dependency in the PR test plan before rerunning verification in a prepared environment.
+
+## Manual workflow
+
+- For a fresh checkout, or if dependencies are not installed or have changed, run `make sync` first to install dev requirements via `uv`.
+- Run from the repository root with `make format` first, then `make lint`, `make typecheck`, and `make tests`.
+- Do not skip steps; stop and fix issues immediately when a command fails.
+- If you run the steps manually, you may parallelize `make lint`, `make typecheck`, and `make tests` after `make format` completes, but you must stop the remaining steps as soon as one fails.
+- Re-run the full stack after applying fixes so the commands execute in the required order.
+
+## Resources
+
+### scripts/run.sh
+
+- Executes `make format` first, then runs `make lint`, `make typecheck`, and `make tests` in parallel with fail-fast semantics from the repository root. It also emits periodic heartbeat updates while the parallel steps are still running. Prefer this entry point to preserve the required ordering while reducing total runtime.
+
+### scripts/run.ps1
+
+- Windows-friendly wrapper that runs the same sequence with `make format` first and the remaining steps in parallel with fail-fast semantics, plus periodic heartbeat updates while work is still running. Use from PowerShell with execution policy bypass if required by your environment.
+tests/test_agent_runner.py:763:async def test_call_model_input_filter_can_reintroduce_reasoning_ids() -> None:
+tests/test_agent_runner.py:800:            call_model_input_filter=reintroduce_reasoning_id,
+tests/test_agent_runner.py:1103:            call_model_input_filter=capture_model_input,
+tests/test_agent_runner.py:1166:            call_model_input_filter=capture_model_input,
+tests/test_agent_runner.py:1235:        call_model_input_filter=capture_model_input,
+src/agents/run_config.py:57:    """Data passed to `RunConfig.call_model_input_filter` prior to model call."""
+src/agents/run_config.py:64:CallModelInputFilter = Callable[[CallModelData[Any]], MaybeAwaitable[ModelInputData]]
+src/agents/run_config.py:300:    call_model_input_filter: CallModelInputFilter | None = None
+src/agents/run_config.py:377:    "CallModelInputFilter",
+tests/test_agent_runner_streamed.py:937:            call_model_input_filter=capture_model_input,
+tests/test_agent_runner_streamed.py:1855:        call_model_input_filter=capture_model_input,
+tests/test_call_model_input_filter.py:18:async def test_call_model_input_filter_sync_non_streamed() -> None:
+tests/test_call_model_input_filter.py:33:        run_config=RunConfig(call_model_input_filter=filter_fn),
+tests/test_call_model_input_filter.py:43:async def test_call_model_input_filter_async_streamed() -> None:
+tests/test_call_model_input_filter.py:58:        run_config=RunConfig(call_model_input_filter=filter_fn),
+tests/test_call_model_input_filter.py:70:async def test_call_model_input_filter_invalid_return_type_raises() -> None:
+tests/test_call_model_input_filter.py:81:            run_config=RunConfig(call_model_input_filter=invalid_filter),
+tests/test_call_model_input_filter.py:93:async def test_call_model_input_filter_error_respects_sensitive_data_setting(
+tests/test_call_model_input_filter.py:105:                call_model_input_filter=filter_fn,
+tests/test_call_model_input_filter.py:112:            "message": "Error in call_model_input_filter",
+tests/test_call_model_input_filter.py:119:async def test_call_model_input_filter_prefers_latest_duplicate_outputs_non_streamed() -> None:
+tests/test_call_model_input_filter.py:150:        run_config=RunConfig(call_model_input_filter=filter_fn),
+tests/test_call_model_input_filter.py:163:async def test_call_model_input_filter_prefers_latest_duplicate_outputs_streamed() -> None:
+tests/test_call_model_input_filter.py:194:        run_config=RunConfig(call_model_input_filter=filter_fn),
+tests/extensions/test_tool_output_trimmer.py:1:"""Tests for ToolOutputTrimmer — the built-in call_model_input_filter for trimming
+tests/test_server_conversation_tracker.py:834:    run_config = RunConfig(call_model_input_filter=_filter_input)
+tests/test_server_conversation_tracker.py:874:    run_config = RunConfig(call_model_input_filter=_filter_input)
+tests/test_server_conversation_tracker.py:948:    run_config = RunConfig(call_model_input_filter=_filter_input)
+tests/test_call_model_input_filter_unit.py:21:async def test_call_model_input_filter_sync_non_streamed_unit() -> None:
+tests/test_call_model_input_filter_unit.py:49:        run_config=RunConfig(call_model_input_filter=filter_fn),
+tests/test_call_model_input_filter_unit.py:59:async def test_call_model_input_filter_async_streamed_unit() -> None:
+tests/test_call_model_input_filter_unit.py:87:        run_config=RunConfig(call_model_input_filter=filter_fn),
+tests/test_call_model_input_filter_unit.py:99:async def test_call_model_input_filter_invalid_return_type_raises_unit() -> None:
+tests/test_call_model_input_filter_unit.py:110:            run_config=RunConfig(call_model_input_filter=invalid_filter),
+tests/test_programmatic_tool_calling.py:2565:                call_model_input_filter=capture_model_input,
+src/agents/run.py:36:    CallModelInputFilter,
+src/agents/run.py:143:    "CallModelInputFilter",
+tests/sandbox/test_runtime.py:1717:async def test_runner_uses_public_agent_for_call_model_input_filter() -> None:
+tests/sandbox/test_runtime.py:1739:            call_model_input_filter=capture_model_input,
+tests/sandbox/test_runtime.py:1748:async def test_runner_streamed_uses_public_agent_for_call_model_input_filter() -> None:
+tests/sandbox/test_runtime.py:1770:            call_model_input_filter=capture_model_input,
+src/agents/run_internal/run_loop.py:1474:        # Track only the items actually sent after call_model_input_filter runs. Retry helpers
+src/agents/run_internal/turn_preparation.py:59:    """Apply optional call_model_input_filter to modify model input."""
+src/agents/run_internal/turn_preparation.py:63:    if run_config.call_model_input_filter is None:
+src/agents/run_internal/turn_preparation.py:76:        maybe_updated = run_config.call_model_input_filter(filter_payload)
+src/agents/run_internal/turn_preparation.py:79:            raise UserError("call_model_input_filter must return a ModelInputData instance")
+src/agents/run_internal/turn_preparation.py:84:                message="Error in call_model_input_filter",
+src/agents/extensions/tool_output_trimmer.py:1:"""Built-in call_model_input_filter that trims large tool outputs from older turns.
+src/agents/extensions/tool_output_trimmer.py:14:        call_model_input_filter=ToolOutputTrimmer(
+src/agents/extensions/tool_output_trimmer.py:48:    This class implements the ``CallModelInputFilter`` protocol and can be passed directly
+src/agents/extensions/tool_output_trimmer.py:49:    to ``RunConfig.call_model_input_filter``. It runs immediately before each model call
+
+codex
+Because this will add a regression test, I’m using the repository’s required verification guidance; for this investigation I’ll first run only the focused test and stop at the reported failure, as requested. My hypothesis is that the callback payload and its return type expose only model input, so there is no path to override the model response format.
+exec
+/bin/bash -lc "sed -n '1,120p' src/agents/run_config.py && sed -n '1,130p' src/agents/run_internal/turn_preparation.py && sed -n '1,230p' tests/test_call_model_input_filter.py && rg -n \"response_format\" src/agents/run_internal src/agents/run_config.py tests/test_call_model_input_filter.py | head -160" in /workspace/repo
+ succeeded in 0ms:
+from __future__ import annotations
+
+import os
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Generic, Literal
+
+from typing_extensions import NotRequired, TypedDict
+
+from .guardrail import InputGuardrail, OutputGuardrail
+from .handoffs import HandoffHistoryMapper, HandoffInputFilter
+from .items import TResponseInputItem
+from .lifecycle import RunHooks
+from .memory import Session, SessionInputCallback, SessionSettings
+from .model_settings import ModelSettings
+from .models.interface import Model, ModelProvider
+from .models.multi_provider import MultiProvider
+from .run_context import TContext
+from .run_error_handlers import RunErrorHandlers
+from .tracing import TracingConfig
+from .util._types import MaybeAwaitable
+
+if TYPE_CHECKING:
+    from .agent import Agent
+    from .run_context import RunContextWrapper
+    from .sandbox.manifest import Manifest
+    from .sandbox.session.base_sandbox_session import BaseSandboxSession
+    from .sandbox.session.sandbox_client import BaseSandboxClient
+    from .sandbox.session.sandbox_session_state import SandboxSessionState
+    from .sandbox.snapshot import SnapshotBase, SnapshotSpec
+
+
+DEFAULT_MAX_TURNS = 10
+DEFAULT_MAX_MANIFEST_ENTRY_CONCURRENCY = 4
+DEFAULT_MAX_LOCAL_DIR_FILE_CONCURRENCY = 4
+DEFAULT_MAX_ARCHIVE_INPUT_BYTES = 1024 * 1024 * 1024
+DEFAULT_MAX_ARCHIVE_EXTRACTED_BYTES = 4 * 1024 * 1024 * 1024
+DEFAULT_MAX_ARCHIVE_MEMBERS = 100_000
+
+
+def _default_trace_include_sensitive_data() -> bool:
+    """Return the default for trace_include_sensitive_data based on environment."""
+    val = os.getenv("OPENAI_AGENTS_TRACE_INCLUDE_SENSITIVE_DATA", "true")
+    return val.strip().lower() in ("1", "true", "yes", "on")
+
+
+@dataclass
+class ModelInputData:
+    """Container for the data that will be sent to the model."""
+
+    input: list[TResponseInputItem]
+    instructions: str | None
+
+
+@dataclass
+class CallModelData(Generic[TContext]):
+    """Data passed to `RunConfig.call_model_input_filter` prior to model call."""
+
+    model_data: ModelInputData
+    agent: Agent[TContext]
+    context: TContext | None
+
+
+CallModelInputFilter = Callable[[CallModelData[Any]], MaybeAwaitable[ModelInputData]]
+ReasoningItemIdPolicy = Literal["preserve", "omit"]
+ToolNotFoundBehavior = Literal["raise_error", "return_error_to_model"]
+
+
+@dataclass
+class ToolErrorFormatterArgs(Generic[TContext]):
+    """Data passed to ``RunConfig.tool_error_formatter`` callbacks."""
+
+    kind: Literal["approval_rejected", "tool_not_found"]
+    """The category of tool error being formatted."""
+
+    tool_type: Literal["function", "computer", "shell", "apply_patch", "custom"]
+    """The tool runtime that produced the error."""
+
+    tool_name: str
+    """The name of the tool that produced the error."""
+
+    call_id: str
+    """The unique tool call identifier."""
+
+    default_message: str
+    """The SDK default message for this error kind."""
+
+    run_context: RunContextWrapper[TContext]
+    """The active run context for the current execution."""
+
+
+ToolErrorFormatter = Callable[[ToolErrorFormatterArgs[Any]], MaybeAwaitable[str | None]]
+
+
+@dataclass
+class ToolExecutionConfig:
+    """Grouped SDK-side execution settings for local tool calls."""
+
+    max_function_tool_concurrency: int | None = None
+    """Maximum number of local function tool calls to execute concurrently.
+
+    Set to `None` to preserve the default behavior, which starts all function tool calls
+    emitted in a turn. This does not change provider-side `parallel_tool_calls` behavior.
+    """
+
+    pre_approval_tool_input_guardrails: bool = False
+    """Run function tool input guardrails before emitting a pending approval interruption.
+
+    The same guardrails still run again immediately before tool execution after approval.
+    """
+
+    def __post_init__(self) -> None:
+        if self.max_function_tool_concurrency is not None and (
+            self.max_function_tool_concurrency < 1
+        ):
+            raise ValueError("tool_execution.max_function_tool_concurrency must be at least 1")
+        if not isinstance(self.pre_approval_tool_input_guardrails, bool):
+            raise ValueError("tool_execution.pre_approval_tool_input_guardrails must be a bool")
+
+
+from __future__ import annotations
+
+import asyncio
+import inspect
+from typing import Any
+
+from ..agent import Agent
+from ..agent_output import AgentOutputSchema, AgentOutputSchemaBase
+from ..exceptions import UserError
+from ..handoffs import Handoff, handoff
+from ..items import TResponseInputItem
+from ..lifecycle import AgentHooksBase, RunHooks, RunHooksBase
+from ..model_settings import ModelSettings
+from ..models.default_models import get_default_model_settings
+from ..models.interface import Model
+from ..run_config import CallModelData, ModelInputData, RunConfig
+from ..run_context import RunContextWrapper, TContext
+from ..tool import Tool
+from ..tracing import SpanError
+from ..util import _error_tracing
+
+__all__ = [
+    "validate_run_hooks",
+    "maybe_filter_model_input",
+    "get_output_schema",
+    "get_handoffs",
+    "get_all_tools",
+    "get_model",
+    "get_model_settings",
+]
+
+
+def validate_run_hooks(
+    hooks: RunHooksBase[Any, Agent[Any]] | AgentHooksBase[Any, Agent[Any]] | Any | None,
+) -> RunHooks[Any]:
+    """Normalize hooks input and enforce RunHooks type."""
+    if hooks is None:
+        return RunHooks[Any]()
+    input_hook_type = type(hooks).__name__
+    if isinstance(hooks, AgentHooksBase):
+        raise TypeError(
+            "Run hooks must be instances of RunHooks. "
+            f"Received agent-scoped hooks ({input_hook_type}). "
+            "Attach AgentHooks to an Agent via Agent(..., hooks=...)."
+        )
+    if not isinstance(hooks, RunHooksBase):
+        raise TypeError(f"Run hooks must be instances of RunHooks. Received {input_hook_type}.")
+    return hooks
+
+
+async def maybe_filter_model_input(
+    *,
+    agent: Agent[TContext],
+    run_config: RunConfig,
+    context_wrapper: RunContextWrapper[TContext],
+    input_items: list[TResponseInputItem],
+    system_instructions: str | None,
+) -> ModelInputData:
+    """Apply optional call_model_input_filter to modify model input."""
+    effective_instructions = system_instructions
+    effective_input: list[TResponseInputItem] = input_items
+
+    if run_config.call_model_input_filter is None:
+        return ModelInputData(input=effective_input, instructions=effective_instructions)
+
+    try:
+        model_input = ModelInputData(
+            input=effective_input.copy(),
+            instructions=effective_instructions,
+        )
+        filter_payload: CallModelData[TContext] = CallModelData(
+            model_data=model_input,
+            agent=agent,
+            context=context_wrapper.context,
+        )
+        maybe_updated = run_config.call_model_input_filter(filter_payload)
+        updated = await maybe_updated if inspect.isawaitable(maybe_updated) else maybe_updated
+        if not isinstance(updated, ModelInputData):
+            raise UserError("call_model_input_filter must return a ModelInputData instance")
+        return updated
+    except Exception as e:
+        _error_tracing.attach_error_to_current_span(
+            SpanError(
+                message="Error in call_model_input_filter",
+                data={
+                    "error": _error_tracing.get_trace_error(
+                        trace_include_sensitive_data=run_config.trace_include_sensitive_data,
+                        error_message=str(e),
+                    )
+                },
+            )
+        )
+        raise
+
+
+async def get_handoffs(agent: Agent[Any], context_wrapper: RunContextWrapper[Any]) -> list[Handoff]:
+    """Return enabled handoffs for the agent."""
+    handoffs = []
+    for handoff_item in agent.handoffs:
+        if isinstance(handoff_item, Handoff):
+            handoffs.append(handoff_item)
+        elif isinstance(handoff_item, Agent):
+            handoffs.append(handoff(handoff_item))
+
+    async def check_handoff_enabled(handoff_obj: Handoff) -> bool:
+        attr = handoff_obj.is_enabled
+        if isinstance(attr, bool):
+            return attr
+        res = attr(context_wrapper, agent)
+        if inspect.isawaitable(res):
+            return bool(await res)
+        return bool(res)
+
+    results = await asyncio.gather(*(check_handoff_enabled(h) for h in handoffs))
+    enabled: list[Handoff] = [h for h, ok in zip(handoffs, results, strict=False) if ok]
+    return enabled
+
+
+async def get_all_tools(agent: Agent[Any], context_wrapper: RunContextWrapper[Any]) -> list[Tool]:
+    """Fetch all tools available to the agent."""
+    return await agent.get_all_tools(context_wrapper)
+
+
+def get_output_schema(agent: Agent[Any]) -> AgentOutputSchemaBase | None:
+    """Return the resolved output schema for the agent, if any."""
+    if agent.output_type is None or agent.output_type is str:
+        return None
+    elif isinstance(agent.output_type, AgentOutputSchemaBase):
+        return agent.output_type
+
+from __future__ import annotations
+
+from typing import Any, cast
+
+import pytest
+
+from agents import Agent, RunConfig, Runner, TResponseInputItem, UserError
+from agents.run import CallModelData, ModelInputData
+
+from .fake_model import FakeModel
+from .test_responses import get_text_input_item, get_text_message
+from .testing_processor import fetch_span_errors
+
+SENSITIVE_ERROR_MESSAGE = "sensitive-filter-error"
+
+
+@pytest.mark.asyncio
+async def test_call_model_input_filter_sync_non_streamed() -> None:
+    model = FakeModel()
+    agent = Agent(name="test", model=model)
+
+    # Prepare model output
+    model.set_next_output([get_text_message("ok")])
+
+    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+        mi = data.model_data
+        new_input = list(mi.input) + [get_text_input_item("added-sync")]
+        return ModelInputData(input=new_input, instructions="filtered-sync")
+
+    await Runner.run(
+        agent,
+        input="start",
+        run_config=RunConfig(call_model_input_filter=filter_fn),
+    )
+
+    assert model.last_turn_args["system_instructions"] == "filtered-sync"
+    assert isinstance(model.last_turn_args["input"], list)
+    assert len(model.last_turn_args["input"]) == 2
+    assert model.last_turn_args["input"][-1]["content"] == "added-sync"
+
+
+@pytest.mark.asyncio
+async def test_call_model_input_filter_async_streamed() -> None:
+    model = FakeModel()
+    agent = Agent(name="test", model=model)
+
+    # Prepare model output
+    model.set_next_output([get_text_message("ok")])
+
+    async def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+        mi = data.model_data
+        new_input = list(mi.input) + [get_text_input_item("added-async")]
+        return ModelInputData(input=new_input, instructions="filtered-async")
+
+    result = Runner.run_streamed(
+        agent,
+        input="start",
+        run_config=RunConfig(call_model_input_filter=filter_fn),
+    )
+    async for _ in result.stream_events():
+        pass
+
+    assert model.last_turn_args["system_instructions"] == "filtered-async"
+    assert isinstance(model.last_turn_args["input"], list)
+    assert len(model.last_turn_args["input"]) == 2
+    assert model.last_turn_args["input"][-1]["content"] == "added-async"
+
+
+@pytest.mark.asyncio
+async def test_call_model_input_filter_invalid_return_type_raises() -> None:
+    model = FakeModel()
+    agent = Agent(name="test", model=model)
+
+    def invalid_filter(_data: CallModelData[Any]):
+        return "bad"
+
+    with pytest.raises(UserError):
+        await Runner.run(
+            agent,
+            input="start",
+            run_config=RunConfig(call_model_input_filter=invalid_filter),
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("trace_include_sensitive_data", "expected_error"),
+    [
+        (False, "Error details are redacted."),
+        (True, SENSITIVE_ERROR_MESSAGE),
+    ],
+)
+async def test_call_model_input_filter_error_respects_sensitive_data_setting(
+    trace_include_sensitive_data: bool,
+    expected_error: str,
+) -> None:
+    def filter_fn(_data: CallModelData[Any]) -> ModelInputData:
+        raise ValueError(SENSITIVE_ERROR_MESSAGE)
+
+    with pytest.raises(ValueError, match=SENSITIVE_ERROR_MESSAGE):
+        await Runner.run(
+            Agent(name="test", model=FakeModel(tracing_enabled=False)),
+            input="start",
+            run_config=RunConfig(
+                call_model_input_filter=filter_fn,
+                trace_include_sensitive_data=trace_include_sensitive_data,
+            ),
+        )
+
+    assert fetch_span_errors("turn") == [
+        {
+            "message": "Error in call_model_input_filter",
+            "data": {"error": expected_error},
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_call_model_input_filter_prefers_latest_duplicate_outputs_non_streamed() -> None:
+    model = FakeModel()
+    agent = Agent(name="test", model=model)
+    model.set_next_output([get_text_message("ok")])
+
+    duplicate_old = cast(
+        TResponseInputItem,
+        {
+            "type": "function_call_output",
+            "call_id": "dup-call",
+            "output": "old-value",
+        },
+    )
+    duplicate_new = cast(
+        TResponseInputItem,
+        {
+            "type": "function_call_output",
+            "call_id": "dup-call",
+            "output": "new-value",
+        },
+    )
+
+    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+        return ModelInputData(
+            input=[duplicate_old, duplicate_new] + list(data.model_data.input),
+            instructions=data.model_data.instructions,
+        )
+
+    await Runner.run(
+        agent,
+        input="start",
+        run_config=RunConfig(call_model_input_filter=filter_fn),
+    )
+
+    outputs = [
+        item
+        for item in model.last_turn_args["input"]
+        if item.get("type") == "function_call_output" and item.get("call_id") == "dup-call"
+    ]
+    assert len(outputs) == 1
+    assert outputs[0]["output"] == "new-value"
+
+
+@pytest.mark.asyncio
+async def test_call_model_input_filter_prefers_latest_duplicate_outputs_streamed() -> None:
+    model = FakeModel()
+    agent = Agent(name="test", model=model)
+    model.set_next_output([get_text_message("ok")])
+
+    duplicate_old = cast(
+        TResponseInputItem,
+        {
+            "type": "function_call_output",
+            "call_id": "dup-call-stream",
+            "output": "old-value",
+        },
+    )
+    duplicate_new = cast(
+        TResponseInputItem,
+        {
+            "type": "function_call_output",
+            "call_id": "dup-call-stream",
+            "output": "new-value",
+        },
+    )
+
+    async def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+        return ModelInputData(
+            input=[duplicate_old, duplicate_new] + list(data.model_data.input),
+            instructions=data.model_data.instructions,
+        )
+
+    result = Runner.run_streamed(
+        agent,
+        input="start",
+        run_config=RunConfig(call_model_input_filter=filter_fn),
+    )
+    async for _ in result.stream_events():
+        pass
+
+    outputs = [
+        item
+        for item in model.last_turn_args["input"]
+        if item.get("type") == "function_call_output" and item.get("call_id") == "dup-call-stream"
+    ]
+    assert len(outputs) == 1
+    assert outputs[0]["output"] == "new-value"
+
+exec
+/bin/bash -lc "rg -n \"response_format\" src/agents tests | head -240 && rg -n \"maybe_filter_model_input\\(\" src/agents/run_internal src/agents/run.py" in /workspace/repo
+ succeeded in 0ms:
+tests/models/test_openai_chatcompletions.py:750:    assert kwargs["response_format"] is omit
+tests/models/test_openai_chatcompletions_converter.py:373:def test_convert_response_format_returns_not_given_for_plain_text_and_dict_for_schemas() -> None:
+tests/models/test_openai_chatcompletions_converter.py:375:    The `Converter.convert_response_format` method should return the omit sentinel
+tests/models/test_openai_chatcompletions_converter.py:381:    # when output is plain text (schema None or output_type str), do not include response_format
+tests/models/test_openai_chatcompletions_converter.py:382:    assert Converter.convert_response_format(None) is omit
+tests/models/test_openai_chatcompletions_converter.py:383:    assert Converter.convert_response_format(AgentOutputSchema(str)) is omit
+tests/models/test_openai_chatcompletions_converter.py:384:    # For e.g. integer output, we expect a response_format dict
+tests/models/test_openai_chatcompletions_converter.py:386:    resp_format = Converter.convert_response_format(schema)
+tests/models/test_openai_responses_converter.py:18:- `get_response_format` returns `openai.omit` for plain-text response
+tests/models/test_openai_responses_converter.py:369:def test_get_response_format_plain_text_and_json_schema():
+tests/models/test_openai_responses_converter.py:379:    assert Converter.get_response_format(None) is omit
+tests/models/test_openai_responses_converter.py:381:    assert Converter.get_response_format(AgentOutputSchema(str)) is omit
+tests/models/test_openai_responses_converter.py:389:    fmt = Converter.get_response_format(out_schema)
+tests/voice/test_openai_tts.py:47:        *, model: str, voice: str, input: str, response_format: str, extra_body: dict[str, Any]
+tests/voice/test_openai_tts.py:52:        captured["response_format"] = response_format
+tests/voice/test_openai_tts.py:66:    assert captured["response_format"] == "pcm"
+tests/voice/test_openai_tts.py:77:        *, model: str, voice: str, input: str, response_format: str, extra_body: dict[str, Any]
+tests/voice/test_openai_tts.py:82:        captured["response_format"] = response_format
+src/agents/models/chatcmpl_converter.py:101:    def convert_response_format(
+src/agents/models/openai_chatcompletions.py:523:        response_format = Converter.convert_response_format(output_schema)
+src/agents/models/openai_chatcompletions.py:552:                response_format,
+src/agents/models/openai_chatcompletions.py:574:            "response_format": response_format,
+src/agents/models/openai_responses.py:764:        response_format = Converter.get_response_format(output_schema)
+src/agents/models/openai_responses.py:807:                response_format,
+src/agents/models/openai_responses.py:816:            if response_format is not omit:
+src/agents/models/openai_responses.py:817:                response_format["verbosity"] = model_settings.verbosity  # type: ignore [index]
+src/agents/models/openai_responses.py:819:                response_format = {"verbosity": model_settings.verbosity}
+src/agents/models/openai_responses.py:842:            "text": response_format,
+src/agents/models/openai_responses.py:1869:    def get_response_format(
+src/agents/extensions/models/any_llm_model.py:106:    "response_format",
+src/agents/extensions/models/any_llm_model.py:703:        response_format = Converter.convert_response_format(output_schema)
+src/agents/extensions/models/any_llm_model.py:720:                response_format,
+src/agents/extensions/models/any_llm_model.py:744:            response_format=self._remove_not_given(response_format),
+src/agents/extensions/models/any_llm_model.py:864:        text = OpenAIResponsesConverter.get_response_format(output_schema)
+src/agents/extensions/models/litellm_model.py:497:        response_format = Converter.convert_response_format(output_schema)
+src/agents/extensions/models/litellm_model.py:527:                response_format,
+src/agents/extensions/models/litellm_model.py:573:            response_format=self._remove_not_given(response_format),
+src/agents/voice/models/openai_tts.py:46:            response_format="pcm",
+src/agents/run_internal/turn_preparation.py:51:async def maybe_filter_model_input(
+src/agents/run_internal/run_loop.py:1456:    filtered = await maybe_filter_model_input(
+src/agents/run_internal/run_loop.py:1898:    filtered = await maybe_filter_model_input(
+
+exec
+/bin/bash -lc "sed -n '1420,1505p' src/agents/run_internal/run_loop.py && sed -n '1860,1935p' src/agents/run_internal/run_loop.py && sed -n '1,180p' src/agents/models/interface.py && rg -n \"ResponseFormat\" src tests | head -160 && git status --short && git log -1 --oneline" in /workspace/repo
+ succeeded in 139ms:
+9518535 fix: preserve dot-prefixed skip paths in Modal tar workspace excludes (#3905)
+
+exec
+/bin/bash -lc "sed -n '1935,2030p' src/agents/run_internal/run_loop.py && sed -n '1,130p' src/agents/models/chatcmpl_converter.py && sed -n '1840,1905p' src/agents/models/openai_responses.py && rg -n \"output_schema=|output_schema,\" src/agents/run_internal/run_loop.py | head -80 && sed -n '1,100p' tests/fake_model.py" in /workspace/repo
+ succeeded in 0ms:
+    )
+    conversation_id = (
+        server_conversation_tracker.conversation_id if server_conversation_tracker else None
+    )
+    if conversation_id:
+        logger.debug("Using conversation_id=%s", conversation_id)
+    else:
+        logger.debug("No conversation_id available for request")
+
+    prompt_cache_key = (
+        prompt_cache_key_resolver.resolve(
+            model_settings,
+            model=model,
+            conversation_id=conversation_id,
+            session=session,
+            group_id=run_config.group_id,
+        )
+        if prompt_cache_key_resolver is not None
+        else None
+    )
+    model_settings = model_settings_with_prompt_cache_key(model_settings, prompt_cache_key)
+
+    async def rewind_model_request() -> None:
+        items_to_rewind = session_items_to_rewind if session_items_to_rewind is not None else []
+        await rewind_session_items(session, items_to_rewind, server_conversation_tracker)
+        if server_conversation_tracker is not None:
+            server_conversation_tracker.rewind_input(filtered.input)
+
+    with model_run_context(tool_use_tracker):
+        new_response = await get_response_with_retry(
+            get_response=lambda: model.get_response(
+                system_instructions=filtered.instructions,
+                input=filtered.input,
+                model_settings=model_settings,
+                tools=all_tools,
+                output_schema=output_schema,
+                handoffs=handoffs,
+                tracing=get_model_tracing_impl(
+                    run_config.tracing_disabled, run_config.trace_include_sensitive_data
+                ),
+                previous_response_id=previous_response_id,
+                conversation_id=conversation_id,
+                prompt=prompt_config,
+            ),
+            rewind=rewind_model_request,
+            retry_settings=model_settings.retry,
+            get_retry_advice=model.get_retry_advice,
+            previous_response_id=previous_response_id,
+            conversation_id=conversation_id,
+            replay_unsafe_request=any(
+                isinstance(tool, ProgrammaticToolCallingTool) for tool in all_tools
+            ),
+        )
+    if server_conversation_tracker is not None:
+        # Retry helpers rewind sent-input tracking before replaying a failed request. Mark the
+        # filtered input as delivered again once a retry succeeds so subsequent turns only send
+        # new deltas.
+        server_conversation_tracker.mark_input_as_sent(filtered.input)
+
+    context_wrapper.usage.add(new_response.usage)
+
+    await asyncio.gather(
+        (
+            public_agent.hooks.on_llm_end(context_wrapper, public_agent, new_response)
+            if public_agent.hooks
+            else _coro.noop_coroutine()
+        ),
+        hooks.on_llm_end(context_wrapper, public_agent, new_response),
+    )
+
+    return new_response
+from __future__ import annotations
+
+import json
+from collections.abc import Iterable, Mapping
+from typing import Any, Literal, cast
+
+from openai import Omit, omit
+from openai.types.chat import (
+    ChatCompletionAssistantMessageParam,
+    ChatCompletionContentPartImageParam,
+    ChatCompletionContentPartInputAudioParam,
+    ChatCompletionContentPartParam,
+    ChatCompletionContentPartTextParam,
+    ChatCompletionDeveloperMessageParam,
+    ChatCompletionMessage,
+    ChatCompletionMessageFunctionToolCallParam,
+    ChatCompletionMessageParam,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionToolChoiceOptionParam,
+    ChatCompletionToolMessageParam,
+    ChatCompletionUserMessageParam,
+)
+from openai.types.chat.chat_completion_content_part_param import File, FileFile
+from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
+from openai.types.chat.completion_create_params import ResponseFormat
+from openai.types.responses import (
+    EasyInputMessageParam,
+    ResponseFileSearchToolCallParam,
+    ResponseFunctionToolCall,
+    ResponseFunctionToolCallParam,
+    ResponseInputAudioParam,
+    ResponseInputContentParam,
+    ResponseInputFileParam,
+    ResponseInputImageParam,
+    ResponseInputTextParam,
+    ResponseOutputMessage,
+    ResponseOutputMessageParam,
+    ResponseOutputRefusal,
+    ResponseOutputText,
+    ResponseReasoningItem,
+    ResponseReasoningItemParam,
+)
+from openai.types.responses.response_input_param import FunctionCallOutput, ItemReference, Message
+from openai.types.responses.response_reasoning_item import Content, Summary
+
+from ..agent_output import AgentOutputSchemaBase
+from ..exceptions import AgentsException, UserError
+from ..handoffs import Handoff
+from ..items import TResponseInputItem, TResponseOutputItem
+from ..logger import logger
+from ..model_settings import MCPToolChoice
+from ..tool import (
+    FunctionTool,
+    Tool,
+    ensure_function_tool_supports_responses_only_features,
+    ensure_tool_choice_supports_backend,
+)
+from .fake_id import FAKE_RESPONSES_ID
+from .reasoning_content_replay import (
+    ReasoningContentReplayContext,
+    ReasoningContentSource,
+    ShouldReplayReasoningContent,
+    default_should_replay_reasoning_content,
+)
+
+ResponseInputContentWithAudioParam = (
+    ResponseInputContentParam | ResponseInputAudioParam | dict[str, Any]
+)
+
+_OMITTED_TOOL_OUTPUT_PLACEHOLDER = "[tool output omitted]"
+
+
+class Converter:
+    @classmethod
+    def convert_tool_choice(
+        cls, tool_choice: Literal["auto", "required", "none"] | str | MCPToolChoice | None
+    ) -> ChatCompletionToolChoiceOptionParam | Omit:
+        if tool_choice is None:
+            return omit
+        elif isinstance(tool_choice, MCPToolChoice):
+            raise UserError("MCPToolChoice is not supported for Chat Completions models")
+        elif tool_choice == "auto":
+            return "auto"
+        elif tool_choice == "required":
+            return "required"
+        elif tool_choice == "none":
+            return "none"
+        else:
+            ensure_tool_choice_supports_backend(
+                tool_choice,
+                backend_name="Chat Completions-compatible models",
+            )
+            return {
+                "type": "function",
+                "function": {
+                    "name": tool_choice,
+                },
+            }
+
+    @classmethod
+    def convert_response_format(
+        cls, final_output_schema: AgentOutputSchemaBase | None
+    ) -> ResponseFormat | Omit:
+        if not final_output_schema or final_output_schema.is_plain_text():
+            return omit
+
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "final_output",
+                "strict": final_output_schema.is_strict_json_schema(),
+                "schema": final_output_schema.json_schema(),
+            },
+        }
+
+    @classmethod
+    def message_to_output_items(
+        cls,
+        message: ChatCompletionMessage,
+        provider_data: dict[str, Any] | None = None,
+        strict_feature_validation: bool = False,
+    ) -> list[TResponseOutputItem]:
+        """
+        Convert a ChatCompletionMessage to a list of response output items.
+
+        Args:
+            message: The chat completion message to convert
+            provider_data: Metadata indicating the source model that generated this message.
+                Contains provider-specific information like model name and response_id,
+                which is attached to output items.
+        if model is not None:
+            return False
+        if isinstance(tool_choice, str) and tool_choice in {"computer", "computer_use"}:
+            return False
+        return True
+
+    @classmethod
+    def _convert_builtin_computer_tool_choice(
+        cls,
+        *,
+        tool_choice: Literal["auto", "required", "none"] | str | MCPToolChoice | None,
+        model: str | ChatModel | None,
+    ) -> response_create_params.ToolChoice:
+        # Preview models only support the preview computer tool selector, even if callers force
+        # a GA-era alias such as "computer" or "computer_use".
+        if cls._is_preview_computer_model(model):
+            return {
+                "type": "computer_use_preview",
+            }
+        if cls._should_use_preview_computer_tool(model=model, tool_choice=tool_choice):
+            return {
+                "type": "computer_use_preview",
+            }
+        # `computer_use` is a compatibility alias, but the GA built-in tool surface is `computer`.
+        return {
+            "type": "computer",
+        }
+
+    @classmethod
+    def get_response_format(
+        cls, output_schema: AgentOutputSchemaBase | None
+    ) -> ResponseTextConfigParam | Omit:
+        if output_schema is None or output_schema.is_plain_text():
+            return omit
+        else:
+            return {
+                "format": {
+                    "type": "json_schema",
+                    "name": "final_output",
+                    "schema": output_schema.json_schema(),
+                    "strict": output_schema.is_strict_json_schema(),
+                }
+            }
+
+    @classmethod
+    def convert_tools(
+        cls,
+        tools: list[Tool],
+        handoffs: list[Handoff[Any, Any]],
+        *,
+        allow_opaque_tool_search_surface: bool = False,
+        model: str | ChatModel | None = None,
+        tool_choice: Literal["auto", "required", "none"] | str | MCPToolChoice | None = None,
+    ) -> ConvertedTools:
+        converted_tools: list[ResponsesToolParam | None] = []
+        includes: list[ResponseIncludable] = []
+        namespace_index_by_name: dict[str, int] = {}
+        namespace_tools_by_name: dict[str, list[FunctionToolParam]] = {}
+        namespace_descriptions: dict[str, str] = {}
+        use_preview_computer_tool = cls._should_use_preview_computer_tool(
+            model=model,
+            tool_choice=tool_choice,
+        )
+        validate_responses_tool_search_configuration(
+            tools,
+            allow_opaque_search_surface=allow_opaque_tool_search_surface,
+188:    get_output_schema,
+1550:            output_schema,
+1732:        output_schema=output_schema,
+1847:        output_schema,
+1866:        output_schema=output_schema,
+1970:                output_schema=output_schema,
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from typing import Any
+
+from openai.types.responses import (
+    Response,
+    ResponseApplyPatchToolCall,
+    ResponseCompletedEvent,
+    ResponseContentPartAddedEvent,
+    ResponseContentPartDoneEvent,
+    ResponseCreatedEvent,
+    ResponseFunctionCallArgumentsDeltaEvent,
+    ResponseFunctionCallArgumentsDoneEvent,
+    ResponseFunctionToolCall,
+    ResponseInProgressEvent,
+    ResponseOutputItemAddedEvent,
+    ResponseOutputItemDoneEvent,
+    ResponseOutputMessage,
+    ResponseOutputText,
+    ResponseReasoningSummaryPartAddedEvent,
+    ResponseReasoningSummaryPartDoneEvent,
+    ResponseReasoningSummaryTextDeltaEvent,
+    ResponseReasoningSummaryTextDoneEvent,
+    ResponseTextDeltaEvent,
+    ResponseTextDoneEvent,
+    ResponseUsage,
+)
+from openai.types.responses.response_reasoning_item import ResponseReasoningItem
+from openai.types.responses.response_reasoning_summary_part_added_event import (
+    Part as AddedEventPart,
+)
+from openai.types.responses.response_reasoning_summary_part_done_event import Part as DoneEventPart
+from openai.types.responses.response_usage import InputTokensDetails, OutputTokensDetails
+
+from agents.agent_output import AgentOutputSchemaBase
+from agents.handoffs import Handoff
+from agents.items import (
+    ModelResponse,
+    TResponseInputItem,
+    TResponseOutputItem,
+    TResponseStreamEvent,
+)
+from agents.model_settings import ModelSettings
+from agents.models.interface import Model, ModelTracing
+from agents.tool import Tool
+from agents.tracing import SpanError, generation_span
+from agents.usage import Usage
+
+
+class FakeModel(Model):
+    def __init__(
+        self,
+        tracing_enabled: bool = False,
+        initial_output: list[TResponseOutputItem] | Exception | None = None,
+    ):
+        if initial_output is None:
+            initial_output = []
+        self.turn_outputs: list[list[TResponseOutputItem] | Exception] = (
+            [initial_output] if initial_output else []
+        )
+        self.tracing_enabled = tracing_enabled
+        self.last_turn_args: dict[str, Any] = {}
+        self.first_turn_args: dict[str, Any] | None = None
+        self.hardcoded_usage: Usage | None = None
+
+    def set_hardcoded_usage(self, usage: Usage):
+        self.hardcoded_usage = usage
+
+    def set_next_output(self, output: list[TResponseOutputItem] | Exception):
+        self.turn_outputs.append(output)
+
+    def add_multiple_turn_outputs(self, outputs: list[list[TResponseOutputItem] | Exception]):
+        self.turn_outputs.extend(outputs)
+
+    def get_next_output(self) -> list[TResponseOutputItem] | Exception:
+        if not self.turn_outputs:
+            return []
+        return self.turn_outputs.pop(0)
+
+    async def get_response(
+        self,
+        system_instructions: str | None,
+        input: str | list[TResponseInputItem],
+        model_settings: ModelSettings,
+        tools: list[Tool],
+        output_schema: AgentOutputSchemaBase | None,
+        handoffs: list[Handoff],
+        tracing: ModelTracing,
+        *,
+        previous_response_id: str | None,
+        conversation_id: str | None,
+        prompt: Any | None,
+    ) -> ModelResponse:
+        turn_args = {
+            "system_instructions": system_instructions,
+            "input": input,
+            "model_settings": model_settings,
+            "tools": tools,
+            "output_schema": output_schema,
+
+codex
+The code confirms the hypothesis: `CallModelData` carries a `ModelInputData` object with only `input` and `instructions`, and both streaming and non-streaming runner paths pass the separate output schema directly to the model after filtering. I’ll add one non-streaming regression test that requires the callback payload to expose `response_format`; current code should fail at that access.
+apply patch
+patch: completed
+/workspace/repo/tests/test_call_model_input_filter.py
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+exec
+/bin/bash -lc 'uv run pytest -q tests/test_call_model_input_filter.py -k response_format' in /workspace/repo
+ exited 127 in 0ms:
+/bin/bash: line 1: uv: command not found
+
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+codex
+The focused command cannot start because this checkout has no `uv` executable. I’ll try the available Python test runner once; if it is also unavailable, the test itself still provides a static, direct reproduction of the missing attribute, but I’ll report that execution is blocked.
+exec
+/bin/bash -lc 'pytest -q tests/test_call_model_input_filter.py -k response_format' in /workspace/repo
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+ exited 1 in 1249ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_call_model_input_filter_can_access_response_format ____________
+
+    @pytest.mark.asyncio
+    async def test_call_model_input_filter_can_access_response_format() -> None:
+        model = FakeModel()
+        agent = Agent(name="test", model=model)
+        model.set_next_output([get_text_message("ok")])
+    
+        def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+            assert data.model_data.response_format is None
+            return data.model_data
+    
+>       await Runner.run(
+            agent,
+            input="start",
+            run_config=RunConfig(call_model_input_filter=filter_fn),
+        )
+
+tests/test_call_model_input_filter.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/agents/run.py:272: in run
+    return await runner.run(
+src/agents/run.py:1296: in run
+    turn_result = await model_task
+                  ^^^^^^^^^^^^^^^^
+src/agents/run_internal/run_loop.py:1843: in run_single_turn
+    new_response = await get_new_response(
+src/agents/run_internal/run_loop.py:1898: in get_new_response
+    filtered = await maybe_filter_model_input(
+src/agents/run_internal/turn_preparation.py:76: in maybe_filter_model_input
+    maybe_updated = run_config.call_model_input_filter(filter_payload)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data = CallModelData(model_data=ModelInputData(input=[{'content': 'start', 'role': 'user'}], instructions=None), agent=Agent(..._guardrails=[], output_type=None, hooks=None, tool_use_behavior='run_llm_again', reset_tool_choice=True), context=None)
+
+    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+>       assert data.model_data.response_format is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ModelInputData' object has no attribute 'response_format'
+
+tests/test_call_model_input_filter.py:49: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_call_model_input_filter.py::test_call_model_input_filter_can_access_response_format
+1 failed, 7 deselected in 0.14s
+
+codex
+The focused pytest run fails exactly as reported: the callback receives `ModelInputData`, which raises `AttributeError` for `response_format`. I’m stopping investigation here rather than changing runtime code. Since this added a test, I’ll generate the repository’s required PR handoff metadata; full verification is intentionally not run because the new regression test is meant to fail.
+exec
+/bin/bash -lc "sed -n '1,260p' .agents/skills/pr-draft-summary/SKILL.md && git diff -- tests/test_call_model_input_filter.py && git status --short" in /workspace/repo
+ succeeded in 0ms:
+---
+name: pr-draft-summary
+description: Create the required PR-ready summary block, branch suggestion, title, and draft description for openai-agents-python. Use before the final response whenever the current task changed runtime code, tests, examples, build/test configuration, or docs with behavior impact, regardless of perceived change size and including local-only or uncommitted work. Skip only for trivial or conversation-only tasks, repo-meta/doc-only tasks without behavior impact, or when the user explicitly says not to include the PR draft block.
+---
+
+# PR Draft Summary
+
+## Purpose
+Produce the PR-ready summary required in this repository after eligible code work is complete: a concise summary plus a PR-ready title and draft description that begins with "This pull request <verb> ...". The block should be ready to paste into a PR for openai-agents-python.
+
+## When to Trigger
+- Before every final response, check whether the current task changed runtime code (`src/agents/`), tests (`tests/`), examples (`examples/`), build/test configuration, or docs with behavior impact.
+- If it did, run this skill after required verification and before sending the final response. Do not use perceived change size to decide whether to run it.
+- Run it for eligible local-only and uncommitted work even when the user did not ask to create a pull request. Producing this text does not authorize creating a branch, committing, pushing, or opening a pull request.
+- Skip only for trivial or conversation-only tasks, repo-meta/doc-only tasks without behavior impact, or when the user explicitly says not to include the PR draft block.
+
+## Inputs to Collect Automatically (do not ask the user)
+- Current branch: `git rev-parse --abbrev-ref HEAD`.
+- Working tree: `git status -sb`.
+- Untracked files: `git ls-files --others --exclude-standard` (use with `git status -sb` to ensure they are surfaced; `--stat` does not include them).
+- Changed files: `git diff --name-only` (unstaged) and `git diff --name-only --cached` (staged); sizes via `git diff --stat` and `git diff --stat --cached`.
+- Latest release tag (prefer remote-aware lookup): `LATEST_RELEASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin 'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1)`.
+- Base reference (use the branch's upstream, fallback to `origin/main`):
+  - `BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)`.
+  - `BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD || git merge-base "$BASE_REF" HEAD || echo "$BASE_REF")`.
+- Commits ahead of the base fork point: `git log --oneline --no-merges ${BASE_COMMIT}..HEAD`.
+- Category signals for this repo: runtime (`src/agents/`), tests (`tests/`), examples (`examples/`), docs (`docs/`, `mkdocs.yml`), build/test config (`pyproject.toml`, `uv.lock`, `Makefile`, `.github/`).
+
+## Workflow
+1) Run the commands above without asking the user; compute `BASE_REF`/`BASE_COMMIT` first so later commands reuse them.
+2) If there are no staged/unstaged/untracked changes and no commits ahead of `${BASE_COMMIT}`, reply briefly that no code changes were detected and skip emitting the PR block.
+3) Infer change type from the touched paths listed under "Category signals"; classify as feature, fix, refactor, or docs-with-impact, and flag backward-compatibility risk only when the diff changes released public APIs, external config, persisted data, serialized state, or wire protocols. Judge that risk against `LATEST_RELEASE_TAG`, not unreleased branch-only churn.
+4) Summarize changes in 1–3 short sentences using the key paths (top 5) and `git diff --stat` output; explicitly call out untracked files from `git status -sb`/`git ls-files --others --exclude-standard` because `--stat` does not include them. If the working tree is clean but there are commits ahead of `${BASE_COMMIT}`, summarize using those commit messages.
+5) Choose the lead verb for the description: feature → `adds`, bug fix → `fixes`, refactor/perf → `improves` or `updates`, docs-only → `updates`.
+6) Suggest a branch name. If already off main, keep it; otherwise propose `feat/<slug>`, `fix/<slug>`, or `docs/<slug>` based on the primary area (e.g., `docs/pr-draft-summary-guidance`).
+7) If the current branch matches `issue-<number>` (digits only), keep that branch suggestion. Optionally pull light issue context (for example via the GitHub API) when available, but do not block or retry if it is not. When an issue number is present, reference `https://github.com/openai/openai-agents-python/issues/<number>` and include an auto-closing line such as `This pull request resolves #<number>.`.
+8) Draft the PR title and description using the template below.
+9) Output only the block in "Output Format". Keep any surrounding status note minimal and in English.
+
+## Output Format
+When closing out a task, add this concise Markdown block (English only) after any brief status note unless the task falls under the documented skip cases or the user says they do not want it.
+
+```
+# Pull Request Draft
+
+## Branch name suggestion
+
+git checkout -b <kebab-case suggestion, e.g., feat/pr-draft-summary-skill>
+
+## Title
+
+<single-line imperative title, which can be a commit message; if a common prefix like chore: and feat: etc., having them is preferred>
+
+## Description
+
+<include what you changed plus a draft pull request title and description for your local changes; start the description with prose such as "This pull request resolves/updates/adds ..." using a verb that matches the change (you can use bullets later), explain the change background (for bugs, clearly describe the bug, symptoms, or repro; for features, what is needed and why), any behavior changes or considerations to be aware of, and you do not need to mention tests you ran.>
+```
+
+Keep it tight—no redundant prose around the block, and avoid repeating details between `Changes` and the description. Tests do not need to be listed unless specifically requested.
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f..9ed4706 100644
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -39,6 +39,23 @@ async def test_call_model_input_filter_sync_non_streamed() -> None:
+     assert model.last_turn_args["input"][-1]["content"] == "added-sync"
+ 
+ 
++@pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
+ @pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+ M tests/test_call_model_input_filter.py
+
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+exec
+/bin/bash -lc 'base_ref=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)
+base_commit=$(git merge-base --fork-point "$base_ref" HEAD 2>/dev/null || git merge-base "$base_ref" HEAD 2>/dev/null || echo "$base_ref")
+latest_release_tag=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin '"'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1)
+printf 'branch: '; git rev-parse --abbrev-ref HEAD
+printf 'status: '; git status -sb
+printf 'untracked: '; git ls-files --others --exclude-standard
+printf 'base_ref: %s\\nbase_commit: %s\\nlatest_release_tag: %s\\n' \""'$base_ref" "$base_commit" "$latest_release_tag"
+printf '"'changed_unstaged:\\n'; git diff --name-only
+printf 'changed_staged:\\n'; git diff --name-only --cached
+printf 'stat:\\n'; git diff --stat
+printf 'commits_ahead:\\n'; git log --oneline --no-merges \""'${base_commit}..HEAD"' in /workspace/repo
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+ succeeded in 13049ms:
+branch: main
+status: ## main...origin/main
+ M tests/test_call_model_input_filter.py
+untracked: base_ref: origin/main
+base_commit: 95185352c8b829405a96c3886960f030163bdf07
+latest_release_tag: v0.18.3
+changed_unstaged:
+tests/test_call_model_input_filter.py
+changed_staged:
+stat:
+ tests/test_call_model_input_filter.py | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+commits_ahead:
+
+codex
+Failure reproduced.
+
+- Added regression test: [tests/test_call_model_input_filter.py](/workspace/repo/tests/test_call_model_input_filter.py:42)
+- `pytest -q tests/test_call_model_input_filter.py -k response_format` fails with:
+  `AttributeError: 'ModelInputData' object has no attribute 'response_format'`
+- No production code changed. `uv` is unavailable, but system `pytest` executed the focused test.
+- Full verification was not run because this intentional regression test currently fails.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b test/call-model-response-format-regression
+```
+
+## Title
+
+test: cover response format in call model input filter
+
+## Description
+
+This pull request adds a regression test demonstrating that `call_model_input_filter` cannot access `ModelInputData.response_format`. The test currently fails, documenting the missing callback field and the need for a runtime implementation.
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3b643a0a75de25f4dd2080408e5024efb..9ed47063048558a2a7d5d00a16ae0c022599f571
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -40,6 +40,23 @@
+ 
+ 
+ @pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
++@pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()
+     agent = Agent(name="test", model=model)
+
+tokens used
+24,239
+Failure reproduced.
+
+- Added regression test: [tests/test_call_model_input_filter.py](/workspace/repo/tests/test_call_model_input_filter.py:42)
+- `pytest -q tests/test_call_model_input_filter.py -k response_format` fails with:
+  `AttributeError: 'ModelInputData' object has no attribute 'response_format'`
+- No production code changed. `uv` is unavailable, but system `pytest` executed the focused test.
+- Full verification was not run because this intentional regression test currently fails.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b test/call-model-response-format-regression
+```
+
+## Title
+
+test: cover response format in call model input filter
+
+## Description
+
+This pull request adds a regression test demonstrating that `call_model_input_filter` cannot access `ModelInputData.response_format`. The test currently fails, documenting the missing callback field and the need for a runtime implementation.
+[exit 0; elapsed 88448ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='/tmp/triage-d85fd378-dc04-42d7-979d-a8df9da9f334-attempt_1-junit.xml' 'tests/test_call_model_input_filter.py'
+.F......                                                                 [100%]
+=================================== FAILURES ===================================
+___________ test_call_model_input_filter_can_access_response_format ____________
+
+    @pytest.mark.asyncio
+    async def test_call_model_input_filter_can_access_response_format() -> None:
+        model = FakeModel()
+        agent = Agent(name="test", model=model)
+        model.set_next_output([get_text_message("ok")])
+    
+        def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+            assert data.model_data.response_format is None
+            return data.model_data
+    
+>       await Runner.run(
+            agent,
+            input="start",
+            run_config=RunConfig(call_model_input_filter=filter_fn),
+        )
+
+tests/test_call_model_input_filter.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/agents/run.py:272: in run
+    return await runner.run(
+src/agents/run.py:1296: in run
+    turn_result = await model_task
+                  ^^^^^^^^^^^^^^^^
+src/agents/run_internal/run_loop.py:1843: in run_single_turn
+    new_response = await get_new_response(
+src/agents/run_internal/run_loop.py:1898: in get_new_response
+    filtered = await maybe_filter_model_input(
+src/agents/run_internal/turn_preparation.py:76: in maybe_filter_model_input
+    maybe_updated = run_config.call_model_input_filter(filter_payload)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data = CallModelData(model_data=ModelInputData(input=[{'content': 'start', 'role': 'user'}], instructions=None), agent=Agent(..._guardrails=[], output_type=None, hooks=None, tool_use_behavior='run_llm_again', reset_tool_choice=True), context=None)
+
+    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
+>       assert data.model_data.response_format is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ModelInputData' object has no attribute 'response_format'
+
+tests/test_call_model_input_filter.py:49: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_call_model_input_filter.py::test_call_model_input_filter_can_access_response_format
+1 failed, 7 passed in 0.18s
+[exit 1]
+$ git diff --no-ext-diff
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3..9ed47063 100644
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -39,6 +39,23 @@ async def test_call_model_input_filter_sync_non_streamed() -> None:
+     assert model.last_turn_args["input"][-1]["content"] == "added-sync"
+ 
+ 
++@pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
+ @pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()

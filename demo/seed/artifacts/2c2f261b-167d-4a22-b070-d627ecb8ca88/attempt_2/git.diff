@@ -1,0 +1,35 @@
+diff --git a/tests/unit/test_agents.py b/tests/unit/test_agents.py
+index 54cf56b..0846af1 100644
+--- a/tests/unit/test_agents.py
++++ b/tests/unit/test_agents.py
+@@ -246,6 +246,30 @@ def test_create_default_tool_context_provides_async_client(monkeypatch: pytest.M
+     assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+ 
+ 
++def test_create_default_tool_context_preserves_litellm_proxy_configuration(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Tool guardrail client should receive LiteLLM proxy settings."""
++    openai_mod = types.ModuleType("openai")
++
++    class StubAsyncOpenAI:
++        def __init__(self, **kwargs: Any) -> None:
++            self.kwargs = kwargs
++
++    openai_mod.AsyncOpenAI = StubAsyncOpenAI
++    monkeypatch.setitem(sys.modules, "openai", openai_mod)
++
++    context = agents._create_default_tool_context(
++        api_key="litellm-proxy-key",
++        base_url="http://litellm-proxy.example/v1",
++    )
++
++    assert context.guardrail_llm.kwargs == {  # type: ignore[attr-defined]  # noqa: S101
++        "api_key": "litellm-proxy-key",
++        "base_url": "http://litellm-proxy.example/v1",
++    }
++
++
+ def test_attach_guardrail_to_tools_initializes_lists() -> None:
+     """Attaching guardrails should create input/output lists when missing."""
+     tool = SimpleNamespace()

@@ -1,0 +1,13 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________________________ test_oci_provider_is_available ________________________
+
+    def test_oci_provider_is_available() -> None:
+        """OCI should be available as a native optional model provider."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_is_available - Mo...
+1 failed in 0.11s

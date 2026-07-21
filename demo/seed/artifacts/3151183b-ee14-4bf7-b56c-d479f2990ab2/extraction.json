@@ -1,0 +1,21 @@
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}

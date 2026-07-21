@@ -1,0 +1,1310 @@
+$ codex exec --sandbox workspace-write --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+3
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete behavior specification. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+f already off main, keep it; otherwise propose `feat/<slug>`, `fix/<slug>`, or `docs/<slug>` based on the primary area (e.g., `docs/pr-draft-summary-guidance`).
+7) If the current branch matches `issue-<number>` (digits only), keep that branch suggestion. Optionally pull light issue context (for example via the GitHub API) when available, but do not block or retry if it is not. When an issue number is present, reference `https://github.com/openai/openai-agents-python/issues/<number>` and include an auto-closing line such as `This pull request resolves #<number>.`.
+8) Draft the PR title and description using the template below.
+9) Output only the block in "Output Format". Keep any surrounding status note minimal and in English.
+
+## Output Format
+When closing out a task, add this concise Markdown block (English only) after any brief status note unless the task falls under the documented skip cases or the user says they do not want it.
+
+```
+# Pull Request Draft
+
+## Branch name suggestion
+
+git checkout -b <kebab-case suggestion, e.g., feat/pr-draft-summary-skill>
+
+## Title
+
+<single-line imperative title, which can be a commit message; if a common prefix like chore: and feat: etc., having them is preferred>
+
+## Description
+
+<include what you changed plus a draft pull request title and description for your local changes; start the description with prose such as "This pull request resolves/updates/adds ..." using a verb that matches the change (you can use bullets later), explain the change background (for bugs, clearly describe the bug, symptoms, or repro; for features, what is needed and why), any behavior changes or considerations to be aware of, and you do not need to mention tests you ran.>
+```
+
+Keep it tight—no redundant prose around the block, and avoid repeating details between `Changes` and the description. Tests do not need to be listed unless specifically requested.
+
+codex
+The required verification skill confirms that its full stack is for work intended to pass. Because this investigation must stop at the first focused, report-related failing test, I’ll not run unrelated formatting/type/full-suite checks after that failure; I’ll report that limitation explicitly.
+apply patch
+patch: completed
+/workspace/repo/tests/models/test_oci_provider.py
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+exec
+/bin/bash -lc '"'"'python -m pytest -q tests/models/test_oci_provider.py'"'"' in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ exited 1 in 802ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+
+codex
+The tightened test fails at the native OCI module boundary before it can configure the compulsory compartment, with `ModuleNotFoundError`. That is the first focused failure tied to the report, so I’m stopping without implementation or broader test execution.
+exec
+/bin/bash -lc '"'"'BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)
+BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD 2>/dev/null || git merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")
+LATEST_RELEASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin '"'"'"'"'"'v*'"'"' 2>/dev/null || git tag -l '"'"'v*'"'"' --sort=-v:refname | head -n1)
+printf '"'"'branch='"'"'; git rev-parse --abbrev-ref HEAD
+printf '"'"'status\\n'"'"'; git status -sb
+printf '"'"'untracked\\n'"'"'; git ls-files --others --exclude-standard
+printf '"'"'unstaged\\n'"'"'; git diff --name-only
+printf '"'"'staged\\n'"'"'; git diff --name-only --cached
+printf '"'"'stat\\n'"'"'; git diff --stat
+printf '"'"'base_ref=%s\\nbase_commit=%s\\nlatest_release=%s\\n'"'"' \""'"'"'$BASE_REF" "$BASE_COMMIT" "$LATEST_RELEASE_TAG"
+printf '"'"'"'"'"'ahead\\n'"'"'; git log --oneline --no-merges \""'"'"'${BASE_COMMIT}..HEAD"
+printf '"'"'"'"'"'test\\n'"'"'; sed -n '"'"'1,100p'"'"' tests/models/test_oci_provider.py" in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ succeeded in 809ms:
+branch=main
+status
+## main...origin/main
+?? tests/models/test_oci_provider.py
+untracked
+tests/models/test_oci_provider.py
+unstaged
+staged
+stat
+base_ref=origin/main
+base_commit=95185352c8b829405a96c3886960f030163bdf07
+latest_release=v0.18.3
+ahead
+test
+def test_oci_provider_accepts_the_target_compartment() -> None:
+    """OCI requests need a native provider configured for their target compartment."""
+    from agents.extensions.models.oci_provider import OCIProvider
+
+    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
+
+    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+codex
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+tokens used
+15,776
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+[exit 0; elapsed 53192ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='"'"'/tmp/triage-3151183b-ee14-4bf7-b56c-d479f2990ab2-attempt_2-junit.xml'"'"' '"'"'tests/models/test_oci_provider.py'"'"'
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+[exit 1]
+$ git diff --no-ext-diff
+
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84d3-ed84-7371-86bd-6c42b3151521
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+3
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete behavior specification. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+f already off main, keep it; otherwise propose `feat/<slug>`, `fix/<slug>`, or `docs/<slug>` based on the primary area (e.g., `docs/pr-draft-summary-guidance`).
+7) If the current branch matches `issue-<number>` (digits only), keep that branch suggestion. Optionally pull light issue context (for example via the GitHub API) when available, but do not block or retry if it is not. When an issue number is present, reference `https://github.com/openai/openai-agents-python/issues/<number>` and include an auto-closing line such as `This pull request resolves #<number>.`.
+8) Draft the PR title and description using the template below.
+9) Output only the block in "Output Format". Keep any surrounding status note minimal and in English.
+
+## Output Format
+When closing out a task, add this concise Markdown block (English only) after any brief status note unless the task falls under the documented skip cases or the user says they do not want it.
+
+```
+# Pull Request Draft
+
+## Branch name suggestion
+
+git checkout -b <kebab-case suggestion, e.g., feat/pr-draft-summary-skill>
+
+## Title
+
+<single-line imperative title, which can be a commit message; if a common prefix like chore: and feat: etc., having them is preferred>
+
+## Description
+
+<include what you changed plus a draft pull request title and description for your local changes; start the description with prose such as "This pull request resolves/updates/adds ..." using a verb that matches the change (you can use bullets later), explain the change background (for bugs, clearly describe the bug, symptoms, or repro; for features, what is needed and why), any behavior changes or considerations to be aware of, and you do not need to mention tests you ran.>
+```
+
+Keep it tight—no redundant prose around the block, and avoid repeating details between `Changes` and the description. Tests do not need to be listed unless specifically requested.
+
+codex
+The required verification skill confirms that its full stack is for work intended to pass. Because this investigation must stop at the first focused, report-related failing test, I’ll not run unrelated formatting/type/full-suite checks after that failure; I’ll report that limitation explicitly.
+apply patch
+patch: completed
+/workspace/repo/tests/models/test_oci_provider.py
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+exec
+/bin/bash -lc 'python -m pytest -q tests/models/test_oci_provider.py' in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ exited 1 in 802ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+
+codex
+The tightened test fails at the native OCI module boundary before it can configure the compulsory compartment, with `ModuleNotFoundError`. That is the first focused failure tied to the report, so I’m stopping without implementation or broader test execution.
+exec
+/bin/bash -lc 'BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)
+BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD 2>/dev/null || git merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")
+LATEST_RELEASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin '"'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1)
+printf 'branch='; git rev-parse --abbrev-ref HEAD
+printf 'status\\n'; git status -sb
+printf 'untracked\\n'; git ls-files --others --exclude-standard
+printf 'unstaged\\n'; git diff --name-only
+printf 'staged\\n'; git diff --name-only --cached
+printf 'stat\\n'; git diff --stat
+printf 'base_ref=%s\\nbase_commit=%s\\nlatest_release=%s\\n' \""'$BASE_REF" "$BASE_COMMIT" "$LATEST_RELEASE_TAG"
+printf '"'ahead\\n'; git log --oneline --no-merges \""'${BASE_COMMIT}..HEAD"
+printf '"'test\\n'; sed -n '1,100p' tests/models/test_oci_provider.py" in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ succeeded in 809ms:
+branch=main
+status
+## main...origin/main
+?? tests/models/test_oci_provider.py
+untracked
+tests/models/test_oci_provider.py
+unstaged
+staged
+stat
+base_ref=origin/main
+base_commit=95185352c8b829405a96c3886960f030163bdf07
+latest_release=v0.18.3
+ahead
+test
+def test_oci_provider_accepts_the_target_compartment() -> None:
+    """OCI requests need a native provider configured for their target compartment."""
+    from agents.extensions.models.oci_provider import OCIProvider
+
+    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
+
+    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+codex
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+tokens used
+15,776
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+[exit 0; elapsed 53192ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='/tmp/triage-3151183b-ee14-4bf7-b56c-d479f2990ab2-attempt_2-junit.xml' 'tests/models/test_oci_provider.py'
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+[exit 1]
+$ git diff --no-ext-diff
+
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+I’ll treat the absent module as the concrete defect hypothesis and preserve the existing focused characterization test. I’ll verify the current working tree and rerun only that test, stopping at the first report-related failure.
+exec
+/bin/bash -lc "sed -n '1,240p' .agents/skills/code-change-verification/SKILL.md && sed -n '1,240p' .agents/skills/pr-draft-summary/SKILL.md" in /workspace/repo
+exec
+/bin/bash -lc "git status --short && sed -n '1,120p' tests/models/test_oci_provider.py && rg --files src/agents/extensions/models tests/models | sed -n '1,160p'" in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+exec
+/bin/bash -lc "pwd; git status --short; sed -n '1,120p' tests/models/test_oci_provider.py" in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+Hypothesis: a native OCI provider is missing, so required OCI configuration—including the target compartment—cannot be expressed through `agents.extensions.models`.
+
+The supplied focused test demonstrates this directly:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+This is a report-related failure at the intended public module boundary. No production change is warranted for this investigation.
+Hypothesis: a native OCI provider is missing, so required OCI configuration—including the target compartment—cannot be expressed through `agents.extensions.models`.
+
+The supplied focused test demonstrates this directly:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+This is a report-related failure at the intended public module boundary. No production change is warranted for this investigation.
+tokens used
+5,578
+[exit 0; elapsed 33994ms; preferred]
+$ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+3
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete behavior specification. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+f already off main, keep it; otherwise propose `feat/<slug>`, `fix/<slug>`, or `docs/<slug>` based on the primary area (e.g., `docs/pr-draft-summary-guidance`).
+7) If the current branch matches `issue-<number>` (digits only), keep that branch suggestion. Optionally pull light issue context (for example via the GitHub API) when available, but do not block or retry if it is not. When an issue number is present, reference `https://github.com/openai/openai-agents-python/issues/<number>` and include an auto-closing line such as `This pull request resolves #<number>.`.
+8) Draft the PR title and description using the template below.
+9) Output only the block in "Output Format". Keep any surrounding status note minimal and in English.
+
+## Output Format
+When closing out a task, add this concise Markdown block (English only) after any brief status note unless the task falls under the documented skip cases or the user says they do not want it.
+
+```
+# Pull Request Draft
+
+## Branch name suggestion
+
+git checkout -b <kebab-case suggestion, e.g., feat/pr-draft-summary-skill>
+
+## Title
+
+<single-line imperative title, which can be a commit message; if a common prefix like chore: and feat: etc., having them is preferred>
+
+## Description
+
+<include what you changed plus a draft pull request title and description for your local changes; start the description with prose such as "This pull request resolves/updates/adds ..." using a verb that matches the change (you can use bullets later), explain the change background (for bugs, clearly describe the bug, symptoms, or repro; for features, what is needed and why), any behavior changes or considerations to be aware of, and you do not need to mention tests you ran.>
+```
+
+Keep it tight—no redundant prose around the block, and avoid repeating details between `Changes` and the description. Tests do not need to be listed unless specifically requested.
+
+codex
+The required verification skill confirms that its full stack is for work intended to pass. Because this investigation must stop at the first focused, report-related failing test, I’ll not run unrelated formatting/type/full-suite checks after that failure; I’ll report that limitation explicitly.
+apply patch
+patch: completed
+/workspace/repo/tests/models/test_oci_provider.py
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+exec
+/bin/bash -lc '"'"'python -m pytest -q tests/models/test_oci_provider.py'"'"' in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ exited 1 in 802ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+
+codex
+The tightened test fails at the native OCI module boundary before it can configure the compulsory compartment, with `ModuleNotFoundError`. That is the first focused failure tied to the report, so I’m stopping without implementation or broader test execution.
+exec
+/bin/bash -lc '"'"'BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)
+BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD 2>/dev/null || git merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")
+LATEST_RELEASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin '"'"'"'"'"'v*'"'"' 2>/dev/null || git tag -l '"'"'v*'"'"' --sort=-v:refname | head -n1)
+printf '"'"'branch='"'"'; git rev-parse --abbrev-ref HEAD
+printf '"'"'status\\n'"'"'; git status -sb
+printf '"'"'untracked\\n'"'"'; git ls-files --others --exclude-standard
+printf '"'"'unstaged\\n'"'"'; git diff --name-only
+printf '"'"'staged\\n'"'"'; git diff --name-only --cached
+printf '"'"'stat\\n'"'"'; git diff --stat
+printf '"'"'base_ref=%s\\nbase_commit=%s\\nlatest_release=%s\\n'"'"' \""'"'"'$BASE_REF" "$BASE_COMMIT" "$LATEST_RELEASE_TAG"
+printf '"'"'"'"'"'ahead\\n'"'"'; git log --oneline --no-merges \""'"'"'${BASE_COMMIT}..HEAD"
+printf '"'"'"'"'"'test\\n'"'"'; sed -n '"'"'1,100p'"'"' tests/models/test_oci_provider.py" in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ succeeded in 809ms:
+branch=main
+status
+## main...origin/main
+?? tests/models/test_oci_provider.py
+untracked
+tests/models/test_oci_provider.py
+unstaged
+staged
+stat
+base_ref=origin/main
+base_commit=95185352c8b829405a96c3886960f030163bdf07
+latest_release=v0.18.3
+ahead
+test
+def test_oci_provider_accepts_the_target_compartment() -> None:
+    """OCI requests need a native provider configured for their target compartment."""
+    from agents.extensions.models.oci_provider import OCIProvider
+
+    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
+
+    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+codex
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+tokens used
+15,776
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+[exit 0; elapsed 53192ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='"'"'/tmp/triage-3151183b-ee14-4bf7-b56c-d479f2990ab2-attempt_2-junit.xml'"'"' '"'"'tests/models/test_oci_provider.py'"'"'
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named '"'"'agents.extensions.models.oci_provider'"'"'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+[exit 1]
+$ git diff --no-ext-diff
+
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84d4-7269-7350-93ef-bfb0bb6e05b8
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Proposal for a native Oracle Cloud Infrastructure Generative AI model provider under `agents.extensions.models` with OpenAI-compatible chat completions, native OCI SDK, and Responses transports.",
+  "steps_to_reproduce": [],
+  "expected_behavior": "The Agents SDK should provide an optional OCI integration that authenticates using OCI request signing, routes models to the appropriate transport, carries the target compartment on every request, and normalizes tool calling, structured output, and usage reporting across the transports.",
+  "actual_behavior": "The only way to use OCI Generative AI with the Agents SDK is through a generic adapter, which does not cover OCI authentication or all required transports.",
+  "environment": {
+    "Agents SDK version": "main (post `v0.x` latest)",
+    "Python version": "3.10+"
+  },
+  "affected_area": "agents.extensions.models",
+  "repro_code": null,
+  "missing_info": [
+    "No concrete reproduction code or command is provided.",
+    "No OCI region value is provided.",
+    "No target compartment value is provided.",
+    "No model ID is provided.",
+    "No OCI authentication mode or credentials are provided.",
+    "No request payload or specific failing request is provided."
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+3
+
+## Revision reason
+
+Previous attempt made no repository changes; target a more concrete behavior specification. Validation: No new or modified executable pytest test was detected.
+
+## Previous evidence
+
+[Earlier terminal output omitted; final output preserved.]
+f already off main, keep it; otherwise propose `feat/<slug>`, `fix/<slug>`, or `docs/<slug>` based on the primary area (e.g., `docs/pr-draft-summary-guidance`).
+7) If the current branch matches `issue-<number>` (digits only), keep that branch suggestion. Optionally pull light issue context (for example via the GitHub API) when available, but do not block or retry if it is not. When an issue number is present, reference `https://github.com/openai/openai-agents-python/issues/<number>` and include an auto-closing line such as `This pull request resolves #<number>.`.
+8) Draft the PR title and description using the template below.
+9) Output only the block in "Output Format". Keep any surrounding status note minimal and in English.
+
+## Output Format
+When closing out a task, add this concise Markdown block (English only) after any brief status note unless the task falls under the documented skip cases or the user says they do not want it.
+
+```
+# Pull Request Draft
+
+## Branch name suggestion
+
+git checkout -b <kebab-case suggestion, e.g., feat/pr-draft-summary-skill>
+
+## Title
+
+<single-line imperative title, which can be a commit message; if a common prefix like chore: and feat: etc., having them is preferred>
+
+## Description
+
+<include what you changed plus a draft pull request title and description for your local changes; start the description with prose such as "This pull request resolves/updates/adds ..." using a verb that matches the change (you can use bullets later), explain the change background (for bugs, clearly describe the bug, symptoms, or repro; for features, what is needed and why), any behavior changes or considerations to be aware of, and you do not need to mention tests you ran.>
+```
+
+Keep it tight—no redundant prose around the block, and avoid repeating details between `Changes` and the description. Tests do not need to be listed unless specifically requested.
+
+codex
+The required verification skill confirms that its full stack is for work intended to pass. Because this investigation must stop at the first focused, report-related failing test, I’ll not run unrelated formatting/type/full-suite checks after that failure; I’ll report that limitation explicitly.
+apply patch
+patch: completed
+/workspace/repo/tests/models/test_oci_provider.py
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+exec
+/bin/bash -lc 'python -m pytest -q tests/models/test_oci_provider.py' in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ exited 1 in 802ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+
+codex
+The tightened test fails at the native OCI module boundary before it can configure the compulsory compartment, with `ModuleNotFoundError`. That is the first focused failure tied to the report, so I’m stopping without implementation or broader test execution.
+exec
+/bin/bash -lc 'BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)
+BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD 2>/dev/null || git merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")
+LATEST_RELEASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin '"'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1)
+printf 'branch='; git rev-parse --abbrev-ref HEAD
+printf 'status\\n'; git status -sb
+printf 'untracked\\n'; git ls-files --others --exclude-standard
+printf 'unstaged\\n'; git diff --name-only
+printf 'staged\\n'; git diff --name-only --cached
+printf 'stat\\n'; git diff --stat
+printf 'base_ref=%s\\nbase_commit=%s\\nlatest_release=%s\\n' \""'$BASE_REF" "$BASE_COMMIT" "$LATEST_RELEASE_TAG"
+printf '"'ahead\\n'; git log --oneline --no-merges \""'${BASE_COMMIT}..HEAD"
+printf '"'test\\n'; sed -n '1,100p' tests/models/test_oci_provider.py" in /workspace/repo
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+ succeeded in 809ms:
+branch=main
+status
+## main...origin/main
+?? tests/models/test_oci_provider.py
+untracked
+tests/models/test_oci_provider.py
+unstaged
+staged
+stat
+base_ref=origin/main
+base_commit=95185352c8b829405a96c3886960f030163bdf07
+latest_release=v0.18.3
+ahead
+test
+def test_oci_provider_accepts_the_target_compartment() -> None:
+    """OCI requests need a native provider configured for their target compartment."""
+    from agents.extensions.models.oci_provider import OCIProvider
+
+    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
+
+    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+codex
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+index e03f519642699cbc84e476c07d2f2c0f6de47a27..7e5667e22f19107d4c140e40963ee76d3eaca247
+--- a/tests/models/test_oci_provider.py
++++ b/tests/models/test_oci_provider.py
+@@ -1,5 +1,7 @@
+-def test_oci_provider_is_available() -> None:
+-    """OCI should be available as a native optional model provider."""
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
+     from agents.extensions.models.oci_provider import OCIProvider
+ 
+-    assert OCIProvider
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+
+tokens used
+15,776
+Hypothesis confirmed: the native OCI provider module is absent, so a provider cannot be configured with the required target compartment.
+
+Updated [test_oci_provider.py](/workspace/repo/tests/models/test_oci_provider.py:1) to specify that behavior. Focused test result:
+
+```text
+ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+```
+
+Stopped at this report-related failure; the full verification stack was not run per the investigation stop condition. No production code changed.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a focused failing characterization test for the proposed OCI model-provider extension. It demonstrates that the expected native provider module is absent, preventing configuration of the required target compartment.
+[exit 0; elapsed 53192ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='/tmp/triage-3151183b-ee14-4bf7-b56c-d479f2990ab2-attempt_2-junit.xml' 'tests/models/test_oci_provider.py'
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+[exit 1]
+$ git diff --no-ext-diff
+
+
+codex
+Hypothesis: the report is an unmet native-integration contract, and the smallest demonstrable behavior is that an OCI provider accepting a target compartment cannot even be imported. I’ll preserve the existing focused characterization test and rerun only it; per the stop condition, I’ll stop at its first report-related failure.
+exec
+/bin/bash -lc "sed -n '1,240p' .agents/skills/code-change-verification/SKILL.md && sed -n '1,240p' .agents/skills/pr-draft-summary/SKILL.md && python -m pytest -q tests/models/test_oci_provider.py" in /workspace/repo
+ exited 1 in 772ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.10s
+
+codex
+The focused test fails as hypothesized at import time: `agents.extensions.models.oci_provider` does not exist. This is sufficient evidence of the missing native-provider boundary, so I’m not running the full verification stack or changing production code.
+exec
+/bin/bash -lc 'BASE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo origin/main)
+BASE_COMMIT=$(git merge-base --fork-point "$BASE_REF" HEAD 2>/dev/null || git merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")
+LATEST_RELEASE_TAG=$(.agents/skills/final-release-review/scripts/find_latest_release_tag.sh origin '"'v*' 2>/dev/null || git tag -l 'v*' --sort=-v:refname | head -n1)
+git rev-parse --abbrev-ref HEAD
+git status -sb
+git ls-files --others --exclude-standard
+git diff --name-only
+git diff --name-only --cached
+git diff --stat
+git diff --no-index /dev/null tests/models/test_oci_provider.py || true
+printf 'base_ref=%s\\nbase_commit=%s\\nlatest_release=%s\\n' \""'$BASE_REF" "$BASE_COMMIT" "$LATEST_RELEASE_TAG"
+git log --oneline --no-merges "${BASE_COMMIT}..HEAD"' in /workspace/repo
+ succeeded in 850ms:
+main
+## main...origin/main
+?? tests/models/test_oci_provider.py
+tests/models/test_oci_provider.py
+diff --git a/tests/models/test_oci_provider.py b/tests/models/test_oci_provider.py
+new file mode 100644
+index 00000000..7e5667e2
+--- /dev/null
++++ b/tests/models/test_oci_provider.py
+@@ -0,0 +1,7 @@
++def test_oci_provider_accepts_the_target_compartment() -> None:
++    """OCI requests need a native provider configured for their target compartment."""
++    from agents.extensions.models.oci_provider import OCIProvider
++
++    provider = OCIProvider(compartment_id="ocid1.compartment.oc1..example")
++
++    assert provider.compartment_id == "ocid1.compartment.oc1..example"
+base_ref=origin/main
+base_commit=95185352c8b829405a96c3886960f030163bdf07
+latest_release=v0.18.3
+
+codex
+Hypothesis confirmed: the native OCI provider module is absent, preventing required compartment configuration.
+
+Focused test: `python -m pytest -q tests/models/test_oci_provider.py`  
+Result: `ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'`
+
+Stopped at this report-related failure. No production code changed; full verification was intentionally not run.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a failing characterization test for the proposed OCI model provider. It demonstrates that the native provider module is absent, so consumers cannot configure the required target compartment.
+Hypothesis confirmed: the native OCI provider module is absent, preventing required compartment configuration.
+
+Focused test: `python -m pytest -q tests/models/test_oci_provider.py`  
+Result: `ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'`
+
+Stopped at this report-related failure. No production code changed; full verification was intentionally not run.
+
+# Pull Request Draft
+
+## Branch name suggestion
+
+```bash
+git checkout -b feat/oci-model-provider
+```
+
+## Title
+
+feat: characterize OCI provider compartment configuration
+
+## Description
+
+This pull request adds a failing characterization test for the proposed OCI model provider. It demonstrates that the native provider module is absent, so consumers cannot configure the required target compartment.
+tokens used
+15,040
+[exit 0; elapsed 32120ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='/tmp/triage-3151183b-ee14-4bf7-b56c-d479f2990ab2-attempt_3-junit.xml' 'tests/models/test_oci_provider.py'
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s
+[exit 1]
+$ git diff --no-ext-diff

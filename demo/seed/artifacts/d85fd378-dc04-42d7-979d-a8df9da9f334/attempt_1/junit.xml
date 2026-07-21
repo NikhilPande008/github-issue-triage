@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="8" time="0.107" timestamp="2026-07-21T13:23:22.817469+00:00" hostname="0fcbcf087a87"><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_sync_non_streamed" time="0.003" /><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_can_access_response_format" time="0.001"><failure message="AttributeError: 'ModelInputData' object has no attribute 'response_format'">@pytest.mark.asyncio
+    async def test_call_model_input_filter_can_access_response_format() -&gt; None:
+        model = FakeModel()
+        agent = Agent(name="test", model=model)
+        model.set_next_output([get_text_message("ok")])
+    
+        def filter_fn(data: CallModelData[Any]) -&gt; ModelInputData:
+            assert data.model_data.response_format is None
+            return data.model_data
+    
+&gt;       await Runner.run(
+            agent,
+            input="start",
+            run_config=RunConfig(call_model_input_filter=filter_fn),
+        )
+
+tests/test_call_model_input_filter.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/agents/run.py:272: in run
+    return await runner.run(
+src/agents/run.py:1296: in run
+    turn_result = await model_task
+                  ^^^^^^^^^^^^^^^^
+src/agents/run_internal/run_loop.py:1843: in run_single_turn
+    new_response = await get_new_response(
+src/agents/run_internal/run_loop.py:1898: in get_new_response
+    filtered = await maybe_filter_model_input(
+src/agents/run_internal/turn_preparation.py:76: in maybe_filter_model_input
+    maybe_updated = run_config.call_model_input_filter(filter_payload)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data = CallModelData(model_data=ModelInputData(input=[{'content': 'start', 'role': 'user'}], instructions=None), agent=Agent(..._guardrails=[], output_type=None, hooks=None, tool_use_behavior='run_llm_again', reset_tool_choice=True), context=None)
+
+    def filter_fn(data: CallModelData[Any]) -&gt; ModelInputData:
+&gt;       assert data.model_data.response_format is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ModelInputData' object has no attribute 'response_format'
+
+tests/test_call_model_input_filter.py:49: AttributeError</failure></testcase><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_async_streamed" time="0.043" /><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_invalid_return_type_raises" time="0.001" /><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_error_respects_sensitive_data_setting[False-Error details are redacted.]" time="0.001" /><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_error_respects_sensitive_data_setting[True-sensitive-filter-error]" time="0.001" /><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_prefers_latest_duplicate_outputs_non_streamed" time="0.001" /><testcase classname="tests.test_call_model_input_filter" name="test_call_model_input_filter_prefers_latest_duplicate_outputs_streamed" time="0.001" /></testsuite></testsuites>

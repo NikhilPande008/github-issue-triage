@@ -8,6 +8,9 @@ import sys
 from pathlib import Path
 
 from sqlalchemy import select
+from sqlalchemy import text
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +22,19 @@ from triage.persistence.models import Artifact, Hypothesis, Investigation, LLMCa
 
 def copy_row(model, row):
     return model(**{column.name: getattr(row, column.name) for column in model.__table__.columns})
+
+
+def alembic_head() -> str:
+    config = Config(str(ROOT / "alembic.ini"))
+    config.set_main_option("script_location", str(ROOT / "migrations"))
+    return ScriptDirectory.from_config(config).get_current_head() or ""
+
+
+def artifact_relative_path(path: str) -> Path:
+    relative = Path(path).relative_to("artifacts")
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError(f"artifact path escapes artifact root: {path}")
+    return relative
 
 
 def main() -> int:
@@ -49,10 +65,15 @@ def main() -> int:
         for model in (Hypothesis, Artifact, LLMCall):
             destination.add_all(copy_row(model, item) for item in source.scalars(select(model).where(model.investigation_id.in_(ids))))
         destination.commit()
+        destination.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)"))
+        destination.execute(text("INSERT INTO alembic_version (version_num) VALUES (:head)"), {"head": alembic_head()})
+        destination.commit()
         artifacts = list(source.scalars(select(Artifact).where(Artifact.investigation_id.in_(ids))))
     for artifact in artifacts:
-        relative_path = Path(artifact.path).relative_to("artifacts")
+        relative_path = artifact_relative_path(artifact.path)
         source_path = args.source_artifacts / relative_path
+        if not source_path.is_file():
+            parser.error(f"persisted artifact is missing from source root: {artifact.path}")
         target_path = args.destination_artifacts / relative_path
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, target_path)

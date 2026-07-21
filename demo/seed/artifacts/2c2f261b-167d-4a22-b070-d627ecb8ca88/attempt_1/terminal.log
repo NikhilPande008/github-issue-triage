@@ -1,0 +1,2692 @@
+$ codex exec --sandbox workspace-write --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Allow LiteLLM Proxy to be used in Guardrails",
+  "steps_to_reproduce": [],
+  "expected_behavior": "LiteLLM Proxy can be used in Guardrails.",
+  "actual_behavior": "The implementation shown for GuardrailsAsyncOpenAI, which allows proxy API keys and URLs when building context, is not seen for GuardrailsAgent. GuardrailsAgent creates its default context with AsyncOpenAI() without the corresponding configuration.",
+  "environment": {},
+  "affected_area": "GuardrailsAsyncOpenAI and GuardrailsAgent",
+  "repro_code": "def _create_default_context(self) -> GuardrailLLMContextProto:\n        \"\"\"Create default context with guardrail_llm client.\"\"\"\n        # First check base implementation for ContextVars\n        try:\n            return super()._create_default_context()\n        except NotImplementedError:\n            pass\n\n        # Create a separate client instance for guardrails (not the same as main client)\n        @dataclass\n        class DefaultContext:\n            guardrail_llm: AsyncOpenAI\n\n        # Create separate instance with same configuration\n        from openai import AsyncOpenAI\n\n        guardrail_kwargs = {\n            \"api_key\": self.api_key,\n            \"base_url\": getattr(self, \"base_url\", None),\n            \"organization\": getattr(self, \"organization\", None),\n            \"timeout\": getattr(self, \"timeout\", None),\n            \"max_retries\": getattr(self, \"max_retries\", None),\n        }\n        default_headers = getattr(self, \"default_headers\", None)\n        if default_headers is not None:\n            guardrail_kwargs[\"default_headers\"] = default_headers\n        guardrail_client = AsyncOpenAI(**guardrail_kwargs)\n\n        return DefaultContext(guardrail_llm=guardrail_client)\n\n\ndef _create_default_tool_context() -> Any:\n    \"\"\"Create a default context for tool guardrails.\"\"\"\n    from openai import AsyncOpenAI\n\n    @dataclass\n    class DefaultContext:\n        guardrail_llm: AsyncOpenAI\n\n    return DefaultContext(guardrail_llm=AsyncOpenAI())",
+  "missing_info": [
+    "Concrete steps to reproduce the issue",
+    "LiteLLM Proxy API key and URL configuration",
+    "Environment details such as package versions and operating system",
+    "Observed error message or output"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84df-d725-7373-b27f-7e828d1499ad
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Allow LiteLLM Proxy to be used in Guardrails",
+  "steps_to_reproduce": [],
+  "expected_behavior": "LiteLLM Proxy can be used in Guardrails.",
+  "actual_behavior": "The implementation shown for GuardrailsAsyncOpenAI, which allows proxy API keys and URLs when building context, is not seen for GuardrailsAgent. GuardrailsAgent creates its default context with AsyncOpenAI() without the corresponding configuration.",
+  "environment": {},
+  "affected_area": "GuardrailsAsyncOpenAI and GuardrailsAgent",
+  "repro_code": "def _create_default_context(self) -> GuardrailLLMContextProto:\n        \"\"\"Create default context with guardrail_llm client.\"\"\"\n        # First check base implementation for ContextVars\n        try:\n            return super()._create_default_context()\n        except NotImplementedError:\n            pass\n\n        # Create a separate client instance for guardrails (not the same as main client)\n        @dataclass\n        class DefaultContext:\n            guardrail_llm: AsyncOpenAI\n\n        # Create separate instance with same configuration\n        from openai import AsyncOpenAI\n\n        guardrail_kwargs = {\n            \"api_key\": self.api_key,\n            \"base_url\": getattr(self, \"base_url\", None),\n            \"organization\": getattr(self, \"organization\", None),\n            \"timeout\": getattr(self, \"timeout\", None),\n            \"max_retries\": getattr(self, \"max_retries\", None),\n        }\n        default_headers = getattr(self, \"default_headers\", None)\n        if default_headers is not None:\n            guardrail_kwargs[\"default_headers\"] = default_headers\n        guardrail_client = AsyncOpenAI(**guardrail_kwargs)\n\n        return DefaultContext(guardrail_llm=guardrail_client)\n\n\ndef _create_default_tool_context() -> Any:\n    \"\"\"Create a default context for tool guardrails.\"\"\"\n    from openai import AsyncOpenAI\n\n    @dataclass\n    class DefaultContext:\n        guardrail_llm: AsyncOpenAI\n\n    return DefaultContext(guardrail_llm=AsyncOpenAI())",
+  "missing_info": [
+    "Concrete steps to reproduce the issue",
+    "LiteLLM Proxy API key and URL configuration",
+    "Environment details such as package versions and operating system",
+    "Observed error message or output"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+codex
+I’ll trace the two default-context construction paths and add the narrowest regression test that proves whether `GuardrailsAgent` drops the configured OpenAI client settings.
+exec
+/bin/bash -lc 'pwd && rg -n "_create_default_context|_create_default_tool_context|GuardrailsAgent|GuardrailsAsyncOpenAI" .' in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+exec
+/bin/bash -c 'rg -n "_create_default_context|_create_default_tool_context|GuardrailsAgent|GuardrailsAsyncOpenAI" .' in /workspace/repo
+ exited 1 in 0ms:
+bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.
+
+codex
+Hypothesis: `GuardrailsAgent._create_default_tool_context()` creates `AsyncOpenAI()` without copying the agent’s configured `api_key` and `base_url`, so LiteLLM Proxy settings are lost.
+
+I couldn’t inspect or run tests because every workspace command fails before execution with:
+
+`bwrap: No permissions to create a new namespace`
+
+The focused regression test should mock `openai.AsyncOpenAI`, construct a `GuardrailsAgent` with LiteLLM Proxy key/URL, invoke default tool-context creation, and assert those values were passed to the guardrail client. This should fail on the reported implementation.
+Hypothesis: `GuardrailsAgent._create_default_tool_context()` creates `AsyncOpenAI()` without copying the agent’s configured `api_key` and `base_url`, so LiteLLM Proxy settings are lost.
+
+I couldn’t inspect or run tests because every workspace command fails before execution with:
+
+`bwrap: No permissions to create a new namespace`
+
+The focused regression test should mock `openai.AsyncOpenAI`, construct a `GuardrailsAgent` with LiteLLM Proxy key/URL, invoke default tool-context creation, and assert those values were passed to the guardrail client. This should fail on the reported implementation.
+tokens used
+2,581
+[exit 0; elapsed 19573ms; preferred]
+$ codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral '# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Allow LiteLLM Proxy to be used in Guardrails",
+  "steps_to_reproduce": [],
+  "expected_behavior": "LiteLLM Proxy can be used in Guardrails.",
+  "actual_behavior": "The implementation shown for GuardrailsAsyncOpenAI, which allows proxy API keys and URLs when building context, is not seen for GuardrailsAgent. GuardrailsAgent creates its default context with AsyncOpenAI() without the corresponding configuration.",
+  "environment": {},
+  "affected_area": "GuardrailsAsyncOpenAI and GuardrailsAgent",
+  "repro_code": "def _create_default_context(self) -> GuardrailLLMContextProto:\n        \"\"\"Create default context with guardrail_llm client.\"\"\"\n        # First check base implementation for ContextVars\n        try:\n            return super()._create_default_context()\n        except NotImplementedError:\n            pass\n\n        # Create a separate client instance for guardrails (not the same as main client)\n        @dataclass\n        class DefaultContext:\n            guardrail_llm: AsyncOpenAI\n\n        # Create separate instance with same configuration\n        from openai import AsyncOpenAI\n\n        guardrail_kwargs = {\n            \"api_key\": self.api_key,\n            \"base_url\": getattr(self, \"base_url\", None),\n            \"organization\": getattr(self, \"organization\", None),\n            \"timeout\": getattr(self, \"timeout\", None),\n            \"max_retries\": getattr(self, \"max_retries\", None),\n        }\n        default_headers = getattr(self, \"default_headers\", None)\n        if default_headers is not None:\n            guardrail_kwargs[\"default_headers\"] = default_headers\n        guardrail_client = AsyncOpenAI(**guardrail_kwargs)\n\n        return DefaultContext(guardrail_llm=guardrail_client)\n\n\ndef _create_default_tool_context() -> Any:\n    \"\"\"Create a default context for tool guardrails.\"\"\"\n    from openai import AsyncOpenAI\n\n    @dataclass\n    class DefaultContext:\n        guardrail_llm: AsyncOpenAI\n\n    return DefaultContext(guardrail_llm=AsyncOpenAI())",
+  "missing_info": [
+    "Concrete steps to reproduce the issue",
+    "LiteLLM Proxy API key and URL configuration",
+    "Environment details such as package versions and operating system",
+    "Observed error message or output"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+'
+Reading additional input from stdin...
+OpenAI Codex v0.144.5
+--------
+workdir: /workspace/repo
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: none
+session id: 019f84e0-2259-7f63-9672-4fe7b79976c3
+--------
+user
+# Codex investigation prompt v1
+
+You are investigating a reported defect in the current repository. Reason only from the issue extraction and the previous attempt evidence supplied below.
+
+Form a concrete hypothesis before acting. Prefer the smallest test-focused change that can demonstrate the reported behavior. Modify tests rather than production code unless production changes are necessary to understand the failure. Do not make broad refactors, speculative fixes, classifications, or unrelated cleanup.
+
+Run focused pytest commands when useful. Stop once the test suite demonstrates a failure related to the report. Do not claim success without evidence.
+
+## Issue extraction
+
+{
+  "summary": "Allow LiteLLM Proxy to be used in Guardrails",
+  "steps_to_reproduce": [],
+  "expected_behavior": "LiteLLM Proxy can be used in Guardrails.",
+  "actual_behavior": "The implementation shown for GuardrailsAsyncOpenAI, which allows proxy API keys and URLs when building context, is not seen for GuardrailsAgent. GuardrailsAgent creates its default context with AsyncOpenAI() without the corresponding configuration.",
+  "environment": {},
+  "affected_area": "GuardrailsAsyncOpenAI and GuardrailsAgent",
+  "repro_code": "def _create_default_context(self) -> GuardrailLLMContextProto:\n        \"\"\"Create default context with guardrail_llm client.\"\"\"\n        # First check base implementation for ContextVars\n        try:\n            return super()._create_default_context()\n        except NotImplementedError:\n            pass\n\n        # Create a separate client instance for guardrails (not the same as main client)\n        @dataclass\n        class DefaultContext:\n            guardrail_llm: AsyncOpenAI\n\n        # Create separate instance with same configuration\n        from openai import AsyncOpenAI\n\n        guardrail_kwargs = {\n            \"api_key\": self.api_key,\n            \"base_url\": getattr(self, \"base_url\", None),\n            \"organization\": getattr(self, \"organization\", None),\n            \"timeout\": getattr(self, \"timeout\", None),\n            \"max_retries\": getattr(self, \"max_retries\", None),\n        }\n        default_headers = getattr(self, \"default_headers\", None)\n        if default_headers is not None:\n            guardrail_kwargs[\"default_headers\"] = default_headers\n        guardrail_client = AsyncOpenAI(**guardrail_kwargs)\n\n        return DefaultContext(guardrail_llm=guardrail_client)\n\n\ndef _create_default_tool_context() -> Any:\n    \"\"\"Create a default context for tool guardrails.\"\"\"\n    from openai import AsyncOpenAI\n\n    @dataclass\n    class DefaultContext:\n        guardrail_llm: AsyncOpenAI\n\n    return DefaultContext(guardrail_llm=AsyncOpenAI())",
+  "missing_info": [
+    "Concrete steps to reproduce the issue",
+    "LiteLLM Proxy API key and URL configuration",
+    "Environment details such as package versions and operating system",
+    "Observed error message or output"
+  ],
+  "confidence": 0.98
+}
+
+## Attempt
+
+1
+
+## Revision reason
+
+None; this is the first attempt.
+
+## Previous evidence
+
+None; this is the first attempt.
+
+codex
+Hypothesis: `GuardrailsAgent`’s default tool context creates a bare `AsyncOpenAI()` client, so it drops the proxy client’s `api_key` and `base_url`. I’ll locate the relevant implementation and its existing tests, then add the smallest regression test and run it.
+exec
+/bin/bash -lc 'rg -n "_create_default_tool_context|GuardrailsAgent|GuardrailsAsyncOpenAI" .' in /workspace/repo
+ succeeded in 0ms:
+./src/guardrails/agents.py:162:def _create_default_tool_context() -> Any:
+./src/guardrails/agents.py:717:            context = _create_default_tool_context()
+./src/guardrails/types.py:256:    - GuardrailsResponse (from GuardrailsAsyncOpenAI, GuardrailsOpenAI, etc.)
+./src/guardrails/client.py:3:This module provides GuardrailsAsyncOpenAI and GuardrailsOpenAI classes that
+./src/guardrails/client.py:36:    "GuardrailsAsyncOpenAI",
+./src/guardrails/client.py:138:class GuardrailsAsyncOpenAI(AsyncOpenAI, GuardrailsBaseClient, StreamingMixin):
+./src/guardrails/client.py:159:        """Initialize GuardrailsAsyncOpenAI client.
+./src/guardrails/client.py:317:    Synchronous version of GuardrailsAsyncOpenAI with the same functionality.
+./src/guardrails/__init__.py:18:    GuardrailsAsyncOpenAI,
+./src/guardrails/__init__.py:51:    "GuardrailsAsyncOpenAI",  # async OpenAI subclass with guardrails
+./docs/quickstart.md:66:Replace your OpenAI client with the Guardrails version (GuardrailsAsyncOpenAI or GuardrailsOpenAI):
+./docs/quickstart.md:73:from guardrails import GuardrailsAsyncOpenAI
+./docs/quickstart.md:76:    # Use GuardrailsAsyncOpenAI instead of AsyncOpenAI
+./docs/quickstart.md:77:    client = GuardrailsAsyncOpenAI(config=Path("guardrails_config.json"))
+./docs/quickstart.md:137:client = GuardrailsAsyncOpenAI(config="config.json")
+./docs/quickstart.md:146:client = GuardrailsAsyncOpenAI(
+./docs/quickstart.md:208:from guardrails import GuardrailsAsyncOpenAI
+./docs/quickstart.md:211:client = GuardrailsAsyncOpenAI(
+./docs/quickstart.md:223:from guardrails import GuardrailsAsyncOpenAI, total_guardrail_token_usage
+./docs/quickstart.md:225:client = GuardrailsAsyncOpenAI(config="config.json")
+./docs/quickstart.md:266:**OpenAI Clients (GuardrailsAsyncOpenAI, etc.)**:
+./docs/tripwires.md:19:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./docs/tripwires.md:21:client = GuardrailsAsyncOpenAI(config=Path("guardrails_config.json"))
+./examples/basic/pii_mask_example.py:18:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/basic/pii_mask_example.py:73:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/basic/pii_mask_example.py:143:    # Initialize GuardrailsAsyncOpenAI with PII masking configuration
+./examples/basic/pii_mask_example.py:144:    guardrails_client = GuardrailsAsyncOpenAI(config=PIPELINE_CONFIG)
+./tests/integration/test_suite.py:16:from guardrails import GuardrailsAsyncOpenAI
+./tests/integration/test_suite.py:342:    guardrails_client: GuardrailsAsyncOpenAI,
+./tests/integration/test_suite.py:501:        # Initialize GuardrailsAsyncOpenAI for this test
+./tests/integration/test_suite.py:502:        guardrails_client = GuardrailsAsyncOpenAI(config=pipeline_config)
+./examples/basic/multi_bundle.py:10:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered, total_guardrail_token_usage
+./examples/basic/multi_bundle.py:57:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/basic/multi_bundle.py:104:    # Initialize GuardrailsAsyncOpenAI with the pipeline configuration
+./examples/basic/multi_bundle.py:105:    guardrails_client = GuardrailsAsyncOpenAI(config=PIPELINE_CONFIG)
+./tests/unit/test_agents.py:233:def test_create_default_tool_context_provides_async_client(monkeypatch: pytest.MonkeyPatch) -> None:
+./tests/unit/test_agents.py:244:    context = agents._create_default_tool_context()
+./examples/basic/local_model.py:10:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered, total_guardrail_token_usage
+./examples/basic/local_model.py:38:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/basic/local_model.py:66:    # Initialize GuardrailsAsyncOpenAI with Ollama configuration
+./examples/basic/local_model.py:67:    guardrails_client = GuardrailsAsyncOpenAI(
+./examples/basic/suppress_tripwire.py:10:from guardrails import GuardrailsAsyncOpenAI
+./examples/basic/suppress_tripwire.py:39:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/basic/suppress_tripwire.py:81:    # Initialize GuardrailsAsyncOpenAI with the pipeline configuration
+./examples/basic/suppress_tripwire.py:82:    guardrails_client = GuardrailsAsyncOpenAI(config=PIPELINE_CONFIG)
+./examples/implementation_code/streaming/streaming_responses.py:12:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/implementation_code/streaming/streaming_responses.py:15:async def process_input(guardrails_client: GuardrailsAsyncOpenAI, user_input: str, response_id: str | None = None) -> str | None:
+./examples/implementation_code/streaming/streaming_responses.py:47:    # Initialize GuardrailsAsyncOpenAI with the config file
+./examples/implementation_code/streaming/streaming_responses.py:48:    guardrails_client = GuardrailsAsyncOpenAI(config=Path("guardrails_config.json"))
+./examples/basic/multiturn_chat_with_alignment.py:9:It uses GuardrailsAsyncOpenAI as a drop-in replacement for OpenAI's Chat Completions API,
+./examples/basic/multiturn_chat_with_alignment.py:29:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/basic/multiturn_chat_with_alignment.py:218:    client = GuardrailsAsyncOpenAI(config=GUARDRAILS_CONFIG)
+./examples/implementation_code/streaming/streaming_completions.py:12:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/implementation_code/streaming/streaming_completions.py:16:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/implementation_code/streaming/streaming_completions.py:50:    # Initialize GuardrailsAsyncOpenAI with the config file
+./examples/implementation_code/streaming/streaming_completions.py:51:    guardrails_client = GuardrailsAsyncOpenAI(config=Path("guardrails_config.json"))
+./docs/index.md:17:2. **Replace**: Use `GuardrailsAsyncOpenAI` instead of `AsyncOpenAI`
+./docs/index.md:30:from guardrails import GuardrailsAsyncOpenAI
+./docs/index.md:32:client = GuardrailsAsyncOpenAI(config="guardrails_config.json")
+./examples/basic/structured_outputs_example.py:7:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/basic/structured_outputs_example.py:40:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/basic/structured_outputs_example.py:72:    # Initialize GuardrailsAsyncOpenAI
+./examples/basic/structured_outputs_example.py:73:    guardrails_client = GuardrailsAsyncOpenAI(config=PIPELINE_CONFIG)
+./examples/basic/hello_world.py:1:"""Hello World: Minimal async customer support agent with guardrails using the new GuardrailsAsyncOpenAI."""
+./examples/basic/hello_world.py:9:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered, total_guardrail_token_usage
+./examples/basic/hello_world.py:46:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/basic/hello_world.py:50:    """Process user input using the new GuardrailsAsyncOpenAI."""
+./examples/basic/hello_world.py:52:        # Use the new GuardrailsAsyncOpenAI - it handles all guardrail validation automatically
+./examples/basic/hello_world.py:74:    # Initialize GuardrailsAsyncOpenAI with our pipeline configuration
+./examples/basic/hello_world.py:75:    guardrails_client = GuardrailsAsyncOpenAI(config=PIPELINE_CONFIG)
+./tests/unit/test_client_async.py:1:"""Tests for GuardrailsAsyncOpenAI core behaviour."""
+./tests/unit/test_client_async.py:11:from guardrails.client import GuardrailsAsyncAzureOpenAI, GuardrailsAsyncOpenAI
+./tests/unit/test_client_async.py:21:def _build_client(**kwargs: Any) -> GuardrailsAsyncOpenAI:
+./tests/unit/test_client_async.py:22:    """Instantiate GuardrailsAsyncOpenAI with deterministic defaults."""
+./tests/unit/test_client_async.py:23:    return GuardrailsAsyncOpenAI(config=_minimal_config(), **kwargs)
+./examples/implementation_code/blocking/blocking_completions.py:11:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/implementation_code/blocking/blocking_completions.py:15:    guardrails_client: GuardrailsAsyncOpenAI,
+./examples/implementation_code/blocking/blocking_completions.py:41:    # Initialize GuardrailsAsyncOpenAI with the config file
+./examples/implementation_code/blocking/blocking_completions.py:42:    guardrails_client = GuardrailsAsyncOpenAI(config=Path("guardrails_config.json"))
+./examples/implementation_code/blocking/blocking_responses.py:11:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/implementation_code/blocking/blocking_responses.py:14:async def process_input(guardrails_client: GuardrailsAsyncOpenAI, user_input: str, response_id: str | None = None) -> str | None:
+./examples/implementation_code/blocking/blocking_responses.py:31:    # Initialize GuardrailsAsyncOpenAI with the config file
+./examples/implementation_code/blocking/blocking_responses.py:32:    guardrails_client = GuardrailsAsyncOpenAI(config=Path("guardrails_config.json"))
+./examples/hallucination_detection/run_hallucination_detection.py:6:from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
+./examples/hallucination_detection/run_hallucination_detection.py:35:    client = GuardrailsAsyncOpenAI(config=pipeline_config)
+./tests/unit/evals/test_async_engine.py:17:    """Minimal stub mimicking GuardrailsAsyncOpenAI for testing."""
+./tests/unit/evals/test_async_engine.py:169:    # Mock GuardrailsAsyncOpenAI client for conversation-aware guardrails
+./tests/unit/evals/test_async_engine.py:170:    class MockGuardrailsAsyncOpenAI:
+./tests/unit/evals/test_async_engine.py:203:    # Patch both GuardrailsAsyncOpenAI and run_guardrails
+./tests/unit/evals/test_async_engine.py:204:    original_client = async_engine_module.GuardrailsAsyncOpenAI
+./tests/unit/evals/test_async_engine.py:207:    async_engine_module.GuardrailsAsyncOpenAI = MockGuardrailsAsyncOpenAI
+./tests/unit/evals/test_async_engine.py:223:        async_engine_module.GuardrailsAsyncOpenAI = original_client
+./src/guardrails/evals/core/async_engine.py:15:from guardrails import GuardrailsAsyncOpenAI, run_guardrails
+./src/guardrails/evals/core/async_engine.py:165:    client: GuardrailsAsyncOpenAI,
+./src/guardrails/evals/core/async_engine.py:174:        client: GuardrailsAsyncOpenAI client with configured guardrails
+./src/guardrails/evals/core/async_engine.py:362:                        # Create a temporary GuardrailsAsyncOpenAI client for conversation-aware guardrails
+./src/guardrails/evals/core/async_engine.py:363:                        temp_client = GuardrailsAsyncOpenAI(
+./docs/ref/checks/hallucination_detection.md:76:from guardrails import GuardrailsAsyncOpenAI
+./docs/ref/checks/hallucination_detection.md:78:client = GuardrailsAsyncOpenAI(config=bundle)
+
+exec
+/bin/bash -lc "sed -n '120,190p' src/guardrails/agents.py && sed -n '670,735p' src/guardrails/agents.py && sed -n '210,265p' tests/unit/test_agents.py && sed -n '130,230p' src/guardrails/client.py" in /workspace/repo
+ succeeded in 0ms:
+        "call_id": getattr(data.context, "tool_call_id", None),
+    }
+    return await _conversation_with_items([event])
+
+
+def _separate_tool_level_from_agent_level(guardrails: list[Any]) -> tuple[list[Any], list[Any]]:
+    """Separate tool-level guardrails from agent-level guardrails.
+
+    Args:
+        guardrails: List of configured guardrails
+
+    Returns:
+        Tuple of (tool_level_guardrails, agent_level_guardrails)
+    """
+    tool_level = []
+    agent_level = []
+
+    for guardrail in guardrails:
+        if guardrail.definition.name in _TOOL_LEVEL_GUARDRAILS:
+            tool_level.append(guardrail)
+        else:
+            agent_level.append(guardrail)
+
+    return tool_level, agent_level
+
+
+def _attach_guardrail_to_tools(tools: list[Any], guardrail: Callable, guardrail_type: str) -> None:
+    """Attach a guardrail to all tools in the list.
+
+    Args:
+        tools: List of tool objects to attach the guardrail to
+        guardrail: The guardrail function to attach
+        guardrail_type: Either "input" or "output" to determine which list to append to
+    """
+    attr_name = "tool_input_guardrails" if guardrail_type == "input" else "tool_output_guardrails"
+
+    for tool in tools:
+        if not hasattr(tool, attr_name) or getattr(tool, attr_name) is None:
+            setattr(tool, attr_name, [])
+        getattr(tool, attr_name).append(guardrail)
+
+
+def _create_default_tool_context() -> Any:
+    """Create a default context for tool guardrails."""
+    from openai import AsyncOpenAI
+
+    @dataclass
+    class DefaultContext:
+        guardrail_llm: AsyncOpenAI
+
+    return DefaultContext(guardrail_llm=AsyncOpenAI())
+
+
+def _create_conversation_context(
+    conversation_history: list,
+    base_context: Any,
+) -> Any:
+    """Augment existing context with conversation history method.
+
+    This wrapper preserves all fields from the base context while adding
+    get_conversation_history() method for conversation-aware guardrails.
+
+    Args:
+        conversation_history: User messages for alignment checking
+        base_context: Base context to augment (all fields preserved)
+
+    Returns:
+        Wrapper object that delegates to base_context and provides conversation history
+    """
+
+    class ConversationContextWrapper:
+        # Extract any user-provided guardrails from agent_kwargs
+        user_input_guardrails = agent_kwargs.pop("input_guardrails", [])
+        user_output_guardrails = agent_kwargs.pop("output_guardrails", [])
+
+        # Create agent-level INPUT guardrails from config
+        input_guardrails = []
+
+        # Add agent-level guardrails from pre_flight and input stages
+        agent_input_stages = []
+        if preflight_agent:
+            agent_input_stages.append("pre_flight")
+        if input_agent:
+            agent_input_stages.append("input")
+
+        if agent_input_stages:
+            input_guardrails.extend(
+                _create_agents_guardrails_from_config(
+                    config=config,
+                    stages=agent_input_stages,
+                    guardrail_type="input",
+                    raise_guardrail_errors=raise_guardrail_errors,
+                )
+            )
+
+        # Merge with user-provided input guardrails (config ones run first, then user ones)
+        input_guardrails.extend(user_input_guardrails)
+
+        # Create agent-level OUTPUT guardrails from config
+        output_guardrails = []
+        if output_agent:
+            output_guardrails = _create_agents_guardrails_from_config(
+                config=config,
+                stages=["output"],
+                guardrail_type="output",
+                raise_guardrail_errors=raise_guardrail_errors,
+            )
+
+        # Merge with user-provided output guardrails (config ones run first, then user ones)
+        output_guardrails.extend(user_output_guardrails)
+
+        # Apply tool-level guardrails
+        tools = agent_kwargs.get("tools", [])
+
+        # Map pipeline stages to tool guardrails:
+        # - pre_flight + input stages → tool_input_guardrail (checks BEFORE tool execution)
+        # - output stage → tool_output_guardrail (checks AFTER tool execution)
+        if tools and (preflight_tool or input_tool or output_tool):
+            context = _create_default_tool_context()
+
+            # pre_flight + input stages → tool_input_guardrail
+            for guardrail in preflight_tool + input_tool:
+                tool_input_gr = _create_tool_guardrail(
+                    guardrail=guardrail,
+                    guardrail_type="input",
+                    context=context,
+                    raise_guardrail_errors=raise_guardrail_errors,
+                    block_on_violations=block_on_tool_violations,
+                )
+                _attach_guardrail_to_tools(tools, tool_input_gr, "input")
+
+            # output stage → tool_output_guardrail
+            for guardrail in output_tool:
+                tool_output_gr = _create_tool_guardrail(
+                    guardrail=guardrail,
+                    guardrail_type="output",
+                    context=context,
+async def test_conversation_with_tool_output_includes_output() -> None:
+    """Tool output conversation should include serialized output payload."""
+    agents._agent_session.set(None)
+    agents._agent_conversation.set(({"role": "user", "content": "Compute"},))
+    data = SimpleNamespace(
+        context=ToolContext(tool_name="calc", tool_arguments={"y": 2}, tool_call_id="call-3"),
+        output={"result": 4},
+    )
+
+    conversation = await agents._conversation_with_tool_output(data)
+
+    assert conversation[-1]["output"] == "{'result': 4}"  # noqa: S101
+
+
+def test_create_conversation_context_exposes_history() -> None:
+    """Conversation context should expose conversation history only."""
+    base_context = SimpleNamespace(guardrail_llm="client")
+    context = agents._create_conversation_context(["msg"], base_context)
+
+    assert context.get_conversation_history() == ["msg"]  # noqa: S101
+    assert not hasattr(context, "update_injection_last_checked_index")  # noqa: S101
+
+
+def test_create_default_tool_context_provides_async_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Default tool context should return AsyncOpenAI client."""
+    openai_mod = types.ModuleType("openai")
+
+    class StubAsyncOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            pass
+
+    openai_mod.AsyncOpenAI = StubAsyncOpenAI
+    monkeypatch.setitem(sys.modules, "openai", openai_mod)
+
+    context = agents._create_default_tool_context()
+
+    assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+
+
+def test_attach_guardrail_to_tools_initializes_lists() -> None:
+    """Attaching guardrails should create input/output lists when missing."""
+    tool = SimpleNamespace()
+    fn = lambda data: data  # noqa: E731
+
+    agents._attach_guardrail_to_tools([tool], fn, "input")
+    agents._attach_guardrail_to_tools([tool], fn, "output")
+
+    assert tool.tool_input_guardrails == [fn]  # type: ignore[attr-defined]  # noqa: S101
+    assert tool.tool_output_guardrails == [fn]  # type: ignore[attr-defined]  # noqa: S101
+
+
+def test_separate_tool_level_from_agent_level() -> None:
+    """Prompt injection guardrails should be classified as tool-level."""
+    tool, agent_level = agents._separate_tool_level_from_agent_level([_make_guardrail("Prompt Injection Detection"), _make_guardrail("Other Guard")])
+
+    assert [g.definition.name for g in tool] == ["Prompt Injection Detection"]  # noqa: S101
+
+        output_items = getattr(response, "output", None)
+        if output_items:
+            items.extend(output_items)
+
+    return items
+
+
+class GuardrailsAsyncOpenAI(AsyncOpenAI, GuardrailsBaseClient, StreamingMixin):
+    """AsyncOpenAI subclass with automatic guardrail integration.
+
+    This class provides full OpenAI API compatibility while automatically
+    applying guardrails to text-based methods that could benefit from validation.
+
+    Methods with guardrails:
+    - chat.completions.create() - Input/output validation
+    - responses.create() - Input/output validation
+    - responses.parse() - Input/output validation
+    - responses.retrieve() - Output validation (retrieved content)
+
+    All other methods pass through unchanged for full API compatibility.
+    """
+
+    def __init__(
+        self,
+        config: str | Path | dict[str, Any],
+        raise_guardrail_errors: bool = False,
+        **openai_kwargs,
+    ) -> None:
+        """Initialize GuardrailsAsyncOpenAI client.
+
+        Args:
+            config: Path to pipeline configuration file or configuration dict.
+            raise_guardrail_errors: If True, raise exceptions when guardrails fail to execute.
+                If False (default), treat guardrail execution errors as safe and continue.
+                Note: Tripwires (guardrail violations) are handled separately and not affected
+                by this parameter.
+            **openai_kwargs: Additional arguments passed to AsyncOpenAI constructor.
+        """
+        # Initialize OpenAI client first
+        super().__init__(**openai_kwargs)
+
+        # Store the error handling preference
+        self.raise_guardrail_errors = raise_guardrail_errors
+
+        # Use base client initialization helper (guardrail LLM client)
+        from openai import AsyncOpenAI
+
+        self._initialize_client(config, openai_kwargs, AsyncOpenAI)
+
+    def _create_default_context(self) -> GuardrailLLMContextProto:
+        """Create default context with guardrail_llm client."""
+        # First check base implementation for ContextVars
+        try:
+            return super()._create_default_context()
+        except NotImplementedError:
+            pass
+
+        # Create a separate client instance for guardrails (not the same as main client)
+        @dataclass
+        class DefaultContext:
+            guardrail_llm: AsyncOpenAI
+
+        # Create separate instance with same configuration
+        from openai import AsyncOpenAI
+
+        guardrail_kwargs = {
+            "api_key": self.api_key,
+            "base_url": getattr(self, "base_url", None),
+            "organization": getattr(self, "organization", None),
+            "timeout": getattr(self, "timeout", None),
+            "max_retries": getattr(self, "max_retries", None),
+        }
+        default_headers = getattr(self, "default_headers", None)
+        if default_headers is not None:
+            guardrail_kwargs["default_headers"] = default_headers
+        guardrail_client = AsyncOpenAI(**guardrail_kwargs)
+
+        return DefaultContext(guardrail_llm=guardrail_client)
+
+    def _create_context_with_conversation(self, conversation_history: list) -> GuardrailLLMContextProto:
+        """Create a context with conversation history for prompt injection detection guardrail."""
+
+        # Create a new context that includes conversation history
+        @dataclass
+        class ConversationContext:
+            guardrail_llm: AsyncOpenAI
+            conversation_history: list
+
+            def get_conversation_history(self) -> list:
+                return self.conversation_history
+
+        return ConversationContext(
+            guardrail_llm=self.context.guardrail_llm,
+            conversation_history=conversation_history,
+        )
+
+    def _append_llm_response_to_conversation(self, conversation_history: list | str, llm_response: Any) -> list:
+        """Append LLM response to conversation history as-is."""
+        normalized_history = self._normalize_conversation(conversation_history)
+        return self._conversation_with_response(normalized_history, llm_response)
+
+exec
+/bin/bash -lc "sed -n '1,125p' src/guardrails/agents.py && rg -n \"def GuardrailsAgent|GuardrailsAgent\" src/guardrails/agents.py tests/unit/test_agents.py && sed -n '560,735p' src/guardrails/agents.py && sed -n '1,80p' tests/unit/test_agents.py" in /workspace/repo
+ exited 1 in 0ms:
+"""GuardrailAgent: Drop-in replacement for Agents SDK Agent with automatic guardrails.
+
+This module provides the GuardrailAgent class that acts as a factory for creating
+Agents SDK Agent instances with guardrails automatically configured from a pipeline
+configuration file.
+
+Tool-level guardrails are used for Prompt Injection Detection to check each tool
+call and output, while other guardrails run at the agent level.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from collections.abc import Callable
+from contextvars import ContextVar
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from .types import GuardrailResult
+from .utils.conversation import merge_conversation_with_items, normalize_conversation
+
+logger = logging.getLogger(__name__)
+
+__all__ = ["GuardrailAgent"]
+
+# Guardrails that should run at tool level (before/after each tool call)
+# instead of at agent level (before/after entire agent interaction)
+_TOOL_LEVEL_GUARDRAILS = ["Prompt Injection Detection"]
+
+# Context variables used to expose conversation information during guardrail checks.
+_agent_session: ContextVar[Any | None] = ContextVar("guardrails_agent_session", default=None)
+_agent_conversation: ContextVar[tuple[dict[str, Any], ...] | None] = ContextVar(
+    "guardrails_agent_conversation",
+    default=None,
+)
+_AGENT_RUNNER_PATCHED = False
+
+
+def _ensure_agent_runner_patch() -> None:
+    """Patch AgentRunner.run once so sessions are exposed via ContextVars."""
+    global _AGENT_RUNNER_PATCHED
+    if _AGENT_RUNNER_PATCHED:
+        return
+
+    try:
+        from agents.run import AgentRunner  # type: ignore
+    except ImportError:
+        return
+
+    original_run = AgentRunner.run
+
+    async def _patched_run(self, starting_agent, input, **kwargs):  # type: ignore[override]
+        session = kwargs.get("session")
+        fallback_history: list[dict[str, Any]] | None = None
+        if session is None:
+            fallback_history = normalize_conversation(input)
+
+        session_token = _agent_session.set(session)
+        conversation_token = _agent_conversation.set(tuple(dict(item) for item in fallback_history) if fallback_history else None)
+
+        try:
+            return await original_run(self, starting_agent, input, **kwargs)
+        finally:
+            _agent_session.reset(session_token)
+            _agent_conversation.reset(conversation_token)
+
+    AgentRunner.run = _patched_run  # type: ignore[assignment]
+    _AGENT_RUNNER_PATCHED = True
+
+
+def _cache_conversation(conversation: list[dict[str, Any]]) -> None:
+    """Cache the normalized conversation for the current run."""
+    _agent_conversation.set(tuple(dict(item) for item in conversation))
+
+
+async def _load_agent_conversation() -> list[dict[str, Any]]:
+    """Load the latest conversation snapshot from session or fallback storage."""
+    cached = _agent_conversation.get()
+    if cached is not None:
+        return [dict(item) for item in cached]
+
+    session = _agent_session.get()
+    if session is not None:
+        items = await session.get_items()
+        conversation = normalize_conversation(items)
+        _cache_conversation(conversation)
+        return conversation
+
+    return []
+
+
+async def _conversation_with_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return conversation history including additional items."""
+    base_history = await _load_agent_conversation()
+    conversation = merge_conversation_with_items(base_history, items)
+    _cache_conversation(conversation)
+    return conversation
+
+
+async def _conversation_with_tool_call(data: Any) -> list[dict[str, Any]]:
+    """Build conversation history including the current tool call."""
+    event = {
+        "type": "function_call",
+        "tool_name": data.context.tool_name,
+        "arguments": data.context.tool_arguments,
+        "call_id": getattr(data.context, "tool_call_id", None),
+    }
+    return await _conversation_with_items([event])
+
+
+async def _conversation_with_tool_output(data: Any) -> list[dict[str, Any]]:
+    """Build conversation history including the current tool output."""
+    event = {
+        "type": "function_call_output",
+        "tool_name": data.context.tool_name,
+        "arguments": data.context.tool_arguments,
+        "output": str(data.output),
+        "call_id": getattr(data.context, "tool_call_id", None),
+    }
+    return await _conversation_with_items([event])
+
+
+def _separate_tool_level_from_agent_level(guardrails: list[Any]) -> tuple[list[Any], list[Any]]:
+
+exec
+/bin/bash -lc "rg -n \"GuardrailAgent|guardrail_llm|model_settings|base_url|api_key\" src/guardrails/agents.py tests/unit/test_agents.py | tail -n 100 && sed -n '400,620p' src/guardrails/agents.py" in /workspace/repo
+ succeeded in 0ms:
+src/guardrails/agents.py:1:"""GuardrailAgent: Drop-in replacement for Agents SDK Agent with automatic guardrails.
+src/guardrails/agents.py:3:This module provides the GuardrailAgent class that acts as a factory for creating
+src/guardrails/agents.py:26:__all__ = ["GuardrailAgent"]
+src/guardrails/agents.py:168:        guardrail_llm: AsyncOpenAI
+src/guardrails/agents.py:170:    return DefaultContext(guardrail_llm=AsyncOpenAI())
+src/guardrails/agents.py:471:            guardrail_llm: AsyncOpenAI
+src/guardrails/agents.py:473:        context = DefaultContext(guardrail_llm=AsyncOpenAI())
+src/guardrails/agents.py:566:class GuardrailAgent:
+src/guardrails/agents.py:582:        from guardrails import GuardrailAgent
+src/guardrails/agents.py:591:        agent = GuardrailAgent(
+src/guardrails/agents.py:647:            raise ImportError("The 'agents' package is required to use GuardrailAgent. Please install it with: pip install openai-agents") from e
+tests/unit/test_agents.py:226:    base_context = SimpleNamespace(guardrail_llm="client")
+tests/unit/test_agents.py:246:    assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+tests/unit/test_agents.py:288:        context=SimpleNamespace(guardrail_llm="client"),
+tests/unit/test_agents.py:316:        context=SimpleNamespace(guardrail_llm="client"),
+tests/unit/test_agents.py:342:        context=SimpleNamespace(guardrail_llm="client"),
+tests/unit/test_agents.py:370:        context=SimpleNamespace(guardrail_llm="client"),
+tests/unit/test_agents.py:441:        context=SimpleNamespace(guardrail_llm="llm"),
+tests/unit/test_agents.py:473:        context=SimpleNamespace(guardrail_llm="llm"),
+tests/unit/test_agents.py:506:        context=SimpleNamespace(guardrail_llm="llm"),
+tests/unit/test_agents.py:534:        context=SimpleNamespace(guardrail_llm="llm"),
+tests/unit/test_agents.py:544:    """GuardrailAgent should attach tool-level guardrails and return an Agent."""
+tests/unit/test_agents.py:580:    agent_instance = agents.GuardrailAgent(
+tests/unit/test_agents.py:600:    agent_instance = agents.GuardrailAgent(config={}, name="NoTools", instructions="None")
+tests/unit/test_agents.py:606:    """GuardrailAgent should work without instructions parameter."""
+tests/unit/test_agents.py:613:    agent_instance = agents.GuardrailAgent(config={}, name="NoInstructions")
+tests/unit/test_agents.py:620:    """GuardrailAgent should accept callable instructions."""
+tests/unit/test_agents.py:629:    agent_instance = agents.GuardrailAgent(
+tests/unit/test_agents.py:668:    agent_instance = agents.GuardrailAgent(
+tests/unit/test_agents.py:709:    agent_instance = agents.GuardrailAgent(
+tests/unit/test_agents.py:723:    """GuardrailAgent should handle empty user guardrail lists gracefully."""
+tests/unit/test_agents.py:729:    agent_instance = agents.GuardrailAgent(
+tests/unit/test_agents.py:962:        context=SimpleNamespace(guardrail_llm="llm"),
+tests/unit/test_agents.py:1004:        context=SimpleNamespace(guardrail_llm="llm"),
+tests/unit/test_agents.py:1128:        context=SimpleNamespace(guardrail_llm="client"),
+tests/unit/test_agents.py:1181:        context=SimpleNamespace(guardrail_llm="client"),
+tests/unit/test_agents.py:1226:        context=SimpleNamespace(guardrail_llm="client"),
+tests/unit/test_agents.py:1257:        context=SimpleNamespace(guardrail_llm="client"),
+                                    if field in part:
+                                        text = part[field]
+                                        break
+                                # Preserve empty strings, only filter None
+                                if text is not None and isinstance(text, str):
+                                    text_parts.append(text)
+                        if text_parts:
+                            return " ".join(text_parts)
+                        # No text parts found, return empty string
+                        return ""
+                    # If content is something else, try to stringify it
+                    elif content is not None:
+                        return str(content)
+
+        # No user message found in list
+        return ""
+
+    # Fallback: convert to string
+    return str(input_data)
+
+
+def _create_agents_guardrails_from_config(
+    config: str | Path | dict[str, Any], stages: list[str], guardrail_type: str = "input", context: Any = None, raise_guardrail_errors: bool = False
+) -> list[Any]:
+    """Create agent-level guardrail functions from a pipeline configuration.
+
+    NOTE: This automatically excludes "Prompt Injection Detection" guardrails
+    since those are handled as tool-level guardrails.
+
+    Args:
+        config: Pipeline configuration (file path, dict, or JSON string)
+        stages: List of pipeline stages to include ("pre_flight", "input", "output")
+        guardrail_type: Type of guardrail for Agents SDK ("input" or "output")
+        context: Optional context for guardrail execution (creates default if None)
+        raise_guardrail_errors: If True, raise exceptions when guardrails fail to execute.
+            If False (default), treat guardrail errors as safe and continue execution.
+
+    Returns:
+        List of guardrail functions (one per individual guardrail) ready for Agents SDK
+
+    Raises:
+        ImportError: If agents package is not available
+    """
+    try:
+        from agents import Agent, GuardrailFunctionOutput, RunContextWrapper, input_guardrail, output_guardrail
+    except ImportError as e:
+        raise ImportError("The 'agents' package is required to create agent guardrails. Please install it with: pip install openai-agents") from e
+
+    # Import needed guardrails modules
+    from .registry import default_spec_registry
+    from .runtime import instantiate_guardrails, load_pipeline_bundles, run_guardrails
+
+    # Load and parse the pipeline configuration
+    pipeline = load_pipeline_bundles(config)
+
+    # Collect all individual guardrails from requested stages (filter out tool-level)
+    all_guardrails = []
+    for stage_name in stages:
+        stage = getattr(pipeline, stage_name, None)
+        if stage:
+            stage_guardrails = instantiate_guardrails(stage, default_spec_registry)
+            # Filter out tool-level guardrails - they're handled separately
+            _, agent_level_guardrails = _separate_tool_level_from_agent_level(stage_guardrails)
+            all_guardrails.extend(agent_level_guardrails)
+
+    # Create default context if none provided
+    if context is None:
+        from openai import AsyncOpenAI
+
+        @dataclass
+        class DefaultContext:
+            guardrail_llm: AsyncOpenAI
+
+        context = DefaultContext(guardrail_llm=AsyncOpenAI())
+
+    # Check if any guardrail needs conversation history (optimization to avoid unnecessary loading)
+    needs_conversation_history = any(
+        getattr(g.definition, "metadata", None) and g.definition.metadata.uses_conversation_history for g in all_guardrails
+    )
+
+    def _create_individual_guardrail(guardrail):
+        """Create a function for a single specific guardrail."""
+
+        async def single_guardrail(ctx: RunContextWrapper[None], agent: Agent, input_data: str | list) -> GuardrailFunctionOutput:
+            """Guardrail function for a specific guardrail check.
+
+            Note: input_data is typed as str in Agents SDK, but can actually be a list
+            of message objects when conversation history is used. We handle both cases.
+            """
+            try:
+                # Extract text from input_data (handle both string and conversation history formats)
+                text_data = _extract_text_from_input(input_data)
+
+                # Load conversation history only if any guardrail in this stage needs it
+                if needs_conversation_history:
+                    conversation_history = await _load_agent_conversation()
+                    # Create a context with conversation history for guardrails that need it
+                    guardrail_context = _create_conversation_context(
+                        conversation_history=conversation_history,
+                        base_context=context,
+                    )
+                else:
+                    guardrail_context = context
+
+                # Run this single guardrail
+                results = await run_guardrails(
+                    ctx=guardrail_context,
+                    data=text_data,
+                    media_type="text/plain",
+                    guardrails=[guardrail],  # Just this one guardrail
+                    suppress_tripwire=True,  # We handle tripwires manually
+                    stage_name=guardrail_type,  # "input" or "output" - indicates which stage
+                    raise_guardrail_errors=raise_guardrail_errors,
+                )
+
+                # Check if tripwire was triggered
+                last_result: GuardrailResult | None = None
+                for result in results:
+                    last_result = result
+                    if result.tripwire_triggered:
+                        # Return full metadata in output_info for consistency with tool guardrails
+                        return GuardrailFunctionOutput(output_info=result.info, tripwire_triggered=True)
+
+                # For non-triggered guardrails, still return the info dict (e.g., token usage)
+                return GuardrailFunctionOutput(
+                    output_info=last_result.info if last_result is not None else None,
+                    tripwire_triggered=False,
+                )
+
+            except Exception as e:
+                if raise_guardrail_errors:
+                    # Re-raise the exception to stop execution (preserve traceback)
+                    raise
+                else:
+                    # Current behavior: treat errors as tripwires
+                    # Return structured error info for consistency
+                    return GuardrailFunctionOutput(
+                        output_info={
+                            "error": str(e),
+                            "guardrail_name": guardrail.definition.name,
+                        },
+                        tripwire_triggered=True,
+                    )
+
+        # Set the function name to the guardrail name (e.g., "Moderation" → "Moderation")
+        single_guardrail.__name__ = guardrail.definition.name.replace(" ", "_")
+
+        return single_guardrail
+
+    guardrail_functions = []
+
+    # Create one function per individual guardrail (Agents SDK runs them concurrently)
+    for guardrail in all_guardrails:
+        guardrail_func = _create_individual_guardrail(guardrail)
+
+        # Decorate with the appropriate guardrail decorator
+        if guardrail_type == "input":
+            guardrail_func = input_guardrail(guardrail_func)
+        else:
+            guardrail_func = output_guardrail(guardrail_func)
+
+        guardrail_functions.append(guardrail_func)
+
+    return guardrail_functions
+
+
+class GuardrailAgent:
+    """Drop-in replacement for Agents SDK Agent with automatic guardrails integration.
+
+    This class acts as a factory that creates a regular Agents SDK Agent instance
+    with guardrails automatically configured from a pipeline configuration.
+
+    Prompt Injection Detection guardrails are applied at the tool level (before and
+    after each tool call), while other guardrails run at the agent level.
+
+    When you supply an Agents Session via ``Runner.run(..., session=...)`` the
+    guardrails automatically read the persisted conversation history. Without a
+    session, guardrails operate on the conversation passed to ``Runner.run`` for
+    the current turn.
+
+    Example:
+        ```python
+        from guardrails import GuardrailAgent
+        from agents import Runner, function_tool
+
+
+        @function_tool
+        def get_weather(location: str) -> str:
+            return f"Weather in {location}: Sunny"
+
+
+        agent = GuardrailAgent(
+            config="guardrails_config.json",
+            name="Weather Assistant",
+            instructions="You help with weather information.",
+            tools=[get_weather],
+        )
+
+        # Use with Agents SDK Runner - prompt injection checks run on each tool call
+        result = await Runner.run(agent, "What's the weather in Tokyo?")
+        ```
+    """
+
+    def __new__(
+        cls,
+        config: str | Path | dict[str, Any],
+        name: str,
+        instructions: str | Callable[[Any, Any], Any] | None = None,
+        raise_guardrail_errors: bool = False,
+        block_on_tool_violations: bool = False,
+        **agent_kwargs: Any,
+    ) -> Any:  # Returns agents.Agent
+        """Create a new Agent instance with guardrails automatically configured.
+
+        This method acts as a factory that:
+        1. Loads the pipeline configuration
+        2. Separates tool-level from agent-level guardrails
+        3. Applies agent-level guardrails as input/output guardrails
+        4. Applies tool-level guardrails (e.g., Prompt Injection Detection) to all tools:
+           - pre_flight + input stages → tool_input_guardrail (before tool execution)
+           - output stage → tool_output_guardrail (after tool execution)
+
+exec
+/bin/bash -lc "sed -n '535,745p' tests/unit/test_agents.py && rg -n 'openai-agents|agents' pyproject.toml uv.lock | head -n 30 && rg -n 'OpenAIChatCompletionsModel|set_default_openai|AsyncOpenAI' tests src | head -n 100" in /workspace/repo
+ succeeded in 0ms:
+        raise_guardrail_errors=False,
+    )
+
+    result = await guardrails[0](agents_module.RunContextWrapper(None), Agent("n", "i"), "response")
+
+    assert result.tripwire_triggered is False  # noqa: S101
+
+
+def test_guardrail_agent_attaches_tool_guardrails(monkeypatch: pytest.MonkeyPatch) -> None:
+    """GuardrailAgent should attach tool-level guardrails and return an Agent."""
+    tool_guard = _make_guardrail("Prompt Injection Detection")
+    agent_guard = _make_guardrail("Sensitive Data Check")
+
+    class FakePipeline:
+        def __init__(self) -> None:
+            self.pre_flight = SimpleNamespace()
+            self.input = SimpleNamespace()
+            self.output = SimpleNamespace()
+
+        def stages(self) -> list[Any]:
+            return [self.pre_flight, self.input, self.output]
+
+    pipeline = FakePipeline()
+
+    def fake_load_pipeline_bundles(config: Any) -> FakePipeline:
+        assert config == {"version": 1}  # noqa: S101
+        return pipeline
+
+    def fake_instantiate_guardrails(stage: Any, registry: Any | None = None) -> list[Any]:
+        if stage is pipeline.pre_flight:
+            return [tool_guard]
+        if stage is pipeline.input:
+            return [agent_guard]
+        if stage is pipeline.output:
+            return []
+        return []
+
+    from guardrails import runtime as runtime_module
+
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", fake_load_pipeline_bundles)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", fake_instantiate_guardrails)
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", fake_load_pipeline_bundles, raising=False)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", fake_instantiate_guardrails, raising=False)
+
+    tool = SimpleNamespace()
+    agent_instance = agents.GuardrailAgent(
+        config={"version": 1},
+        name="Test Agent",
+        instructions="Help users.",
+        tools=[tool],
+    )
+
+    assert isinstance(agent_instance, agents_module.Agent)  # noqa: S101
+    assert len(tool.tool_input_guardrails) == 1  # type: ignore[attr-defined]  # noqa: S101
+    # Agent-level guardrails should be attached (one for Sensitive Data Check)
+    assert len(agent_instance.input_guardrails or []) >= 1  # noqa: S101
+
+
+def test_guardrail_agent_without_tools(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Agent with no tools should not attach tool guardrails."""
+    pipeline = SimpleNamespace(pre_flight=None, input=None, output=None)
+
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", lambda config: pipeline, raising=False)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", lambda *args, **kwargs: [], raising=False)
+
+    agent_instance = agents.GuardrailAgent(config={}, name="NoTools", instructions="None")
+
+    assert getattr(agent_instance, "input_guardrails", []) == []  # noqa: S101
+
+
+def test_guardrail_agent_without_instructions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """GuardrailAgent should work without instructions parameter."""
+    pipeline = SimpleNamespace(pre_flight=None, input=None, output=None)
+
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", lambda config: pipeline, raising=False)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", lambda *args, **kwargs: [], raising=False)
+
+    # Should not raise TypeError about missing instructions
+    agent_instance = agents.GuardrailAgent(config={}, name="NoInstructions")
+
+    assert isinstance(agent_instance, agents_module.Agent)  # noqa: S101
+    assert agent_instance.instructions is None  # noqa: S101
+
+
+def test_guardrail_agent_with_callable_instructions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """GuardrailAgent should accept callable instructions."""
+    pipeline = SimpleNamespace(pre_flight=None, input=None, output=None)
+
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", lambda config: pipeline, raising=False)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", lambda *args, **kwargs: [], raising=False)
+
+    def dynamic_instructions(ctx: Any, agent: Any) -> str:
+        return f"You are {agent.name}"
+
+    agent_instance = agents.GuardrailAgent(
+        config={},
+        name="DynamicAgent",
+        instructions=dynamic_instructions,
+    )
+
+    assert isinstance(agent_instance, agents_module.Agent)  # noqa: S101
+    assert callable(agent_instance.instructions)  # noqa: S101
+    assert agent_instance.instructions == dynamic_instructions  # noqa: S101
+
+
+def test_guardrail_agent_merges_user_input_guardrails(monkeypatch: pytest.MonkeyPatch) -> None:
+    """User input guardrails should be merged with config guardrails."""
+    agent_guard = _make_guardrail("Config Input Guard")
+
+    class FakePipeline:
+        def __init__(self) -> None:
+            self.pre_flight = None
+            self.input = SimpleNamespace()
+            self.output = None
+
+    pipeline = FakePipeline()
+
+    def fake_load_pipeline_bundles(config: Any) -> FakePipeline:
+        return pipeline
+
+    def fake_instantiate_guardrails(stage: Any, registry: Any | None = None) -> list[Any]:
+        if stage is pipeline.input:
+            return [agent_guard]
+        return []
+
+    from guardrails import runtime as runtime_module
+
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", fake_load_pipeline_bundles)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", fake_instantiate_guardrails)
+
+    # Create a custom user guardrail
+    custom_guardrail = lambda ctx, agent, input: None  # noqa: E731
+
+    agent_instance = agents.GuardrailAgent(
+        config={},
+        name="MergedAgent",
+        instructions="Test",
+        input_guardrails=[custom_guardrail],
+    )
+
+    # Should have both config and user guardrails merged
+    assert isinstance(agent_instance, agents_module.Agent)  # noqa: S101
+    assert len(agent_instance.input_guardrails) == 2  # noqa: S101
+    # Config guardrail from _create_agents_guardrails_from_config, then user guardrail
+
+
+def test_guardrail_agent_merges_user_output_guardrails(monkeypatch: pytest.MonkeyPatch) -> None:
+    """User output guardrails should be merged with config guardrails."""
+    agent_guard = _make_guardrail("Config Output Guard")
+
+    class FakePipeline:
+        def __init__(self) -> None:
+            self.pre_flight = None
+            self.input = None
+            self.output = SimpleNamespace()
+
+    pipeline = FakePipeline()
+
+    def fake_load_pipeline_bundles(config: Any) -> FakePipeline:
+        return pipeline
+
+    def fake_instantiate_guardrails(stage: Any, registry: Any | None = None) -> list[Any]:
+        if stage is pipeline.output:
+            return [agent_guard]
+        return []
+
+    from guardrails import runtime as runtime_module
+
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", fake_load_pipeline_bundles)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", fake_instantiate_guardrails)
+
+    # Create a custom user guardrail
+    custom_guardrail = lambda ctx, agent, output: None  # noqa: E731
+
+    agent_instance = agents.GuardrailAgent(
+        config={},
+        name="MergedAgent",
+        instructions="Test",
+        output_guardrails=[custom_guardrail],
+    )
+
+    # Should have both config and user guardrails merged
+    assert isinstance(agent_instance, agents_module.Agent)  # noqa: S101
+    assert len(agent_instance.output_guardrails) == 2  # noqa: S101
+    # Config guardrail from _create_agents_guardrails_from_config, then user guardrail
+
+
+def test_guardrail_agent_with_empty_user_guardrails(monkeypatch: pytest.MonkeyPatch) -> None:
+    """GuardrailAgent should handle empty user guardrail lists gracefully."""
+    pipeline = SimpleNamespace(pre_flight=None, input=None, output=None)
+
+    monkeypatch.setattr(runtime_module, "load_pipeline_bundles", lambda config: pipeline, raising=False)
+    monkeypatch.setattr(runtime_module, "instantiate_guardrails", lambda *args, **kwargs: [], raising=False)
+
+    agent_instance = agents.GuardrailAgent(
+        config={},
+        name="EmptyListAgent",
+        instructions="Test",
+        input_guardrails=[],
+        output_guardrails=[],
+    )
+
+    assert isinstance(agent_instance, agents_module.Agent)  # noqa: S101
+    assert agent_instance.input_guardrails == []  # noqa: S101
+    assert agent_instance.output_guardrails == []  # noqa: S101
+
+
+# =============================================================================
+# Tests for _extract_text_from_input (new function for conversation history bug fix)
+# =============================================================================
+
+rg: uv.lock: No such file or directory (os error 2)
+pyproject.toml:12:    "openai-agents>=0.3.3",
+src/guardrails/runtime.py:21:from openai import AsyncOpenAI
+src/guardrails/runtime.py:495:        guardrail_llm: AsyncOpenAI
+src/guardrails/runtime.py:497:    return DefaultCtx(guardrail_llm=AsyncOpenAI())
+src/guardrails/client.py:3:This module provides GuardrailsAsyncOpenAI and GuardrailsOpenAI classes that
+src/guardrails/client.py:15:from openai import AsyncOpenAI, OpenAI
+src/guardrails/client.py:36:    "GuardrailsAsyncOpenAI",
+src/guardrails/client.py:138:class GuardrailsAsyncOpenAI(AsyncOpenAI, GuardrailsBaseClient, StreamingMixin):
+src/guardrails/client.py:139:    """AsyncOpenAI subclass with automatic guardrail integration.
+src/guardrails/client.py:159:        """Initialize GuardrailsAsyncOpenAI client.
+src/guardrails/client.py:167:            **openai_kwargs: Additional arguments passed to AsyncOpenAI constructor.
+src/guardrails/client.py:176:        from openai import AsyncOpenAI
+src/guardrails/client.py:178:        self._initialize_client(config, openai_kwargs, AsyncOpenAI)
+src/guardrails/client.py:191:            guardrail_llm: AsyncOpenAI
+src/guardrails/client.py:194:        from openai import AsyncOpenAI
+src/guardrails/client.py:206:        guardrail_client = AsyncOpenAI(**guardrail_kwargs)
+src/guardrails/client.py:216:            guardrail_llm: AsyncOpenAI
+src/guardrails/client.py:317:    Synchronous version of GuardrailsAsyncOpenAI with the same functionality.
+src/guardrails/types.py:18:from openai import AsyncOpenAI, OpenAI
+src/guardrails/types.py:63:        guardrail_llm (AsyncOpenAI | OpenAI): The OpenAI client used by the guardrail.
+src/guardrails/types.py:67:    guardrail_llm: AsyncOpenAI | OpenAI | AsyncAzureOpenAI | AzureOpenAI
+src/guardrails/types.py:256:    - GuardrailsResponse (from GuardrailsAsyncOpenAI, GuardrailsOpenAI, etc.)
+tests/integration/test_suite.py:14:from openai import AsyncOpenAI
+tests/integration/test_suite.py:16:from guardrails import GuardrailsAsyncOpenAI
+tests/integration/test_suite.py:21:    guardrail_llm: AsyncOpenAI
+tests/integration/test_suite.py:342:    guardrails_client: GuardrailsAsyncOpenAI,
+tests/integration/test_suite.py:501:        # Initialize GuardrailsAsyncOpenAI for this test
+tests/integration/test_suite.py:502:        guardrails_client = GuardrailsAsyncOpenAI(config=pipeline_config)
+src/guardrails/__init__.py:18:    GuardrailsAsyncOpenAI,
+src/guardrails/__init__.py:51:    "GuardrailsAsyncOpenAI",  # async OpenAI subclass with guardrails
+src/guardrails/agents.py:164:    from openai import AsyncOpenAI
+src/guardrails/agents.py:168:        guardrail_llm: AsyncOpenAI
+src/guardrails/agents.py:170:    return DefaultContext(guardrail_llm=AsyncOpenAI())
+src/guardrails/agents.py:467:        from openai import AsyncOpenAI
+src/guardrails/agents.py:471:            guardrail_llm: AsyncOpenAI
+src/guardrails/agents.py:473:        context = DefaultContext(guardrail_llm=AsyncOpenAI())
+src/guardrails/context.py:11:from openai import AsyncOpenAI, OpenAI
+src/guardrails/context.py:31:    - AsyncOpenAI: For async guardrail execution
+src/guardrails/context.py:37:    guardrail_llm: AsyncOpenAI | OpenAI | AsyncAzureOpenAI | AzureOpenAI
+tests/integration/test_guardrails.py:12:from openai import AsyncOpenAI
+tests/integration/test_guardrails.py:22:    guardrail_llm: AsyncOpenAI
+tests/integration/test_guardrails.py:88:        openai_client = AsyncOpenAI()
+tests/conftest.py:39:class _StubAsyncOpenAI(_StubOpenAIBase):
+tests/conftest.py:59:_STUB_OPENAI_MODULE.AsyncOpenAI = _StubAsyncOpenAI
+tests/conftest.py:61:_STUB_OPENAI_MODULE.AsyncAzureOpenAI = _StubAsyncOpenAI
+tests/conftest.py:121:    monkeypatch.setattr(_base_client, "AsyncOpenAI", _StubAsyncOpenAI, raising=False)
+tests/conftest.py:123:    monkeypatch.setattr(client, "AsyncOpenAI", _StubAsyncOpenAI, raising=False)
+tests/conftest.py:125:    monkeypatch.setattr(client, "AsyncAzureOpenAI", _StubAsyncOpenAI, raising=False)
+tests/conftest.py:127:    monkeypatch.setattr(guardrail_types, "AsyncOpenAI", _StubAsyncOpenAI, raising=False)
+tests/conftest.py:129:    monkeypatch.setattr(guardrail_types, "AsyncAzureOpenAI", _StubAsyncOpenAI, raising=False)
+src/guardrails/evals/guardrail_evals.py:20:from openai import AsyncOpenAI
+src/guardrails/evals/guardrail_evals.py:356:            Context with configured AsyncOpenAI or AsyncAzureOpenAI client.
+src/guardrails/evals/guardrail_evals.py:381:            guardrail_llm = AsyncOpenAI(**openai_kwargs)
+tests/unit/test_types.py:13:    """Provide a stub ``openai.AsyncOpenAI`` and patch guardrails types symbol.
+tests/unit/test_types.py:19:    class AsyncOpenAI:  # noqa: D401 - simple stub
+tests/unit/test_types.py:20:        """Stubbed AsyncOpenAI client."""
+tests/unit/test_types.py:25:    module.__dict__["AsyncOpenAI"] = AsyncOpenAI
+tests/unit/test_types.py:31:        monkeypatch.setattr(gr_types, "AsyncOpenAI", AsyncOpenAI, raising=False)
+tests/unit/test_types.py:82:    from guardrails.types import AsyncOpenAI, GuardrailLLMContextProto
+tests/unit/test_types.py:84:    class DummyLLM(AsyncOpenAI):
+tests/unit/test_types.py:88:        guardrail_llm: AsyncOpenAI
+src/guardrails/utils/create_vector_store.py:16:from openai import AsyncOpenAI
+src/guardrails/utils/create_vector_store.py:50:    client: AsyncOpenAI,
+src/guardrails/utils/create_vector_store.py:137:        client = AsyncOpenAI()
+src/guardrails/utils/safety_identifier.py:15:    from openai import AsyncAzureOpenAI, AsyncOpenAI, AzureOpenAI, OpenAI
+src/guardrails/utils/safety_identifier.py:30:    client: AsyncOpenAI | OpenAI | AsyncAzureOpenAI | AzureOpenAI | Any,
+src/guardrails/utils/safety_identifier.py:44:        >>> from openai import AsyncOpenAI
+src/guardrails/utils/safety_identifier.py:45:        >>> client = AsyncOpenAI()
+src/guardrails/utils/safety_identifier.py:49:        >>> from openai import AsyncOpenAI
+src/guardrails/utils/safety_identifier.py:50:        >>> local_client = AsyncOpenAI(base_url="http://localhost:11434")
+tests/unit/test_client_async.py:1:"""Tests for GuardrailsAsyncOpenAI core behaviour."""
+tests/unit/test_client_async.py:11:from guardrails.client import GuardrailsAsyncAzureOpenAI, GuardrailsAsyncOpenAI
+tests/unit/test_client_async.py:21:def _build_client(**kwargs: Any) -> GuardrailsAsyncOpenAI:
+tests/unit/test_client_async.py:22:    """Instantiate GuardrailsAsyncOpenAI with deterministic defaults."""
+tests/unit/test_client_async.py:23:    return GuardrailsAsyncOpenAI(config=_minimal_config(), **kwargs)
+tests/unit/test_client_async.py:32:    """Default context should hold a fresh AsyncOpenAI instance mirroring config."""
+tests/unit/test_agents.py:234:    """Default tool context should return AsyncOpenAI client."""
+tests/unit/test_agents.py:237:    class StubAsyncOpenAI:
+tests/unit/test_agents.py:241:    openai_mod.AsyncOpenAI = StubAsyncOpenAI
+tests/unit/test_agents.py:246:    assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+tests/unit/test_runtime.py:32:    """Provide a stub ``openai.AsyncOpenAI`` and patch imports in guardrails.*.
+tests/unit/test_runtime.py:38:    class AsyncOpenAI:  # noqa: D401 - simple stub
+tests/unit/test_runtime.py:39:        """Stubbed AsyncOpenAI client."""
+tests/unit/test_runtime.py:44:    module.__dict__["AsyncOpenAI"] = AsyncOpenAI
+tests/unit/test_runtime.py:51:        monkeypatch.setattr(gr_runtime, "AsyncOpenAI", AsyncOpenAI, raising=False)
+tests/unit/test_runtime.py:57:        monkeypatch.setattr(gr_types, "AsyncOpenAI", AsyncOpenAI, raising=False)
+tests/unit/test_safety_identifier.py:14:    mock_client.__class__.__name__ = "AsyncOpenAI"
+tests/unit/test_safety_identifier.py:25:    mock_client.__class__.__name__ = "AsyncOpenAI"
+tests/unit/test_safety_identifier.py:59:    mock_client.__class__.__name__ = "AsyncOpenAI"
+tests/unit/test_safety_identifier.py:70:    mock_client.__class__.__name__ = "AsyncOpenAI"
+tests/unit/test_spec.py:21:    """Provide a stub ``openai.AsyncOpenAI`` for modules under test."""
+tests/unit/test_spec.py:24:    class AsyncOpenAI:
+tests/unit/test_spec.py:28:    module.__dict__["AsyncOpenAI"] = AsyncOpenAI
+tests/unit/test_registry.py:13:    """Provide a stub ``openai.AsyncOpenAI`` for modules under test."""
+tests/unit/test_registry.py:16:    class AsyncOpenAI:
+tests/unit/test_registry.py:20:    module.__dict__["AsyncOpenAI"] = AsyncOpenAI
+tests/unit/utils/test_create_vector_store.py:14:class _FakeAsyncOpenAI:
+tests/unit/utils/test_create_vector_store.py:50:    client = _FakeAsyncOpenAI()
+tests/unit/utils/test_create_vector_store.py:61:    client = _FakeAsyncOpenAI()
+src/guardrails/checks/text/moderation.py:36:from openai import AsyncOpenAI, NotFoundError
+src/guardrails/checks/text/moderation.py:123:def _get_moderation_client() -> AsyncOpenAI:
+
+exec
+/bin/bash -lc "python - <<'PY'
+import inspect
+import agents
+import agents.models.openai_provider as provider
+print(agents.__file__)
+print(inspect.getsource(provider.OpenAIProvider))
+PY
+sed -n '1,115p' tests/conftest.py
+sed -n '1,115p' tests/unit/test_client_async.py" in /workspace/repo
+ succeeded in 514ms:
+/usr/local/lib/python3.12/site-packages/agents/__init__.py
+class OpenAIProvider(ModelProvider):
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        websocket_base_url: str | None = None,
+        openai_client: AsyncOpenAI | None = None,
+        organization: str | None = None,
+        project: str | None = None,
+        use_responses: bool | None = None,
+        use_responses_websocket: bool | None = None,
+        strict_feature_validation: bool = False,
+        agent_registration: OpenAIAgentRegistrationConfig | None = None,
+        responses_websocket_options: OpenAIResponsesWebSocketOptions | None = None,
+        buffer_streamed_tool_calls: bool = False,
+    ) -> None:
+        """Create a new OpenAI provider.
+
+        Args:
+            api_key: The API key to use for the OpenAI client. If not provided, we will use the
+                default API key.
+            base_url: The base URL to use for the OpenAI client. If not provided, we will use the
+                default base URL.
+            websocket_base_url: The websocket base URL to use for the OpenAI client. If not
+                provided, we will use the OPENAI_WEBSOCKET_BASE_URL environment variable when set.
+            openai_client: An optional OpenAI client to use. If not provided, we will create a new
+                OpenAI client using the api_key and base_url.
+            organization: The organization to use for the OpenAI client.
+            project: The project to use for the OpenAI client.
+            use_responses: Whether to use the OpenAI responses API.
+            use_responses_websocket: Whether to use websocket transport for the OpenAI responses
+                API.
+            strict_feature_validation: Whether Chat Completions models should raise a UserError
+                when callers pass Responses-only features such as previous_response_id,
+                conversation_id, prompt, or non-text-only tool outputs. Defaults to False, which
+                preserves the default compatibility behavior.
+            agent_registration: Optional agent registration configuration.
+            responses_websocket_options: Optional low-level websocket keepalive options for the
+                OpenAI Responses websocket transport.
+            buffer_streamed_tool_calls: Whether Chat Completions models should buffer streamed
+                function tool-call deltas and emit them to the SDK only after the provider stream
+                finishes. This is useful for OpenAI-compatible providers whose streamed tool-call
+                chunk semantics are not reliable enough for incremental processing.
+        """
+        if openai_client is not None:
+            if api_key is not None or base_url is not None or websocket_base_url is not None:
+                raise UserError(
+                    "Don't provide api_key, base_url, or websocket_base_url if you provide "
+                    "openai_client"
+                )
+            self._client: AsyncOpenAI | None = openai_client
+        else:
+            self._client = None
+            self._stored_api_key = api_key
+            self._stored_base_url = base_url
+            self._stored_websocket_base_url = websocket_base_url
+            self._stored_organization = organization
+            self._stored_project = project
+
+        if use_responses is not None:
+            self._use_responses = use_responses
+        else:
+            self._use_responses = _openai_shared.get_use_responses_by_default()
+
+        if use_responses_websocket is not None:
+            self._responses_transport: _openai_shared.OpenAIResponsesTransport = (
+                "websocket" if use_responses_websocket else "http"
+            )
+        else:
+            self._responses_transport = _openai_shared.get_default_openai_responses_transport()
+        # Backward-compatibility shim for internal tests/diagnostics that inspect the legacy flag.
+        self._use_responses_websocket = self._responses_transport == "websocket"
+        self._strict_feature_validation = strict_feature_validation
+        self._responses_websocket_options = responses_websocket_options
+        self._buffer_streamed_tool_calls = buffer_streamed_tool_calls
+
+        # Reuse websocket model wrappers so websocket transport can keep a persistent connection
+        # when callers pass model names as strings through a shared provider.
+        self._ws_model_cache_by_loop: weakref.WeakKeyDictionary[
+            asyncio.AbstractEventLoop, _WSLoopModelCache
+        ] = weakref.WeakKeyDictionary()
+        self._agent_registration = resolve_openai_agent_registration_config(agent_registration)
+
+    @property
+    def agent_registration(self) -> ResolvedOpenAIAgentRegistrationConfig | None:
+        return self._agent_registration
+
+    # We lazy load the client in case you never actually use OpenAIProvider(). Otherwise
+    # AsyncOpenAI() raises an error if you don't have an API key set.
+    def _get_client(self) -> AsyncOpenAI:
+        if self._client is None:
+            self._client = _openai_shared.get_default_openai_client() or AsyncOpenAI(
+                api_key=self._stored_api_key or _openai_shared.get_default_openai_key(),
+                base_url=self._stored_base_url or os.getenv("OPENAI_BASE_URL"),
+                websocket_base_url=(
+                    self._stored_websocket_base_url or os.getenv("OPENAI_WEBSOCKET_BASE_URL")
+                ),
+                organization=self._stored_organization,
+                project=self._stored_project,
+                http_client=shared_http_client(),
+            )
+
+        return self._client
+
+    def _get_running_loop(self) -> asyncio.AbstractEventLoop | None:
+        try:
+            return asyncio.get_running_loop()
+        except RuntimeError:
+            return None
+
+    async def _close_ws_models_for_loop(
+        self,
+        loop: asyncio.AbstractEventLoop,
+        models: list[Model],
+        current_loop: asyncio.AbstractEventLoop,
+    ) -> None:
+        if not models:
+            return
+        if loop is current_loop:
+            await self._close_models(models)
+            return
+        if loop.is_running():
+            for model in models:
+                future = asyncio.run_coroutine_threadsafe(model.close(), loop)
+                await asyncio.wrap_future(future)
+            return
+        # Do not run an inactive foreign loop on another thread. This also covers closed loops.
+        # Close from the current loop and rely on model-specific cross-loop cleanup fallbacks.
+        await self._close_models(models)
+
+    async def _close_models(self, models: list[Model]) -> None:
+        for model in models:
+            await model.close()
+
+    def _clear_ws_loop_cache_entry(
+        self, loop: asyncio.AbstractEventLoop, loop_cache: _WSLoopModelCache
+    ) -> None:
+        loop_cache.clear()
+        try:
+            del self._ws_model_cache_by_loop[loop]
+        except KeyError:
+            pass
+
+    def _collect_unique_cached_models(
+        self, loop_cache: _WSLoopModelCache, seen: set[int]
+    ) -> list[Model]:
+        models_to_close: list[Model] = []
+        for model in list(loop_cache.values()):
+            model_id = id(model)
+            if model_id in seen:
+                continue
+            seen.add(model_id)
+            models_to_close.append(model)
+        return models_to_close
+
+    def _prune_closed_ws_loop_caches(self) -> None:
+        """Drop websocket model cache entries for loops that are already closed."""
+        for loop, loop_cache in list(self._ws_model_cache_by_loop.items()):
+            if not loop.is_closed():
+                continue
+
+            for model in list(loop_cache.values()):
+                if isinstance(model, OpenAIResponsesWSModel):
+                    model._force_drop_websocket_connection_sync()
+
+            self._clear_ws_loop_cache_entry(loop, loop_cache)
+
+    def get_model(self, model_name: str | None) -> Model:
+        model_is_explicit = model_name is not None
+        resolved_model_name = model_name if model_name is not None else get_default_model()
+        cache_key: _WSModelCacheKey = (
+            resolved_model_name,
+            model_is_explicit,
+        )
+        running_loop: asyncio.AbstractEventLoop | None = None
+        loop_cache: _WSLoopModelCache | None = None
+
+        use_websocket_transport = self._responses_transport == "websocket"
+        if self._use_responses and use_websocket_transport:
+            self._prune_closed_ws_loop_caches()
+            running_loop = self._get_running_loop()
+            loop_cache = (
+                self._ws_model_cache_by_loop.setdefault(running_loop, {})
+                if running_loop is not None
+                else None
+            )
+            if loop_cache is not None and (cached_model := loop_cache.get(cache_key)):
+                return cached_model
+        client = self._get_client()
+        model: Model
+
+        if not self._use_responses:
+            return OpenAIChatCompletionsModel(
+                model=resolved_model_name,
+                openai_client=client,
+                strict_feature_validation=self._strict_feature_validation,
+                buffer_streamed_tool_calls=self._buffer_streamed_tool_calls,
+            )
+
+        if use_websocket_transport:
+            model = OpenAIResponsesWSModel(
+                model=resolved_model_name,
+                openai_client=client,
+                model_is_explicit=model_is_explicit,
+                websocket_options=self._responses_websocket_options,
+            )
+            if loop_cache is not None:
+                loop_cache[cache_key] = model
+            return model
+
+        model = OpenAIResponsesModel(
+            model=resolved_model_name,
+            openai_client=client,
+            model_is_explicit=model_is_explicit,
+        )
+        return model
+
+    async def aclose(self) -> None:
+        """Close any cached model resources held by this provider.
+
+        This primarily releases persistent websocket connections opened by
+        ``OpenAIResponsesWSModel`` instances. It intentionally does not close the
+        underlying ``AsyncOpenAI`` client because the SDK may be sharing the HTTP client
+        across providers/process-wide.
+        """
+        seen: set[int] = set()
+        current_loop = self._get_running_loop()
+        if current_loop is None:
+            return
+        for loop, loop_cache in list(self._ws_model_cache_by_loop.items()):
+            models_to_close = self._collect_unique_cached_models(loop_cache, seen)
+            await self._close_ws_models_for_loop(loop, models_to_close, current_loop)
+            self._clear_ws_loop_cache_entry(loop, loop_cache)
+
+"""Shared pytest fixtures for guardrails tests.
+
+These fixtures provide deterministic test environments by stubbing the OpenAI
+client library, seeding environment variables, and preventing accidental live
+network activity during the suite.
+"""
+
+from __future__ import annotations
+
+import logging
+import sys
+import types
+from collections.abc import Iterator
+from dataclasses import dataclass
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+
+
+class _StubOpenAIBase:
+    """Base stub with attribute bag behaviour for OpenAI client classes."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        self._client_kwargs = kwargs
+        self.chat = SimpleNamespace()
+        self.responses = SimpleNamespace()
+        self.api_key = kwargs.get("api_key", "test-key")
+        self.base_url = kwargs.get("base_url")
+        self.organization = kwargs.get("organization")
+        self.timeout = kwargs.get("timeout")
+        self.max_retries = kwargs.get("max_retries")
+
+    def __getattr__(self, item: str) -> Any:
+        """Return None for unknown attributes to emulate real client laziness."""
+        return None
+
+
+class _StubAsyncOpenAI(_StubOpenAIBase):
+    """Stub asynchronous OpenAI client."""
+
+
+class _StubSyncOpenAI(_StubOpenAIBase):
+    """Stub synchronous OpenAI client."""
+
+
+@dataclass(frozen=True, slots=True)
+class _DummyResponse:
+    """Minimal response type with choices and output."""
+
+    choices: list[Any] | None = None
+    output: list[Any] | None = None
+    output_text: str | None = None
+    type: str | None = None
+    delta: str | None = None
+
+
+_STUB_OPENAI_MODULE = types.ModuleType("openai")
+_STUB_OPENAI_MODULE.AsyncOpenAI = _StubAsyncOpenAI
+_STUB_OPENAI_MODULE.OpenAI = _StubSyncOpenAI
+_STUB_OPENAI_MODULE.AsyncAzureOpenAI = _StubAsyncOpenAI
+_STUB_OPENAI_MODULE.AzureOpenAI = _StubSyncOpenAI
+_STUB_OPENAI_MODULE.NOT_GIVEN = object()
+
+
+class APITimeoutError(Exception):
+    """Stub API timeout error."""
+
+
+class NotFoundError(Exception):
+    """Stub 404 not found error."""
+
+    def __init__(self, message: str, *, response: Any = None, body: Any = None) -> None:
+        """Initialize NotFoundError with OpenAI-compatible signature."""
+        super().__init__(message)
+        self.response = response
+        self.body = body
+
+
+_STUB_OPENAI_MODULE.APITimeoutError = APITimeoutError
+_STUB_OPENAI_MODULE.NotFoundError = NotFoundError
+
+_OPENAI_TYPES_MODULE = types.ModuleType("openai.types")
+_OPENAI_TYPES_MODULE.Completion = _DummyResponse
+_OPENAI_TYPES_MODULE.Response = _DummyResponse
+
+_OPENAI_CHAT_MODULE = types.ModuleType("openai.types.chat")
+_OPENAI_CHAT_MODULE.ChatCompletion = _DummyResponse
+_OPENAI_CHAT_MODULE.ChatCompletionChunk = _DummyResponse
+
+_OPENAI_RESPONSES_MODULE = types.ModuleType("openai.types.responses")
+_OPENAI_RESPONSES_MODULE.Response = _DummyResponse
+_OPENAI_RESPONSES_MODULE.ResponseInputItemParam = dict  # type: ignore[attr-defined]
+_OPENAI_RESPONSES_MODULE.ResponseOutputItem = dict  # type: ignore[attr-defined]
+_OPENAI_RESPONSES_MODULE.ResponseStreamEvent = dict  # type: ignore[attr-defined]
+
+
+_OPENAI_RESPONSES_RESPONSE_MODULE = types.ModuleType("openai.types.responses.response")
+_OPENAI_RESPONSES_RESPONSE_MODULE.Response = _DummyResponse
+
+
+class _ResponseTextConfigParam(dict):
+    """Stub config param used for response formatting."""
+
+
+_OPENAI_RESPONSES_MODULE.ResponseTextConfigParam = _ResponseTextConfigParam
+
+sys.modules["openai"] = _STUB_OPENAI_MODULE
+sys.modules["openai.types"] = _OPENAI_TYPES_MODULE
+sys.modules["openai.types.chat"] = _OPENAI_CHAT_MODULE
+sys.modules["openai.types.responses"] = _OPENAI_RESPONSES_MODULE
+sys.modules["openai.types.responses.response"] = _OPENAI_RESPONSES_RESPONSE_MODULE
+
+
+@pytest.fixture(autouse=True)
+"""Tests for GuardrailsAsyncOpenAI core behaviour."""
+
+from __future__ import annotations
+
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+
+import guardrails.client as client_module
+from guardrails.client import GuardrailsAsyncAzureOpenAI, GuardrailsAsyncOpenAI
+from guardrails.exceptions import GuardrailTripwireTriggered
+from guardrails.types import GuardrailResult
+
+
+def _minimal_config() -> dict[str, Any]:
+    """Return minimal pipeline config with no guardrails."""
+    return {"version": 1, "output": {"version": 1, "guardrails": []}}
+
+
+def _build_client(**kwargs: Any) -> GuardrailsAsyncOpenAI:
+    """Instantiate GuardrailsAsyncOpenAI with deterministic defaults."""
+    return GuardrailsAsyncOpenAI(config=_minimal_config(), **kwargs)
+
+
+def _guardrail(name: str) -> Any:
+    return SimpleNamespace(definition=SimpleNamespace(name=name), ctx_requirements=SimpleNamespace())
+
+
+@pytest.mark.asyncio
+async def test_default_context_uses_distinct_guardrail_client() -> None:
+    """Default context should hold a fresh AsyncOpenAI instance mirroring config."""
+    client = _build_client(api_key="secret-key", base_url="http://example.com")
+
+    assert client.context is not None  # noqa: S101
+    assert client.context.guardrail_llm is not client  # type: ignore[attr-defined]  # noqa: S101
+    assert client.context.guardrail_llm.api_key == "secret-key"  # type: ignore[attr-defined]  # noqa: S101
+    assert client.context.guardrail_llm.base_url == "http://example.com"  # type: ignore[attr-defined]  # noqa: S101
+
+
+@pytest.mark.asyncio
+async def test_conversation_context_exposes_history() -> None:
+    """Conversation-aware context should surface conversation history only."""
+    client = _build_client()
+    conversation = [{"role": "user", "content": "Hello"}]
+
+    conv_ctx = client._create_context_with_conversation(conversation)
+
+    assert conv_ctx.get_conversation_history() == conversation  # noqa: S101
+    assert not hasattr(conv_ctx, "update_injection_last_checked_index")  # noqa: S101
+
+
+def test_append_llm_response_handles_string_history() -> None:
+    """String conversation history should be normalized before appending."""
+    client = _build_client()
+    response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content="assistant reply"))],
+        output=None,
+    )
+
+    updated_history = client._append_llm_response_to_conversation("hi there", response)
+
+    assert updated_history[0]["content"] == "hi there"  # noqa: S101
+    assert updated_history[0]["role"] == "user"  # noqa: S101
+    assert updated_history[1]["content"] == "assistant reply"  # noqa: S101
+
+
+def test_append_llm_response_handles_response_output() -> None:
+    """Responses API output should be appended as-is."""
+    client = _build_client()
+    response = SimpleNamespace(
+        choices=None,
+        output=[{"role": "assistant", "content": "streamed"}],
+    )
+
+    updated_history = client._append_llm_response_to_conversation([], response)
+
+    assert updated_history == [{"role": "assistant", "content": "streamed"}]  # noqa: S101
+
+
+def _guardrail(name: str) -> Any:
+    """Create a guardrail stub with a definition name."""
+    return SimpleNamespace(definition=SimpleNamespace(name=name), ctx_requirements=SimpleNamespace())
+
+
+@pytest.mark.asyncio
+async def test_run_stage_guardrails_raises_on_tripwire(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tripwire results should raise unless suppressed."""
+    client = _build_client()
+    client.guardrails["output"] = [_guardrail("basic guardrail")]
+    captured_ctx = {}
+
+    async def fake_run_guardrails(**kwargs: Any) -> list[GuardrailResult]:
+        captured_ctx.update(kwargs)
+        return [GuardrailResult(tripwire_triggered=True)]
+
+    monkeypatch.setattr("guardrails.client.run_guardrails", fake_run_guardrails)
+
+    with pytest.raises(GuardrailTripwireTriggered):
+        await client._run_stage_guardrails("output", "payload")
+
+    assert captured_ctx["ctx"] is client.context  # noqa: S101
+    assert captured_ctx["stage_name"] == "output"  # noqa: S101
+
+
+@pytest.mark.asyncio
+async def test_run_stage_guardrails_uses_conversation_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Prompt injection guardrail should trigger conversation-aware context."""
+    client = _build_client()
+    client.guardrails["output"] = [_guardrail("Prompt Injection Detection")]
+    conversation = [{"role": "user", "content": "Hi"}]
+    captured_ctx = {}
+
+    async def fake_run_guardrails(**kwargs: Any) -> list[GuardrailResult]:
+        captured_ctx.update(kwargs)
+
+exec
+/bin/bash -lc "python - <<'PY'
+import inspect
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
+print(inspect.signature(OpenAIChatCompletionsModel))
+print(inspect.getsource(OpenAIChatCompletionsModel.__init__))
+PY
+sed -n '620,735p' src/guardrails/agents.py
+sed -n '105,150p' tests/conftest.py" in /workspace/repo
+ succeeded in 463ms:
+(model: 'str | ChatModel', openai_client: 'AsyncOpenAI', should_replay_reasoning_content: 'ShouldReplayReasoningContent | None' = None, strict_feature_validation: 'bool' = False, buffer_streamed_tool_calls: 'bool' = False) -> 'None'
+    def __init__(
+        self,
+        model: str | ChatModel,
+        openai_client: AsyncOpenAI,
+        should_replay_reasoning_content: ShouldReplayReasoningContent | None = None,
+        strict_feature_validation: bool = False,
+        buffer_streamed_tool_calls: bool = False,
+    ) -> None:
+        self.model = model
+        self._client = openai_client
+        self.should_replay_reasoning_content = should_replay_reasoning_content
+        self._strict_feature_validation = strict_feature_validation
+        self._buffer_streamed_tool_calls = buffer_streamed_tool_calls
+        self._has_warned_unsupported_prompt = False
+        self._has_warned_unsupported_conversation_state = False
+        self._has_warned_unsupported_reasoning_settings = False
+
+           - output stage → tool_output_guardrail (after tool execution)
+        5. Returns a regular Agent instance ready for use with Runner.run()
+
+        Args:
+            config: Pipeline configuration (file path, dict, or JSON string)
+            name: Agent name
+            instructions: Agent instructions. Can be a string, a callable that dynamically
+                generates instructions, or None. If a callable, it will receive the context
+                and agent instance and must return a string.
+            raise_guardrail_errors: If True, raise exceptions when guardrails fail to execute.
+                If False (default), treat guardrail errors as safe and continue execution.
+            block_on_tool_violations: If True, tool guardrail violations raise exceptions (halt execution).
+                If False (default), violations use reject_content (agent can continue and explain).
+                Note: Agent-level input/output guardrails always block regardless of this setting.
+            **agent_kwargs: All other arguments passed to Agent constructor (including tools)
+
+        Returns:
+            agents.Agent: A fully configured Agent instance with guardrails
+
+        Raises:
+            ImportError: If agents package is not available
+            ConfigError: If configuration is invalid
+            Exception: If raise_guardrail_errors=True and a guardrail fails to execute
+        """
+        try:
+            from agents import Agent
+        except ImportError as e:
+            raise ImportError("The 'agents' package is required to use GuardrailAgent. Please install it with: pip install openai-agents") from e
+
+        from .registry import default_spec_registry
+        from .runtime import instantiate_guardrails, load_pipeline_bundles
+
+        _ensure_agent_runner_patch()
+
+        # Load and instantiate guardrails from config
+        pipeline = load_pipeline_bundles(config)
+
+        stage_guardrails = {}
+        for stage_name in ["pre_flight", "input", "output"]:
+            bundle = getattr(pipeline, stage_name, None)
+            if bundle:
+                stage_guardrails[stage_name] = instantiate_guardrails(bundle, default_spec_registry)
+            else:
+                stage_guardrails[stage_name] = []
+
+        # Separate tool-level from agent-level guardrails in each stage
+        preflight_tool, preflight_agent = _separate_tool_level_from_agent_level(stage_guardrails.get("pre_flight", []))
+        input_tool, input_agent = _separate_tool_level_from_agent_level(stage_guardrails.get("input", []))
+        output_tool, output_agent = _separate_tool_level_from_agent_level(stage_guardrails.get("output", []))
+
+        # Extract any user-provided guardrails from agent_kwargs
+        user_input_guardrails = agent_kwargs.pop("input_guardrails", [])
+        user_output_guardrails = agent_kwargs.pop("output_guardrails", [])
+
+        # Create agent-level INPUT guardrails from config
+        input_guardrails = []
+
+        # Add agent-level guardrails from pre_flight and input stages
+        agent_input_stages = []
+        if preflight_agent:
+            agent_input_stages.append("pre_flight")
+        if input_agent:
+            agent_input_stages.append("input")
+
+        if agent_input_stages:
+            input_guardrails.extend(
+                _create_agents_guardrails_from_config(
+                    config=config,
+                    stages=agent_input_stages,
+                    guardrail_type="input",
+                    raise_guardrail_errors=raise_guardrail_errors,
+                )
+            )
+
+        # Merge with user-provided input guardrails (config ones run first, then user ones)
+        input_guardrails.extend(user_input_guardrails)
+
+        # Create agent-level OUTPUT guardrails from config
+        output_guardrails = []
+        if output_agent:
+            output_guardrails = _create_agents_guardrails_from_config(
+                config=config,
+                stages=["output"],
+                guardrail_type="output",
+                raise_guardrail_errors=raise_guardrail_errors,
+            )
+
+        # Merge with user-provided output guardrails (config ones run first, then user ones)
+        output_guardrails.extend(user_output_guardrails)
+
+        # Apply tool-level guardrails
+        tools = agent_kwargs.get("tools", [])
+
+        # Map pipeline stages to tool guardrails:
+        # - pre_flight + input stages → tool_input_guardrail (checks BEFORE tool execution)
+        # - output stage → tool_output_guardrail (checks AFTER tool execution)
+        if tools and (preflight_tool or input_tool or output_tool):
+            context = _create_default_tool_context()
+
+            # pre_flight + input stages → tool_input_guardrail
+            for guardrail in preflight_tool + input_tool:
+                tool_input_gr = _create_tool_guardrail(
+                    guardrail=guardrail,
+                    guardrail_type="input",
+                    context=context,
+                    raise_guardrail_errors=raise_guardrail_errors,
+                    block_on_violations=block_on_tool_violations,
+                )
+                _attach_guardrail_to_tools(tools, tool_input_gr, "input")
+
+            # output stage → tool_output_guardrail
+            for guardrail in output_tool:
+                tool_output_gr = _create_tool_guardrail(
+                    guardrail=guardrail,
+                    guardrail_type="output",
+                    context=context,
+
+_OPENAI_RESPONSES_MODULE.ResponseTextConfigParam = _ResponseTextConfigParam
+
+sys.modules["openai"] = _STUB_OPENAI_MODULE
+sys.modules["openai.types"] = _OPENAI_TYPES_MODULE
+sys.modules["openai.types.chat"] = _OPENAI_CHAT_MODULE
+sys.modules["openai.types.responses"] = _OPENAI_RESPONSES_MODULE
+sys.modules["openai.types.responses.response"] = _OPENAI_RESPONSES_RESPONSE_MODULE
+
+
+@pytest.fixture(autouse=True)
+def stub_openai_module(monkeypatch: pytest.MonkeyPatch) -> Iterator[types.ModuleType]:
+    """Provide stub OpenAI module so tests avoid real network-bound clients."""
+    # Patch imported symbols in guardrails modules
+    from guardrails import _base_client, client, types as guardrail_types  # type: ignore
+
+    monkeypatch.setattr(_base_client, "AsyncOpenAI", _StubAsyncOpenAI, raising=False)
+    monkeypatch.setattr(_base_client, "OpenAI", _StubSyncOpenAI, raising=False)
+    monkeypatch.setattr(client, "AsyncOpenAI", _StubAsyncOpenAI, raising=False)
+    monkeypatch.setattr(client, "OpenAI", _StubSyncOpenAI, raising=False)
+    monkeypatch.setattr(client, "AsyncAzureOpenAI", _StubAsyncOpenAI, raising=False)
+    monkeypatch.setattr(client, "AzureOpenAI", _StubSyncOpenAI, raising=False)
+    monkeypatch.setattr(guardrail_types, "AsyncOpenAI", _StubAsyncOpenAI, raising=False)
+    monkeypatch.setattr(guardrail_types, "OpenAI", _StubSyncOpenAI, raising=False)
+    monkeypatch.setattr(guardrail_types, "AsyncAzureOpenAI", _StubAsyncOpenAI, raising=False)
+    monkeypatch.setattr(guardrail_types, "AzureOpenAI", _StubSyncOpenAI, raising=False)
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    yield _STUB_OPENAI_MODULE
+
+
+@pytest.fixture(autouse=True)
+def configure_logging() -> None:
+    """Ensure logging defaults to DEBUG for deterministic assertions."""
+    logging.basicConfig(level=logging.DEBUG)
+
+exec
+/bin/bash -lc "sed -n '260,425p' src/guardrails/agents.py && sed -n '735,770p' src/guardrails/agents.py && sed -n '1,35p' tests/unit/test_agents.py" in /workspace/repo
+ succeeded in 0ms:
+                )
+
+                # Run the guardrail
+                results = await run_guardrails(
+                    ctx=ctx,
+                    data=check_data,
+                    media_type="text/plain",
+                    guardrails=[guardrail],
+                    suppress_tripwire=True,
+                    stage_name="tool_input",
+                    raise_guardrail_errors=raise_guardrail_errors,
+                )
+
+                # Check results
+                last_result: GuardrailResult | None = None
+                for result in results:
+                    last_result = result
+                    if result.tripwire_triggered:
+                        observation = result.info.get("observation", f"{guardrail_name} triggered")
+                        message = f"Tool call was violative of policy and was blocked by {guardrail_name}: {observation}."
+
+                        if block_on_violations:
+                            return ToolGuardrailFunctionOutput.raise_exception(output_info=result.info)
+                        else:
+                            return ToolGuardrailFunctionOutput.reject_content(message=message, output_info=result.info)
+
+                # Include token usage even when guardrail passes
+                output_info = last_result.info if last_result is not None else {"message": f"{guardrail_name} check passed"}
+                return ToolGuardrailFunctionOutput(output_info=output_info)
+
+            except Exception as e:
+                if raise_guardrail_errors:
+                    return ToolGuardrailFunctionOutput.raise_exception(output_info={"error": f"{guardrail_name} check error: {str(e)}"})
+                else:
+                    logger.warning(f"{guardrail_name} check error (treating as safe): {e}")
+                    return ToolGuardrailFunctionOutput(output_info=f"{guardrail_name} check skipped due to error")
+
+        return tool_input_gr
+
+    else:  # output
+
+        @tool_output_guardrail
+        async def tool_output_gr(data: ToolOutputGuardrailData) -> ToolGuardrailFunctionOutput:
+            """Check tool output after execution."""
+            guardrail_name = guardrail.definition.name
+
+            try:
+                conversation_history = await _conversation_with_tool_output(data)
+                ctx = _create_conversation_context(
+                    conversation_history=conversation_history,
+                    base_context=context,
+                )
+                check_data = json.dumps(
+                    {
+                        "tool_name": data.context.tool_name,
+                        "arguments": data.context.tool_arguments,
+                        "output": str(data.output),
+                        "call_id": getattr(data.context, "tool_call_id", None),
+                    }
+                )
+
+                # Run the guardrail
+                results = await run_guardrails(
+                    ctx=ctx,
+                    data=check_data,
+                    media_type="text/plain",
+                    guardrails=[guardrail],
+                    suppress_tripwire=True,
+                    stage_name="tool_output",
+                    raise_guardrail_errors=raise_guardrail_errors,
+                )
+
+                # Check results
+                last_result: GuardrailResult | None = None
+                for result in results:
+                    last_result = result
+                    if result.tripwire_triggered:
+                        observation = result.info.get("observation", f"{guardrail_name} triggered")
+                        message = f"Tool output was violative of policy and was blocked by {guardrail_name}: {observation}."
+                        if block_on_violations:
+                            return ToolGuardrailFunctionOutput.raise_exception(output_info=result.info)
+                        else:
+                            return ToolGuardrailFunctionOutput.reject_content(message=message, output_info=result.info)
+
+                # Include token usage even when guardrail passes
+                output_info = last_result.info if last_result is not None else {"message": f"{guardrail_name} check passed"}
+                return ToolGuardrailFunctionOutput(output_info=output_info)
+
+            except Exception as e:
+                if raise_guardrail_errors:
+                    return ToolGuardrailFunctionOutput.raise_exception(output_info={"error": f"{guardrail_name} check error: {str(e)}"})
+                else:
+                    logger.warning(f"{guardrail_name} check error (treating as safe): {e}")
+                    return ToolGuardrailFunctionOutput(output_info=f"{guardrail_name} check skipped due to error")
+
+        return tool_output_gr
+
+
+def _extract_text_from_input(input_data: Any) -> str:
+    """Extract text from input_data, handling both string and conversation history formats.
+
+    The Agents SDK may pass input_data in different formats:
+    - String: Direct text input
+    - List of dicts: Conversation history with message objects
+
+    Args:
+        input_data: Input from Agents SDK (string or list of messages)
+
+    Returns:
+        Extracted text string from the latest user message
+    """
+    # If it's already a string, return it
+    if isinstance(input_data, str):
+        return input_data
+
+    # If it's a list (conversation history), extract the latest user message
+    if isinstance(input_data, list):
+        if not input_data:
+            return ""  # Empty list returns empty string
+
+        # Iterate from the end to find the latest user message
+        for msg in reversed(input_data):
+            if isinstance(msg, dict):
+                role = msg.get("role")
+                if role == "user":
+                    content = msg.get("content")
+                    # Content can be a string or a list of content parts
+                    if isinstance(content, str):
+                        return content
+                    elif isinstance(content, list):
+                        if not content:
+                            # Empty content list returns empty string (consistent with no text parts found)
+                            return ""
+                        # Extract text from content parts
+                        text_parts = []
+                        for part in content:
+                            if isinstance(part, dict):
+                                # Check for various text field names (avoid falsy empty string issue)
+                                text = None
+                                for field in ["text", "input_text", "output_text"]:
+                                    if field in part:
+                                        text = part[field]
+                                        break
+                                # Preserve empty strings, only filter None
+                                if text is not None and isinstance(text, str):
+                                    text_parts.append(text)
+                        if text_parts:
+                            return " ".join(text_parts)
+                        # No text parts found, return empty string
+                        return ""
+                    # If content is something else, try to stringify it
+                    elif content is not None:
+                        return str(content)
+
+        # No user message found in list
+        return ""
+
+    # Fallback: convert to string
+    return str(input_data)
+
+
+def _create_agents_guardrails_from_config(
+    config: str | Path | dict[str, Any], stages: list[str], guardrail_type: str = "input", context: Any = None, raise_guardrail_errors: bool = False
+) -> list[Any]:
+    """Create agent-level guardrail functions from a pipeline configuration.
+
+                    context=context,
+                    raise_guardrail_errors=raise_guardrail_errors,
+                    block_on_violations=block_on_tool_violations,
+                )
+                _attach_guardrail_to_tools(tools, tool_output_gr, "output")
+
+        # Create and return a regular Agent instance with guardrails configured
+        return Agent(name=name, instructions=instructions, input_guardrails=input_guardrails, output_guardrails=output_guardrails, **agent_kwargs)
+"""Tests covering guardrails.agents helper functions."""
+
+from __future__ import annotations
+
+import sys
+import types
+from collections.abc import Callable
+from dataclasses import dataclass
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+
+from guardrails.types import GuardrailResult
+
+# ---------------------------------------------------------------------------
+# Stub agents SDK module so guardrails.agents can import required symbols.
+# ---------------------------------------------------------------------------
+
+agents_module = types.ModuleType("agents")
+
+
+@dataclass
+class ToolContext:
+    """Stub tool context carrying name, arguments, and optional call id."""
+
+    tool_name: str
+    tool_arguments: dict[str, Any] | str
+    tool_call_id: str | None = None
+
+
+@dataclass
+class ToolInputGuardrailData:
+    """Stub input guardrail payload."""
+
+
+exec
+/bin/bash -lc 'git status --short && git log --oneline -8 && git remote -v && rg -n "class Agent|def tool_input_guardrail" tests/unit/test_agents.py | head -n 20' in /workspace/repo
+ succeeded in 0ms:
+7a245f0 version 0.3.0 (#81)
+origin	https://github.com/openai/openai-guardrails-python.git (fetch)
+origin	https://github.com/openai/openai-guardrails-python.git (push)
+92:class Agent:
+102:class AgentRunner:
+
+exec
+/bin/bash -lc "sed -n '80,175p' tests/unit/test_agents.py && sed -n '175,275p' tests/unit/test_agents.py && sed -n '1,100p' src/guardrails/agents.py | tail -n 10" in /workspace/repo
+ succeeded in 0ms:
+    return func
+
+
+class RunContextWrapper:
+    """Minimal RunContextWrapper stub."""
+
+    def __init__(self, value: Any | None = None) -> None:
+        """Store wrapped value."""
+        self.value = value
+
+
+@dataclass
+class Agent:
+    """Trivial Agent stub storing initialization args for assertions."""
+
+    name: str
+    instructions: str
+    input_guardrails: list[Callable] | None = None
+    output_guardrails: list[Callable] | None = None
+    tools: list[Any] | None = None
+
+
+class AgentRunner:
+    """Minimal AgentRunner stub so guardrails patching succeeds."""
+
+    async def run(self, *args: Any, **kwargs: Any) -> Any:
+        """Return a sentinel result."""
+        return SimpleNamespace()
+
+
+agents_module.ToolGuardrailFunctionOutput = ToolGuardrailFunctionOutput
+agents_module.ToolInputGuardrailData = ToolInputGuardrailData
+agents_module.ToolOutputGuardrailData = ToolOutputGuardrailData
+agents_module.tool_input_guardrail = _decorator_passthrough
+agents_module.tool_output_guardrail = _decorator_passthrough
+agents_module.RunContextWrapper = RunContextWrapper
+agents_module.Agent = Agent
+agents_module.GuardrailFunctionOutput = GuardrailFunctionOutput
+agents_module.input_guardrail = _decorator_passthrough
+agents_module.output_guardrail = _decorator_passthrough
+agents_module.AgentRunner = AgentRunner
+
+sys.modules.setdefault("agents", agents_module)
+
+agents_run_module = types.ModuleType("agents.run")
+agents_run_module.AgentRunner = AgentRunner
+sys.modules.setdefault("agents.run", agents_run_module)
+agents_module.run = agents_run_module
+
+import guardrails.agents as agents  # noqa: E402  (import after stubbing)
+import guardrails.runtime as runtime_module  # noqa: E402
+
+
+def _make_guardrail(name: str, uses_conversation_history: bool = False) -> Any:
+    class _DummyCtxModel:
+        model_fields: dict[str, Any] = {}
+
+        @staticmethod
+        def model_validate(value: Any, **_: Any) -> Any:
+            return value
+
+    return SimpleNamespace(
+        definition=SimpleNamespace(
+            name=name,
+            media_type="text/plain",
+            ctx_requirements=_DummyCtxModel,
+            metadata=SimpleNamespace(uses_conversation_history=uses_conversation_history),
+        ),
+        ctx_requirements=[],
+    )
+
+
+@pytest.fixture(autouse=True)
+def reset_agent_context() -> None:
+    """Ensure agent conversation context vars are reset for each test."""
+    agents._agent_session.set(None)
+    agents._agent_conversation.set(None)
+
+
+@pytest.mark.asyncio
+async def test_conversation_with_tool_call_updates_fallback_history() -> None:
+    """Fallback conversation should include previous history and new tool call."""
+    agents._agent_session.set(None)
+    agents._agent_conversation.set(({"role": "user", "content": "Hi there"},))
+    data = SimpleNamespace(context=ToolContext(tool_name="math", tool_arguments={"x": 1}, tool_call_id="call-1"))
+
+    conversation = await agents._conversation_with_tool_call(data)
+
+    assert conversation[0]["content"] == "Hi there"  # noqa: S101
+    assert conversation[-1]["type"] == "function_call"  # noqa: S101
+    assert conversation[-1]["tool_name"] == "math"  # noqa: S101
+    stored = agents._agent_conversation.get()
+    assert stored is not None and stored[-1]["call_id"] == "call-1"  # type: ignore[index]  # noqa: S101
+
+
+@pytest.mark.asyncio
+@pytest.mark.asyncio
+async def test_conversation_with_tool_call_uses_session_history() -> None:
+    """When session is available, its items form the conversation baseline."""
+
+    class StubSession:
+        def __init__(self) -> None:
+            self.items = [{"role": "user", "content": "Remember me"}]
+
+        async def get_items(self, limit: int | None = None) -> list[dict[str, Any]]:
+            return self.items
+
+        async def add_items(self, items: list[Any]) -> None:
+            self.items.extend(items)
+
+        async def pop_item(self) -> Any | None:
+            return None
+
+        async def clear_session(self) -> None:
+            self.items.clear()
+
+    session = StubSession()
+    agents._agent_session.set(session)
+    agents._agent_conversation.set(None)
+
+    data = SimpleNamespace(context=ToolContext(tool_name="lookup", tool_arguments={"zip": 12345}, tool_call_id="call-2"))
+
+    conversation = await agents._conversation_with_tool_call(data)
+
+    assert conversation[0]["content"] == "Remember me"  # noqa: S101
+    assert conversation[-1]["call_id"] == "call-2"  # noqa: S101
+    cached = agents._agent_conversation.get()
+    assert cached is not None and cached[-1]["call_id"] == "call-2"  # type: ignore[index]  # noqa: S101
+
+
+@pytest.mark.asyncio
+async def test_conversation_with_tool_output_includes_output() -> None:
+    """Tool output conversation should include serialized output payload."""
+    agents._agent_session.set(None)
+    agents._agent_conversation.set(({"role": "user", "content": "Compute"},))
+    data = SimpleNamespace(
+        context=ToolContext(tool_name="calc", tool_arguments={"y": 2}, tool_call_id="call-3"),
+        output={"result": 4},
+    )
+
+    conversation = await agents._conversation_with_tool_output(data)
+
+    assert conversation[-1]["output"] == "{'result': 4}"  # noqa: S101
+
+
+def test_create_conversation_context_exposes_history() -> None:
+    """Conversation context should expose conversation history only."""
+    base_context = SimpleNamespace(guardrail_llm="client")
+    context = agents._create_conversation_context(["msg"], base_context)
+
+    assert context.get_conversation_history() == ["msg"]  # noqa: S101
+    assert not hasattr(context, "update_injection_last_checked_index")  # noqa: S101
+
+
+def test_create_default_tool_context_provides_async_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Default tool context should return AsyncOpenAI client."""
+    openai_mod = types.ModuleType("openai")
+
+    class StubAsyncOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            pass
+
+    openai_mod.AsyncOpenAI = StubAsyncOpenAI
+    monkeypatch.setitem(sys.modules, "openai", openai_mod)
+
+    context = agents._create_default_tool_context()
+
+    assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+
+
+def test_attach_guardrail_to_tools_initializes_lists() -> None:
+    """Attaching guardrails should create input/output lists when missing."""
+    tool = SimpleNamespace()
+    fn = lambda data: data  # noqa: E731
+
+    agents._attach_guardrail_to_tools([tool], fn, "input")
+    agents._attach_guardrail_to_tools([tool], fn, "output")
+
+    assert tool.tool_input_guardrails == [fn]  # type: ignore[attr-defined]  # noqa: S101
+    assert tool.tool_output_guardrails == [fn]  # type: ignore[attr-defined]  # noqa: S101
+
+
+def test_separate_tool_level_from_agent_level() -> None:
+    """Prompt injection guardrails should be classified as tool-level."""
+    tool, agent_level = agents._separate_tool_level_from_agent_level([_make_guardrail("Prompt Injection Detection"), _make_guardrail("Other Guard")])
+
+    assert [g.definition.name for g in tool] == ["Prompt Injection Detection"]  # noqa: S101
+    assert [g.definition.name for g in agent_level] == ["Other Guard"]  # noqa: S101
+
+
+@pytest.mark.asyncio
+async def test_create_tool_guardrail_rejects_on_tripwire(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tool guardrail should reject content when run_guardrails flags a violation."""
+    guardrail = _make_guardrail("Test Guardrail")
+    expected_info = {"observation": "violation"}
+    agents._agent_session.set(None)
+    agents._agent_conversation.set(({"role": "user", "content": "Original request"},))
+    return []
+
+
+async def _conversation_with_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return conversation history including additional items."""
+    base_history = await _load_agent_conversation()
+    conversation = merge_conversation_with_items(base_history, items)
+    _cache_conversation(conversation)
+    return conversation
+
+
+codex
+The agent factory has no independent OpenAI configuration parameters; its model is the available source of proxy settings. The focused regression will exercise the default tool-context helper with a supplied LiteLLM-style key and URL—configuration that is currently impossible to forward because it always calls `AsyncOpenAI()` with no arguments.
+apply patch
+patch: completed
+/workspace/repo/tests/unit/test_agents.py
+diff --git a/tests/unit/test_agents.py b/tests/unit/test_agents.py
+index 54cf56be75a23ca1967791f92a81ca1bfdf0a952..0846af1e573d3a93389ad8db4fe8983d7d1c2e40
+--- a/tests/unit/test_agents.py
++++ b/tests/unit/test_agents.py
+@@ -246,6 +246,30 @@
+     assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+ 
+ 
++def test_create_default_tool_context_preserves_litellm_proxy_configuration(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Tool guardrail client should receive LiteLLM proxy settings."""
++    openai_mod = types.ModuleType("openai")
++
++    class StubAsyncOpenAI:
++        def __init__(self, **kwargs: Any) -> None:
++            self.kwargs = kwargs
++
++    openai_mod.AsyncOpenAI = StubAsyncOpenAI
++    monkeypatch.setitem(sys.modules, "openai", openai_mod)
++
++    context = agents._create_default_tool_context(
++        api_key="litellm-proxy-key",
++        base_url="http://litellm-proxy.example/v1",
++    )
++
++    assert context.guardrail_llm.kwargs == {  # type: ignore[attr-defined]  # noqa: S101
++        "api_key": "litellm-proxy-key",
++        "base_url": "http://litellm-proxy.example/v1",
++    }
++
++
+ def test_attach_guardrail_to_tools_initializes_lists() -> None:
+     """Attaching guardrails should create input/output lists when missing."""
+     tool = SimpleNamespace()
+
+diff --git a/tests/unit/test_agents.py b/tests/unit/test_agents.py
+index 54cf56be75a23ca1967791f92a81ca1bfdf0a952..0846af1e573d3a93389ad8db4fe8983d7d1c2e40
+--- a/tests/unit/test_agents.py
++++ b/tests/unit/test_agents.py
+@@ -246,6 +246,30 @@
+     assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+ 
+ 
++def test_create_default_tool_context_preserves_litellm_proxy_configuration(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Tool guardrail client should receive LiteLLM proxy settings."""
++    openai_mod = types.ModuleType("openai")
++
++    class StubAsyncOpenAI:
++        def __init__(self, **kwargs: Any) -> None:
++            self.kwargs = kwargs
++
++    openai_mod.AsyncOpenAI = StubAsyncOpenAI
++    monkeypatch.setitem(sys.modules, "openai", openai_mod)
++
++    context = agents._create_default_tool_context(
++        api_key="litellm-proxy-key",
++        base_url="http://litellm-proxy.example/v1",
++    )
++
++    assert context.guardrail_llm.kwargs == {  # type: ignore[attr-defined]  # noqa: S101
++        "api_key": "litellm-proxy-key",
++        "base_url": "http://litellm-proxy.example/v1",
++    }
++
++
+ def test_attach_guardrail_to_tools_initializes_lists() -> None:
+     """Attaching guardrails should create input/output lists when missing."""
+     tool = SimpleNamespace()
+
+exec
+/bin/bash -lc 'pytest -q tests/unit/test_agents.py -k litellm_proxy_configuration' in /workspace/repo
+diff --git a/tests/unit/test_agents.py b/tests/unit/test_agents.py
+index 54cf56be75a23ca1967791f92a81ca1bfdf0a952..0846af1e573d3a93389ad8db4fe8983d7d1c2e40
+--- a/tests/unit/test_agents.py
++++ b/tests/unit/test_agents.py
+@@ -246,6 +246,30 @@
+     assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+ 
+ 
++def test_create_default_tool_context_preserves_litellm_proxy_configuration(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Tool guardrail client should receive LiteLLM proxy settings."""
++    openai_mod = types.ModuleType("openai")
++
++    class StubAsyncOpenAI:
++        def __init__(self, **kwargs: Any) -> None:
++            self.kwargs = kwargs
++
++    openai_mod.AsyncOpenAI = StubAsyncOpenAI
++    monkeypatch.setitem(sys.modules, "openai", openai_mod)
++
++    context = agents._create_default_tool_context(
++        api_key="litellm-proxy-key",
++        base_url="http://litellm-proxy.example/v1",
++    )
++
++    assert context.guardrail_llm.kwargs == {  # type: ignore[attr-defined]  # noqa: S101
++        "api_key": "litellm-proxy-key",
++        "base_url": "http://litellm-proxy.example/v1",
++    }
++
++
+ def test_attach_guardrail_to_tools_initializes_lists() -> None:
+     """Attaching guardrails should create input/output lists when missing."""
+     tool = SimpleNamespace()
+
+ exited 1 in 960ms:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_create_default_tool_context_preserves_litellm_proxy_configuration ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xffff7adec290>
+
+    def test_create_default_tool_context_preserves_litellm_proxy_configuration(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Tool guardrail client should receive LiteLLM proxy settings."""
+        openai_mod = types.ModuleType("openai")
+    
+        class StubAsyncOpenAI:
+            def __init__(self, **kwargs: Any) -> None:
+                self.kwargs = kwargs
+    
+        openai_mod.AsyncOpenAI = StubAsyncOpenAI
+        monkeypatch.setitem(sys.modules, "openai", openai_mod)
+    
+>       context = agents._create_default_tool_context(
+            api_key="litellm-proxy-key",
+            base_url="http://litellm-proxy.example/v1",
+        )
+E       TypeError: _create_default_tool_context() got an unexpected keyword argument 'api_key'
+
+tests/unit/test_agents.py:262: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_agents.py::test_create_default_tool_context_preserves_litellm_proxy_configuration
+1 failed, 43 deselected in 0.71s
+
+codex
+Confirmed the reported gap with a focused regression test.
+
+Added [test_agents.py](/workspace/repo/tests/unit/test_agents.py:250) to require LiteLLM proxy `api_key` and `base_url` forwarding to the default tool context.
+
+Evidence:
+
+```text
+TypeError: _create_default_tool_context() got an unexpected keyword argument 'api_key'
+```
+
+Focused pytest result: **1 failed**. No production code was changed.
+diff --git a/tests/unit/test_agents.py b/tests/unit/test_agents.py
+index 54cf56be75a23ca1967791f92a81ca1bfdf0a952..0846af1e573d3a93389ad8db4fe8983d7d1c2e40
+--- a/tests/unit/test_agents.py
++++ b/tests/unit/test_agents.py
+@@ -246,6 +246,30 @@
+     assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+ 
+ 
++def test_create_default_tool_context_preserves_litellm_proxy_configuration(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Tool guardrail client should receive LiteLLM proxy settings."""
++    openai_mod = types.ModuleType("openai")
++
++    class StubAsyncOpenAI:
++        def __init__(self, **kwargs: Any) -> None:
++            self.kwargs = kwargs
++
++    openai_mod.AsyncOpenAI = StubAsyncOpenAI
++    monkeypatch.setitem(sys.modules, "openai", openai_mod)
++
++    context = agents._create_default_tool_context(
++        api_key="litellm-proxy-key",
++        base_url="http://litellm-proxy.example/v1",
++    )
++
++    assert context.guardrail_llm.kwargs == {  # type: ignore[attr-defined]  # noqa: S101
++        "api_key": "litellm-proxy-key",
++        "base_url": "http://litellm-proxy.example/v1",
++    }
++
++
+ def test_attach_guardrail_to_tools_initializes_lists() -> None:
+     """Attaching guardrails should create input/output lists when missing."""
+     tool = SimpleNamespace()
+
+tokens used
+43,867
+Confirmed the reported gap with a focused regression test.
+
+Added [test_agents.py](/workspace/repo/tests/unit/test_agents.py:250) to require LiteLLM proxy `api_key` and `base_url` forwarding to the default tool context.
+
+Evidence:
+
+```text
+TypeError: _create_default_tool_context() got an unexpected keyword argument 'api_key'
+```
+
+Focused pytest result: **1 failed**. No production code was changed.
+[exit 0; elapsed 114359ms; Docker-isolated fallback]
+$ python -m pytest -q --junitxml='/tmp/triage-2c2f261b-167d-4a22-b070-d627ecb8ca88-attempt_1-junit.xml' 'tests/unit/test_agents.py'
+.....F......................................                             [100%]
+=================================== FAILURES ===================================
+____ test_create_default_tool_context_preserves_litellm_proxy_configuration ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xffff64f9a600>
+
+    def test_create_default_tool_context_preserves_litellm_proxy_configuration(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Tool guardrail client should receive LiteLLM proxy settings."""
+        openai_mod = types.ModuleType("openai")
+    
+        class StubAsyncOpenAI:
+            def __init__(self, **kwargs: Any) -> None:
+                self.kwargs = kwargs
+    
+        openai_mod.AsyncOpenAI = StubAsyncOpenAI
+        monkeypatch.setitem(sys.modules, "openai", openai_mod)
+    
+>       context = agents._create_default_tool_context(
+            api_key="litellm-proxy-key",
+            base_url="http://litellm-proxy.example/v1",
+        )
+E       TypeError: _create_default_tool_context() got an unexpected keyword argument 'api_key'
+
+tests/unit/test_agents.py:262: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_agents.py::test_create_default_tool_context_preserves_litellm_proxy_configuration
+1 failed, 43 passed in 0.45s
+[exit 1]
+$ git diff --no-ext-diff
+diff --git a/tests/unit/test_agents.py b/tests/unit/test_agents.py
+index 54cf56b..0846af1 100644
+--- a/tests/unit/test_agents.py
++++ b/tests/unit/test_agents.py
+@@ -246,6 +246,30 @@ def test_create_default_tool_context_provides_async_client(monkeypatch: pytest.M
+     assert isinstance(context.guardrail_llm, StubAsyncOpenAI)  # noqa: S101
+ 
+ 
++def test_create_default_tool_context_preserves_litellm_proxy_configuration(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Tool guardrail client should receive LiteLLM proxy settings."""
++    openai_mod = types.ModuleType("openai")
++
++    class StubAsyncOpenAI:
++        def __init__(self, **kwargs: Any) -> None:
++            self.kwargs = kwargs
++
++    openai_mod.AsyncOpenAI = StubAsyncOpenAI
++    monkeypatch.setitem(sys.modules, "openai", openai_mod)
++
++    context = agents._create_default_tool_context(
++        api_key="litellm-proxy-key",
++        base_url="http://litellm-proxy.example/v1",
++    )
++
++    assert context.guardrail_llm.kwargs == {  # type: ignore[attr-defined]  # noqa: S101
++        "api_key": "litellm-proxy-key",
++        "base_url": "http://litellm-proxy.example/v1",
++    }
++
++
+ def test_attach_guardrail_to_tools_initializes_lists() -> None:
+     """Attaching guardrails should create input/output lists when missing."""
+     tool = SimpleNamespace()

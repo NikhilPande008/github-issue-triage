@@ -11,6 +11,7 @@ from triage.investigation.models import InvestigationResult
 from triage.validation.models import ValidationResult
 from triage.github.models import GitHubIssue
 from triage.github.client import GitHubRateLimitError
+from triage.preflight import PreflightError
 
 
 def test_fetch_command_prints_normalized_json(monkeypatch, capsys) -> None:
@@ -56,7 +57,7 @@ def test_extract_command_prints_validated_json(monkeypatch, capsys) -> None:
             return issue
 
     class FakeExtractionService:
-        def __init__(self, client, repository, investigation_id=None):
+        def __init__(self, client, repository, investigation_id=None, budget=None):
             pass
 
         def extract(self, fetched_issue: GitHubIssue) -> IssueExtraction:
@@ -96,7 +97,7 @@ def test_investigate_local_command_prints_summary(monkeypatch, capsys, tmp_path)
             return issue
 
     class FakeExtractionService:
-        def __init__(self, client, repository, investigation_id=None):
+        def __init__(self, client, repository, investigation_id=None, budget=None):
             pass
 
         def extract(self, fetched_issue: GitHubIssue) -> IssueExtraction:
@@ -146,7 +147,7 @@ def test_investigate_local_command_prints_summary(monkeypatch, capsys, tmp_path)
 
         def update(self, item, **values):
             if "classification" in values:
-                assert values["classification"].value == "REPRODUCED"
+                assert values["classification"].value == "BEHAVIOR_GAP_CONFIRMED"
             return item
 
     class FakeSession:
@@ -166,9 +167,10 @@ def test_investigate_local_command_prints_summary(monkeypatch, capsys, tmp_path)
     monkeypatch.setattr(cli, "ArtifactRepository", lambda session: object())
     monkeypatch.setattr(cli, "create_session_factory", lambda url: lambda: FakeSession())
     monkeypatch.setattr(cli, "_runner_context", lambda settings: nullcontext(object()))
+    monkeypatch.setattr(cli, "require_safe_to_start", lambda settings, repository: object())
     assert cli.main(["investigate", "123"]) == 0
     assert capsys.readouterr().out == (
-        "Investigation Complete\nassertsFailure: TRUE\nReason:\nvalidated\nClassification:\nREPRODUCED\n"
+        "Investigation Complete\nassertsFailure: TRUE\nReason:\nvalidated\nClassification:\nBehavior gap confirmed\n"
     )
 
 
@@ -200,12 +202,28 @@ def test_batch_command_exits_cleanly_before_processing_when_candidate_fetch_is_r
     monkeypatch.setattr(cli, "create_session_factory", lambda url: lambda: FakeSession())
     monkeypatch.setattr(cli, "InvestigationRepository", FakeInvestigationRepository)
     monkeypatch.setattr(cli, "BatchTriageService", RateLimitedBatchService)
+    monkeypatch.setattr(cli, "require_safe_to_start", lambda settings, repository: object())
 
     assert cli.main(["batch-triage", "--count", "5"]) == 2
     assert capsys.readouterr().out == (
         "Unable to select batch candidates: GitHub API rate limit exhausted. "
         "Set GITHUB_TOKEN to increase GitHub API rate limits.\n"
     )
+
+
+def test_batch_preflight_blocks_before_database_or_runner_startup(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(cli, "require_safe_to_start", lambda settings, repository: (_ for _ in ()).throw(PreflightError("unsafe network policy")))
+    monkeypatch.setattr(cli, "create_session_factory", lambda url: (_ for _ in ()).throw(AssertionError("database must not open")))
+    assert cli.main(["batch-triage", "--count", "1"]) == 2
+    assert "Preflight blocked batch triage: unsafe network policy" in capsys.readouterr().out
+
+
+def test_investigate_preflight_blocks_before_issue_fetch_or_extraction(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(cli, "require_safe_to_start", lambda settings, repository: (_ for _ in ()).throw(PreflightError("unsafe network policy")))
+    monkeypatch.setattr(cli, "GitHubIssueService", lambda *args: (_ for _ in ()).throw(AssertionError("GitHub must not be read")))
+    monkeypatch.setattr(cli, "ExtractionService", lambda *args: (_ for _ in ()).throw(AssertionError("OpenAI must not be called")))
+    assert cli.main(["investigate", "7564"]) == 2
+    assert "Preflight blocked live investigation: unsafe network policy" in capsys.readouterr().out
 
 
 def test_batch_summary_reports_queue_exhaustion_shortfall(capsys) -> None:

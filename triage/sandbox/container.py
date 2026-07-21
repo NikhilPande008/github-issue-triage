@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from time import monotonic, perf_counter
 
@@ -34,24 +35,35 @@ class SandboxTimeout(RuntimeError):
     pass
 
 
+class ContainerRole(StrEnum):
+    SETUP = "setup"
+    AGENT = "agent"
+    TEST = "test"
+
+
 class DockerSandboxContainer:
-    def __init__(self, container, overall_timeout_seconds: int):
+    def __init__(self, container, overall_timeout_seconds: int, role: ContainerRole = ContainerRole.AGENT):
         self.container = container
         self.deadline = monotonic() + overall_timeout_seconds
+        self.role = role
 
     @classmethod
-    def start(cls, docker_client, image, repository_path: Path, auth_path: Path, overall_timeout_seconds: int) -> "DockerSandboxContainer":
+    def start(cls, docker_client, image, repository_path: Path, auth_path: Path, overall_timeout_seconds: int, role: ContainerRole, network_policy: str = "allowed") -> "DockerSandboxContainer":
         volumes = {str(repository_path): {"bind": "/workspace/repo", "mode": "rw"}}
-        if auth_path.is_file():
+        if role is ContainerRole.AGENT and auth_path.is_file():
             volumes[str(auth_path)] = {"bind": "/root/.codex/auth.json", "mode": "ro"}
+        kwargs = {}
+        if network_policy == "isolated":
+            kwargs["network_mode"] = "none"
         container = docker_client.containers.run(
             image.id,
             command=["tail", "-f", "/dev/null"],
             working_dir="/workspace/repo",
             volumes=volumes,
             detach=True,
+            **kwargs,
         )
-        return cls(container, overall_timeout_seconds)
+        return cls(container, overall_timeout_seconds, role)
 
     @property
     def id(self) -> str:
@@ -74,6 +86,8 @@ class DockerSandboxContainer:
 
     def run_codex(self, prompt: str, timeout_seconds: int) -> CodexExecutionResult:
         """Run Codex with its normal sandbox, then use Docker isolation only if bwrap is unavailable."""
+        if self.role is not ContainerRole.AGENT:
+            raise RuntimeError("Codex may run only in the agent container")
         preferred = self.run(
             "codex exec --sandbox workspace-write --ephemeral " + _shell_quote(prompt),
             timeout_seconds,
@@ -96,6 +110,9 @@ class DockerSandboxContainer:
 
     def copy_artifact(self, source: str, destination: Path) -> Path:
         return copy_artifact(self.container, source, destination)
+
+    def commit(self):
+        return self.container.commit()
 
     def terminate(self) -> None:
         try:

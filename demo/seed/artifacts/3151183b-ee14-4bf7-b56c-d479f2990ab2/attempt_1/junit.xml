@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.035" timestamp="2026-07-21T13:16:54.155256+00:00" hostname="677e2e859f39"><testcase classname="tests.models.test_oci_provider" name="test_oci_provider_is_available" time="0.002"><failure message="ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'">def test_oci_provider_is_available() -&gt; None:
+        """OCI should be available as a native optional model provider."""
+&gt;       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError</failure></testcase></testsuite></testsuites>

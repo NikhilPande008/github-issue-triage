@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from triage.sandbox.container import CodexSandboxUnavailable, DockerSandboxContainer
+from triage.sandbox.container import CodexSandboxUnavailable, ContainerRole, DockerSandboxContainer
 
 
 class FakeContainer:
@@ -72,7 +72,7 @@ def test_container_mounts_only_workspace_and_read_only_auth(tmp_path) -> None:
             return FakeContainer([])
 
     docker_client = SimpleNamespace(containers=FakeContainers())
-    DockerSandboxContainer.start(docker_client, SimpleNamespace(id="image-1"), repository, auth, 60)
+    DockerSandboxContainer.start(docker_client, SimpleNamespace(id="image-1"), repository, auth, 60, ContainerRole.AGENT)
 
     assert captured["volumes"] == {
         str(repository): {"bind": "/workspace/repo", "mode": "rw"},
@@ -80,3 +80,9 @@ def test_container_mounts_only_workspace_and_read_only_auth(tmp_path) -> None:
     }
     assert "privileged" not in captured
     assert "userns_mode" not in captured
+
+
+def test_test_role_cannot_invoke_codex() -> None:
+    sandbox = DockerSandboxContainer(FakeContainer([]), 60, ContainerRole.TEST)
+    with pytest.raises(RuntimeError, match="only in the agent container"):
+        sandbox.run_codex("probe", 1)

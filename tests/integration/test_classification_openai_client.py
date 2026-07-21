@@ -23,4 +23,5 @@ def test_openai_classification_client_uses_strict_schema() -> None:
     assert captured["model"] == MODEL
     assert captured["text"]["format"]["strict"] is True
     assert captured["text"]["format"]["schema"]["additionalProperties"] is False
+    assert "BEHAVIOR_GAP_CONFIRMED" not in captured["text"]["format"]["schema"]["properties"]["classification"]["enum"]
     assert response.usage.cached_input_tokens == 4

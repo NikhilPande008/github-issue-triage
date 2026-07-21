@@ -8,14 +8,15 @@ class DiffAnalysis:
     changed_test_paths: list[Path]
 
 
-def analyze_diff(content: str) -> DiffAnalysis:
+def analyze_diff(content: str, is_test_path=None) -> DiffAnalysis:
+    is_test_path = is_test_path or _is_test_path
     changed: list[Path] = []
     current_path: Path | None = None
     additions: list[str] = []
     removals: list[str] = []
 
     def finish_file() -> None:
-        if current_path is not None and _is_test_path(current_path) and _has_executable_change(additions, removals):
+        if current_path is not None and is_test_path(current_path) and _has_executable_change(additions, removals):
             changed.append(current_path)
 
     for line in content.splitlines():

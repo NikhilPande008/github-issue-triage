@@ -4,7 +4,7 @@ import { InvestigationDetail } from "./InvestigationDetail";
 
 const summary = {
   id: "run-1", repository: "psf/requests", issue_number: 7564, issue_title: "TLS", status: "COMPLETED",
-  classification: "REPRODUCED" as const, asserts_failure: true, validation_reason: "A new assertion failed in tests/test_requests.py.",
+  classification: "BEHAVIOR_GAP_CONFIRMED" as const, asserts_failure: true, validation_reason: "A new assertion failed in tests/test_requests.py.",
   attempt_count: 1, started_at: null, updated_at: null, completed_at: null, duration_seconds: 2, cost_usd: 0.004,
   tracked_llm_api_cost_usd: 0.004, tracked_llm_api_latency_ms: 1000, tracked_llm_api_input_tokens: 1,
   tracked_llm_api_cached_input_tokens: 0, tracked_llm_api_output_tokens: 1, tracked_llm_api_cost_status: "available" as const,

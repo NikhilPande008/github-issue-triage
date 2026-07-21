@@ -119,7 +119,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if shutil.which("docker") is None:
-        print("NOT REPRODUCED")
+        print("NOT_BEHAVIOR_GAP_CONFIRMED")
         print("Docker is required.", file=sys.stderr)
         return 2
 
@@ -127,7 +127,7 @@ def main() -> int:
     for name in ("terminal.log", "pytest_output.txt", "git.diff", "extraction.json", "final_report.json"):
         (ARTIFACTS / name).unlink(missing_ok=True)
 
-    report: dict[str, object] = {"issue": args.issue, "status": "NOT REPRODUCED", "attempts": 0, "assertsFailure": False}
+    report: dict[str, object] = {"issue": args.issue, "status": "NOT_BEHAVIOR_GAP_CONFIRMED", "attempts": 0, "assertsFailure": False}
     container = f"requests-spike-{os.getpid()}-{int(time.time())}"
     extraction: dict[str, object] | None = None
 
@@ -157,7 +157,7 @@ def main() -> int:
                     Issue extraction (produced by another model; do not redo extraction):
                     {extraction_text}
 
-                    This is attempt {attempt} of at most 3. Inspect the repository and issue clues, form a concrete hypothesis, then modify or add a pytest test under tests/ that demonstrates the reported bug. Run pytest yourself and inspect the result. The goal is a NEW test assertion that fails at unmodified HEAD because the product behavior is wrong. Do not fix production code. Do not introduce syntax/import/collection errors, skips, xfails, artificial `assert False`, or assertions unrelated to the issue. If the hypothesis fails, leave useful evidence and revise it on the next attempt. End after this attempt.
+                    This is attempt {attempt} of at most 3. Inspect the repository and issue clues, form a concrete hypothesis, then modify or add a pytest test under tests/ that tests whether the reported behavior is absent. Run pytest yourself and inspect the result. The goal is a NEW focused assertion that fails at unmodified HEAD for the described behavior. This confirms a behavior gap only; do not infer regression provenance, defect status, or product intent. Do not fix production code. Do not introduce syntax/import/collection errors, skips, xfails, artificial `assert False`, or assertions unrelated to the issue. If the hypothesis fails, leave useful evidence and revise it on the next attempt. End after this attempt.
                 """)
                 docker_exec(log, container, "cd /work/repo && codex exec --sandbox danger-full-access --ephemeral " + shlex.quote(prompt))
                 names = docker_exec(log, container, "cd /work/repo && git diff --name-only").stdout
@@ -166,7 +166,7 @@ def main() -> int:
                 diff = docker_exec(log, container, "cd /work/repo && git diff --no-ext-diff").stdout
                 (ARTIFACTS / "git.diff").write_text(diff, encoding="utf-8")
                 if only_test_changes(names) and changed_test(names) and pytest.returncode != 0 and assertion_failure(pytest.stdout):
-                    report.update({"status": "REPRODUCED", "assertsFailure": True, "changed_tests": names.splitlines()})
+                    report.update({"status": "BEHAVIOR_GAP_CONFIRMED", "assertsFailure": True, "changed_tests": names.splitlines()})
                     break
         except Exception as error:
             report["error"] = str(error)
@@ -180,7 +180,7 @@ def main() -> int:
 
     write_json(ARTIFACTS / "final_report.json", report)
     print(report["status"])
-    return 0 if report["status"] == "REPRODUCED" else 1
+    return 0 if report["status"] == "BEHAVIOR_GAP_CONFIRMED" else 1
 
 
 if __name__ == "__main__":

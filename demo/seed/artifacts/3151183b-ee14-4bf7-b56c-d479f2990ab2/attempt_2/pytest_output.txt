@@ -1,0 +1,13 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_oci_provider_accepts_the_target_compartment _______________
+
+    def test_oci_provider_accepts_the_target_compartment() -> None:
+        """OCI requests need a native provider configured for their target compartment."""
+>       from agents.extensions.models.oci_provider import OCIProvider
+E       ModuleNotFoundError: No module named 'agents.extensions.models.oci_provider'
+
+tests/models/test_oci_provider.py:3: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/models/test_oci_provider.py::test_oci_provider_accepts_the_target_compartment
+1 failed in 0.11s

@@ -1,0 +1,12 @@
+"""add privacy-bounded pilot review telemetry
+Revision ID: 0018_review_telemetry
+Revises: 0017_posting_approvals
+"""
+import sqlalchemy as sa
+from alembic import op
+revision="0018_review_telemetry"; down_revision="0017_posting_approvals"; branch_labels=None; depends_on=None
+def upgrade():
+    cohort=sa.Enum("MAINTAINER","INDEPENDENT_ENGINEER",name="reviewercohort",native_enum=False); event=sa.Enum("QUEUE_OPENED","PACKET_OPENED","REVIEW_STARTED","REVIEW_RESUMED","HEARTBEAT","ASSESSMENT_SUBMITTED","ASSESSMENT_SUPERSEDED","POSTING_APPROVAL_CREATED","REVIEW_COMPLETED","REVIEW_ABANDONED",name="reviewactivitytype",native_enum=False)
+    op.create_table("review_activities",sa.Column("id",sa.String(36),primary_key=True),sa.Column("review_packet_id",sa.String(36),sa.ForeignKey("review_packets.id")),sa.Column("investigation_id",sa.String(36),sa.ForeignKey("investigations.id"),nullable=False),sa.Column("reviewer_external_id",sa.String(128),nullable=False),sa.Column("reviewer_cohort",cohort,nullable=False),sa.Column("session_hash",sa.String(64),nullable=False),sa.Column("event_type",event,nullable=False),sa.Column("metadata_json",sa.Text(),nullable=False),sa.Column("schema_version",sa.String(32),nullable=False),sa.Column("created_at",sa.DateTime(timezone=True),nullable=False)); op.create_index("ix_review_activities_investigation_id","review_activities",["investigation_id"]); op.create_index("ix_review_activities_review_packet_id","review_activities",["review_packet_id"])
+    op.create_table("review_work_sessions",sa.Column("id",sa.String(36),primary_key=True),sa.Column("review_packet_id",sa.String(36),sa.ForeignKey("review_packets.id"),nullable=False),sa.Column("investigation_id",sa.String(36),sa.ForeignKey("investigations.id"),nullable=False),sa.Column("reviewer_external_id",sa.String(128),nullable=False),sa.Column("reviewer_cohort",cohort,nullable=False),sa.Column("session_hash",sa.String(64),nullable=False),sa.Column("started_at",sa.DateTime(timezone=True),nullable=False),sa.Column("last_active_at",sa.DateTime(timezone=True),nullable=False),sa.Column("ended_at",sa.DateTime(timezone=True)),sa.Column("active_seconds",sa.Integer(),nullable=False),sa.Column("estimated",sa.Boolean(),nullable=False)); op.create_index("ix_review_work_sessions_review_packet_id","review_work_sessions",["review_packet_id"])
+def downgrade(): op.drop_table("review_work_sessions"); op.drop_table("review_activities")

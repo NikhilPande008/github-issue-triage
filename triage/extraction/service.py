@@ -1,4 +1,5 @@
 from time import perf_counter
+from decimal import Decimal
 from typing import Protocol
 
 from triage.extraction.client import MODEL, ExtractionResponse, Usage
@@ -29,20 +30,29 @@ def calculate_cost(usage: Usage):
 class ExtractionService:
     """Executes and records up to two source-bound extraction calls."""
 
-    def __init__(self, client: ExtractionClient, llm_calls: LLMCallStore, investigation_id: str | None = None):
+    def __init__(self, client: ExtractionClient, llm_calls: LLMCallStore, investigation_id: str | None = None, budget=None):
         self.client = client
         self.llm_calls = llm_calls
         self.investigation_id = investigation_id
+        self.budget = budget
 
     def extract(self, issue: GitHubIssue) -> "IssueExtraction":
         system_prompt = load_system_prompt()
         user_prompt = render_user_prompt(issue)
         failures: list[str] = []
         for _ in range(2):
+            reservation = self.budget.reserve_openai(self.investigation_id) if self.budget and self.investigation_id else None
             started = perf_counter()
-            response = self.client.extract(system_prompt, user_prompt)
+            try:
+                response = self.client.extract(system_prompt, user_prompt)
+            except Exception:
+                if reservation is not None:
+                    self.budget.reconcile_openai(self.investigation_id, reservation, Decimal("0"))
+                raise
             latency_ms = round((perf_counter() - started) * 1000)
             self._record(response, latency_ms)
+            if reservation is not None:
+                self.budget.reconcile_openai(self.investigation_id, reservation, calculate_cost(response.usage))
             try:
                 return validate_extraction_json(response.content)
             except ExtractionValidationError as error:

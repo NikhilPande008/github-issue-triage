@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.033" timestamp="2026-07-21T13:13:51.562703+00:00" hostname="29e42830013d"><testcase classname="tests.extensions.sandbox.test_superserve" name="test_superserve_is_available_as_an_optional_sandbox_backend" time="0.001"><failure message="assert 'superserve' in {'voice': [&quot;numpy&gt;=2.2.0, &lt;3; python_version&gt;='3.10'&quot;, 'websockets&gt;=15.0, &lt;17'], 'viz': ['graphviz&gt;=0.17'], 'litellm': ['litellm&gt;=1.83.0'], 'any-llm': [&quot;any-llm-sdk&gt;=1.11.0, &lt;2; python_version &gt;= '3.11'&quot;], ...}">def test_superserve_is_available_as_an_optional_sandbox_backend() -&gt; None:
+        pyproject = tomllib.loads((Path(__file__).parents[3] / "pyproject.toml").read_text())
+    
+&gt;       assert "superserve" in pyproject["project"]["optional-dependencies"]
+E       assert 'superserve' in {'voice': ["numpy&gt;=2.2.0, &lt;3; python_version&gt;='3.10'", 'websockets&gt;=15.0, &lt;17'], 'viz': ['graphviz&gt;=0.17'], 'litellm': ['litellm&gt;=1.83.0'], 'any-llm': ["any-llm-sdk&gt;=1.11.0, &lt;2; python_version &gt;= '3.11'"], ...}
+
+tests/extensions/sandbox/test_superserve.py:11: AssertionError</failure></testcase></testsuite></testsuites>

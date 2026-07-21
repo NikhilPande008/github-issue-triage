@@ -12,10 +12,11 @@ def test_enum_values_are_exact() -> None:
         InvestigationStatus.PENDING,
         InvestigationStatus.RUNNING,
         InvestigationStatus.COMPLETED,
+        InvestigationStatus.COMPLETED_NO_GAP,
         InvestigationStatus.FAILED,
     }
     assert set(Classification) == {
-        Classification.REPRODUCED,
+        Classification.BEHAVIOR_GAP_CONFIRMED,
         Classification.NEEDS_INFO,
         Classification.WONT_REPRO,
         Classification.NOT_A_BUG,

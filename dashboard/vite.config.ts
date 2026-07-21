@@ -3,6 +3,6 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  server: { proxy: { "/investigations": "http://127.0.0.1:8000" } },
+  server: { proxy: { "/investigations": process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8000" } },
   test: { environment: "jsdom", setupFiles: "./src/testSetup.ts" },
 });

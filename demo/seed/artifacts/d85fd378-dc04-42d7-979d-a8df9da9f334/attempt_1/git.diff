@@ -1,0 +1,28 @@
+diff --git a/tests/test_call_model_input_filter.py b/tests/test_call_model_input_filter.py
+index 47de67f3..9ed47063 100644
+--- a/tests/test_call_model_input_filter.py
++++ b/tests/test_call_model_input_filter.py
+@@ -39,6 +39,23 @@ async def test_call_model_input_filter_sync_non_streamed() -> None:
+     assert model.last_turn_args["input"][-1]["content"] == "added-sync"
+ 
+ 
++@pytest.mark.asyncio
++async def test_call_model_input_filter_can_access_response_format() -> None:
++    model = FakeModel()
++    agent = Agent(name="test", model=model)
++    model.set_next_output([get_text_message("ok")])
++
++    def filter_fn(data: CallModelData[Any]) -> ModelInputData:
++        assert data.model_data.response_format is None
++        return data.model_data
++
++    await Runner.run(
++        agent,
++        input="start",
++        run_config=RunConfig(call_model_input_filter=filter_fn),
++    )
++
++
+ @pytest.mark.asyncio
+ async def test_call_model_input_filter_async_streamed() -> None:
+     model = FakeModel()

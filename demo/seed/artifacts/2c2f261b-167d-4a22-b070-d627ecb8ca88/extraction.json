@@ -1,0 +1,16 @@
+{
+  "summary": "Allow LiteLLM Proxy to be used in Guardrails",
+  "steps_to_reproduce": [],
+  "expected_behavior": "LiteLLM Proxy can be used in Guardrails.",
+  "actual_behavior": "The implementation shown for GuardrailsAsyncOpenAI, which allows proxy API keys and URLs when building context, is not seen for GuardrailsAgent. GuardrailsAgent creates its default context with AsyncOpenAI() without the corresponding configuration.",
+  "environment": {},
+  "affected_area": "GuardrailsAsyncOpenAI and GuardrailsAgent",
+  "repro_code": "def _create_default_context(self) -> GuardrailLLMContextProto:\n        \"\"\"Create default context with guardrail_llm client.\"\"\"\n        # First check base implementation for ContextVars\n        try:\n            return super()._create_default_context()\n        except NotImplementedError:\n            pass\n\n        # Create a separate client instance for guardrails (not the same as main client)\n        @dataclass\n        class DefaultContext:\n            guardrail_llm: AsyncOpenAI\n\n        # Create separate instance with same configuration\n        from openai import AsyncOpenAI\n\n        guardrail_kwargs = {\n            \"api_key\": self.api_key,\n            \"base_url\": getattr(self, \"base_url\", None),\n            \"organization\": getattr(self, \"organization\", None),\n            \"timeout\": getattr(self, \"timeout\", None),\n            \"max_retries\": getattr(self, \"max_retries\", None),\n        }\n        default_headers = getattr(self, \"default_headers\", None)\n        if default_headers is not None:\n            guardrail_kwargs[\"default_headers\"] = default_headers\n        guardrail_client = AsyncOpenAI(**guardrail_kwargs)\n\n        return DefaultContext(guardrail_llm=guardrail_client)\n\n\ndef _create_default_tool_context() -> Any:\n    \"\"\"Create a default context for tool guardrails.\"\"\"\n    from openai import AsyncOpenAI\n\n    @dataclass\n    class DefaultContext:\n        guardrail_llm: AsyncOpenAI\n\n    return DefaultContext(guardrail_llm=AsyncOpenAI())",
+  "missing_info": [
+    "Concrete steps to reproduce the issue",
+    "LiteLLM Proxy API key and URL configuration",
+    "Environment details such as package versions and operating system",
+    "Observed error message or output"
+  ],
+  "confidence": 0.98
+}

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from openai import OpenAI
 
 from triage.domain.models import IssueExtraction
+from triage.providers import OPENAI_CAPABILITIES
 
 MODEL = "gpt-5.6-luna"
 
@@ -51,3 +52,5 @@ class OpenAIExtractionClient:
                 output_tokens=usage.output_tokens,
             ),
         )
+    identifier = "openai"
+    capabilities = OPENAI_CAPABILITIES

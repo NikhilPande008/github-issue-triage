@@ -3,8 +3,14 @@ from dataclasses import dataclass
 from openai import OpenAI
 
 from triage.domain.enums import Classification
+from triage.providers import OPENAI_CAPABILITIES
 
 MODEL = "gpt-5.6-luna"
+LLM_ALLOWED_CLASSIFICATIONS = (
+    Classification.NEEDS_INFO,
+    Classification.WONT_REPRO,
+    Classification.NOT_A_BUG,
+)
 
 
 @dataclass(frozen=True)
@@ -21,6 +27,8 @@ class ClassificationResponse:
 
 
 class OpenAIClassificationClient:
+    identifier = "openai"
+    capabilities = OPENAI_CAPABILITIES
     def __init__(self, api_key: str | None, client: OpenAI | None = None):
         self.api_key = api_key
         self.client = client
@@ -44,7 +52,7 @@ class OpenAIClassificationClient:
                         "properties": {
                             "classification": {
                                 "type": "string",
-                                "enum": [item.value for item in Classification],
+                                "enum": [item.value for item in LLM_ALLOWED_CLASSIFICATIONS],
                             }
                         },
                         "required": ["classification"],

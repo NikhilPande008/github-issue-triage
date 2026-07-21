@@ -64,7 +64,7 @@ def test_docker_runner_smoke_collects_artifacts_and_cleans_up(tmp_path) -> None:
     assert result.evidence.pytest_exit_code == 1
     assert result.evidence.pytest_output_path.read_text(encoding="utf-8") == "one test failed"
     assert result.evidence.git_diff_path.read_text(encoding="utf-8") == "diff"
-    assert "$ python -m pytest -q 'tests/test_target.py'" in result.terminal_log_path.read_text(encoding="utf-8")
+    assert "--junitxml='/tmp/triage-run-1-attempt_1-junit.xml' 'tests/test_target.py'" in result.terminal_log_path.read_text(encoding="utf-8")
     assert manager.sandbox.cleaned is True
 
 
@@ -81,6 +81,36 @@ def test_docker_runner_preserves_timeout_evidence_when_container_is_unavailable(
     assert "TIMEOUT: pytest timeout" in result.terminal_log_path.read_text(encoding="utf-8")
     assert result.evidence.pytest_output_path.exists()
     assert manager.sandbox.cleaned is True
+
+
+def test_agent_edits_are_followed_by_test_and_confirmation_containers_only(tmp_path) -> None:
+    events = []
+    class Agent(FakeContainer):
+        def run_codex(self, prompt, timeout):
+            events.append("agent:codex"); return super().run_codex(prompt, timeout)
+        def run(self, command, timeout):
+            events.append("agent:status"); return super().run(command, timeout)
+    class Test(FakeContainer):
+        def run_codex(self, prompt, timeout): raise AssertionError("test container must not invoke Codex")
+        def run(self, command, timeout):
+            events.append("test:" + ("pytest" if command.startswith("python -m pytest") else "diff"))
+            return super().run(command, timeout)
+    class SplitSandbox(FakeSandbox):
+        def __init__(self): self.agent_container = Agent(); self.test_container = None; self.cleaned = False
+        def cleanup(self): self.cleaned = True
+    class SplitManager:
+        overall_timeout_seconds = 60
+        def __init__(self): self.sandbox = SplitSandbox(); self.test = Test()
+        def create(self, run_id, repository): return self.sandbox
+        def close_agent_container(self, sandbox): events.append("agent:closed"); sandbox.agent_container = None
+        def create_test_container(self, sandbox): sandbox.test_container = self.test; return self.test
+    manager = SplitManager()
+    with DockerInvestigationRunner(manager, "psf/requests", 30) as runner:
+        runner.run_attempt(tmp_path, "prompt", tmp_path / "artifacts" / "split" / "attempt_1")
+        runner.run_confirmation(tmp_path, "prompt", tmp_path / "artifacts" / "split" / "attempt_2")
+    assert events[:4] == ["agent:codex", "agent:status", "agent:closed", "test:pytest"]
+    assert events.count("agent:codex") == 1
+    assert events.count("test:pytest") == 2
 
 
 def test_focused_pytest_falls_back_to_the_full_suite_without_changed_tests() -> None:

@@ -33,7 +33,7 @@ def revision_reason_from_attempt(execution: AttemptExecution) -> str:
     if execution.codex_exit_code != 0:
         return "Previous Codex invocation exited nonzero; revise from its terminal evidence."
     if execution.evidence.git_diff_path and not execution.evidence.git_diff_path.read_text(encoding="utf-8").strip():
-        return "Previous attempt made no repository changes; target a more concrete reproduction path."
+        return "Previous attempt made no repository changes; target a more concrete behavior specification."
     if execution.evidence.pytest_exit_code == 0:
         return "Previous attempt did not produce a failing pytest result; revise the hypothesis using its test evidence."
     return "Previous attempt ended without a conclusive result; revise from the captured evidence."
@@ -42,7 +42,7 @@ def revision_reason_from_attempt(execution: AttemptExecution) -> str:
 class InvestigationEngine:
     """Bounded investigation orchestration; evidence validation controls completion."""
 
-    def __init__(self, runner: InvestigationRunner, investigations: Store, hypotheses: Store, artifacts: Store, llm_calls: Store, artifacts_root: Path, validator: Validator):
+    def __init__(self, runner: InvestigationRunner, investigations: Store, hypotheses: Store, artifacts: Store, llm_calls: Store, artifacts_root: Path, validator: Validator, confirmation_runs: int = 1, budget=None):
         self.runner = runner
         self.investigations = investigations
         self.hypotheses = hypotheses
@@ -50,6 +50,8 @@ class InvestigationEngine:
         self.llm_calls = llm_calls
         self.artifacts_root = artifacts_root
         self.validator = validator
+        self.confirmation_runs = max(1, confirmation_runs)
+        self.budget = budget
 
     def investigate(
         self, issue: GitHubIssue, extraction: IssueExtraction, repository_path: Path, investigation: Investigation | None = None
@@ -83,6 +85,8 @@ class InvestigationEngine:
             prompt = render_codex_prompt(extraction, attempt_number, revision_reason, previous_evidence)
             artifact_dir = attempt_artifact_dir(self.artifacts_root, run_id, attempt_number)
             try:
+                if self.budget:
+                    self.budget.before_codex(investigation.id)
                 execution = self.runner.run_attempt(repository_path, prompt, artifact_dir)
             except EnvironmentSetupFailure as error:
                 if error.execution is not None:
@@ -95,12 +99,22 @@ class InvestigationEngine:
                 )
                 raise
             self._record_attempt_artifacts(investigation.id, execution)
+            if investigation.test_runner != execution.evidence.runner_id:
+                self.investigations.update(investigation, test_runner=execution.evidence.runner_id)
             self._record_codex_call(investigation.id, attempt_number, execution)
+            if self.budget:
+                self.budget.record_codex(investigation.id, execution.codex_latency_ms)
+            # The runner adapter remains the deterministic authority for a
+            # behavior-gap confirmation; the LLM classifier only consumes this evidence later.
             validation = self.validator.validate(
                 ValidationEvidence(
                     git_diff_path=execution.evidence.git_diff_path,
                     pytest_output_path=execution.evidence.pytest_output_path,
                     pytest_exit_code=execution.evidence.pytest_exit_code,
+                    runner_id=execution.evidence.runner_id,
+                    structured_results_path=execution.evidence.structured_results_path,
+                    execution_failure_reason=execution.evidence.execution_failure_reason,
+                    reliability_status=execution.evidence.reliability_status,
                 )
             )
             self.investigations.update(
@@ -111,23 +125,66 @@ class InvestigationEngine:
             record = AttemptRecord(attempt_number, hypothesis, revision_reason, execution, validation)
             attempts.append(record)
             if validation.asserts_failure:
+                if not self._confirm_stable(repository_path, prompt, run_id, investigation, attempts, validation):
+                    unstable = ValidationResult(False, "FLAKY_OR_INCONCLUSIVE: confirmation execution did not reproduce a clean structured test failure.", [], 0)
+                    self.investigations.update(investigation, status=InvestigationStatus.FAILED, asserts_failure=False, validation_reason=unstable.reason)
+                    return InvestigationResult(investigation.id, run_id, False, attempts, unstable)
                 self.investigations.update(investigation, status=InvestigationStatus.COMPLETED)
                 return InvestigationResult(investigation.id, run_id, True, attempts, validation)
             revision_reason = revision_reason_from_attempt(execution) + " Validation: " + validation.reason
             previous_evidence = execution.terminal_log_path.read_text(encoding="utf-8")
 
-        self.investigations.update(investigation, status=InvestigationStatus.FAILED)
+        # Exhausting focused attempts is a completed evidence review, not an
+        # operational failure. The classifier will attach a conservative
+        # non-confirming outcome after this method returns.
+        self.investigations.update(investigation, status=InvestigationStatus.COMPLETED_NO_GAP)
         assert validation is not None
         return InvestigationResult(investigation.id, run_id, False, attempts, validation)
+
+    def _confirm_stable(self, repository_path: Path, prompt: str, run_id: str, investigation: Investigation, attempts: list[AttemptRecord], initial: ValidationResult) -> bool:
+        """Never retry-until-green: every configured replay must independently agree."""
+        for confirmation_number in range(2, self.confirmation_runs + 1):
+            artifact_dir = attempt_artifact_dir(self.artifacts_root, run_id, len(attempts) + 1)
+            try:
+                if self.budget:
+                    self.budget.before_codex(investigation.id)
+                confirm = getattr(self.runner, "run_confirmation", self.runner.run_attempt)
+                execution = confirm(repository_path, "Confirmation execution: " + prompt, artifact_dir)
+            except Exception:
+                return False
+            self._record_attempt_artifacts(investigation.id, execution)
+            self._record_codex_call(investigation.id, len(attempts) + 1, execution)
+            if self.budget:
+                self.budget.record_codex(investigation.id, execution.codex_latency_ms)
+            validation = self.validator.validate(
+                ValidationEvidence(
+                    git_diff_path=execution.evidence.git_diff_path,
+                    pytest_output_path=execution.evidence.pytest_output_path,
+                    pytest_exit_code=execution.evidence.pytest_exit_code,
+                    runner_id=execution.evidence.runner_id,
+                    structured_results_path=execution.evidence.structured_results_path,
+                    execution_failure_reason=execution.evidence.execution_failure_reason,
+                    reliability_status="CONFIRMATION",
+                )
+            )
+            attempts.append(AttemptRecord(len(attempts) + 1, "Confirmation execution", None, execution, validation))
+            if not validation.asserts_failure:
+                return False
+        return True
 
     @staticmethod
     def _hypothesis(extraction: IssueExtraction, attempt_number: int) -> str:
         basis = extraction.summary or extraction.actual_behavior or "the reported issue"
-        return f"Attempt {attempt_number}: reproduce {basis} with a focused pytest test."
+        return f"Attempt {attempt_number}: test whether {basis} is absent with a focused pytest test."
 
     def _record_attempt_artifacts(self, investigation_id: str, execution: AttemptExecution) -> None:
         self.artifacts.create(Artifact(investigation_id=investigation_id, kind="terminal_log", path=str(execution.terminal_log_path)))
-        self.artifacts.create(Artifact(investigation_id=investigation_id, kind="pytest_output", path=str(execution.evidence.pytest_output_path)))
+        output_kind = "pytest_output" if execution.evidence.runner_id == "pytest" else f"{execution.evidence.runner_id}_output"
+        self.artifacts.create(Artifact(investigation_id=investigation_id, kind=output_kind, path=str(execution.evidence.pytest_output_path)))
+        if execution.evidence.structured_results_path is not None:
+            self.artifacts.create(Artifact(investigation_id=investigation_id, kind="structured_test_results_junit", path=str(execution.evidence.structured_results_path)))
+        if execution.evidence.reproducibility_manifest_path is not None:
+            self.artifacts.create(Artifact(investigation_id=investigation_id, kind="reproducibility_manifest", path=str(execution.evidence.reproducibility_manifest_path)))
         if execution.evidence.git_diff_path:
             self.artifacts.create(Artifact(investigation_id=investigation_id, kind="git_diff", path=str(execution.evidence.git_diff_path)))
 
